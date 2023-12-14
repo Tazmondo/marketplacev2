@@ -7,23 +7,23 @@ local Future = require(ReplicatedStorage.Packages.Future)
 local Spawn = require(ReplicatedStorage.Packages.Spawn)
 local ProfileService = require(ServerStorage.ServerPackages.ProfileService)
 
-type VectorTable = {
+export type VectorTable = {
 	x: number,
 	y: number,
 	z: number,
 }
 
-type Stand = {
+export type Stand = {
 	asset: number,
 	position: VectorTable,
 }
 
-type Showcase = {
+export type Showcase = {
 	stands: { Stand },
 	name: string,
 }
 
-type Data = {
+export type Data = {
 	showcases: { Showcase },
 	version: number,
 }
@@ -105,5 +105,7 @@ function DataService:Initialize()
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 end
+
+DataService:Initialize()
 
 return DataService

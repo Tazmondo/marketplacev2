@@ -5,8 +5,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
-local Config = require(ReplicatedStorage.Modules.Config)
-local Types = require(ReplicatedStorage.Modules.Types)
+local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 
 local UpdateStandsEvent = require(ReplicatedStorage.Events.Place.UpdateStandsEvent):Server()
@@ -17,6 +17,8 @@ type Stand = {
 	part: BasePart,
 }
 
+type PlaceMode = "View" | "Edit"
+
 type Place = {
 	CFrame: CFrame,
 	model: Model,
@@ -25,6 +27,7 @@ type Place = {
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
 	tableIndex: number,
+	mode: PlaceMode,
 }
 
 local template = ServerStorage:FindFirstChild("PlaceTemplate") :: Model?
@@ -131,7 +134,7 @@ function SavePlace(place: Place)
 	-- TODO
 end
 
-function PlaceService:GeneratePlace(ownerId: number)
+function PlaceService:GeneratePlace(ownerId: number, mode: PlaceMode)
 	-- TODO
 
 	local placeIndex = GetNextFreeIndex()
@@ -161,6 +164,7 @@ function PlaceService:GeneratePlace(ownerId: number)
 		model = placeModel,
 		playersPresent = {},
 		tableIndex = placeIndex,
+		mode = mode,
 	}
 
 	placeTable[placeIndex] = place
