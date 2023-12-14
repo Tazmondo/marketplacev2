@@ -1,0 +1,17 @@
+[package]
+name = "tazmondo/rumble-rojo"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+TableUtil = "sleitnick/table-util@^1.2.0"
+Cmdr = "evaera/cmdr@^1.12.0"
+Iris = "michael-48/iris@^2.1.4"
+
+Red = "red-blox/red@2.1.0"
+Future = "red-blox/future@1.0.1"
+Guard = "red-blox/guard@1.0.0"
+Signal = "red-blox/signal@2.0.0"
+Bin = "red-blox/bin@1.0.0"
+Spawn = "red-blox/spawn@1.0.0"
