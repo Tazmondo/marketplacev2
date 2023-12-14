@@ -1,0 +1,3 @@
+local InstanceGuard = {}
+
+return InstanceGuard
