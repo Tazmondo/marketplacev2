@@ -1,17 +1,18 @@
-local PlaceService = {}
+local ShowcaseService = {}
 
 local InsertService = game:GetService("InsertService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
+local ItemDetails = require(script.Parent.ItemDetails)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 
 local UpdateStandsEvent = require(ReplicatedStorage.Events.Place.UpdateStandsEvent):Server()
 
-type Stand = {
+type PlaceStand = {
 	item: Types.Item?,
 	roundedPosition: Vector3,
 	part: BasePart,
@@ -23,7 +24,7 @@ type Place = {
 	CFrame: CFrame,
 	model: Model,
 	entranceCFrame: CFrame,
-	stands: { [BasePart]: Stand },
+	stands: { [BasePart]: PlaceStand },
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
 	tableIndex: number,
@@ -120,7 +121,7 @@ function UpdateStands(place: Place, specificPlayer: Player?)
 	end
 end
 
-function EnterPlayerPlace(player: Player, place: Place)
+function ShowcaseService:EnterPlayerPlace(player: Player, place: Place)
 	local character = player.Character
 	if not character then
 		return
@@ -134,45 +135,65 @@ function SavePlace(place: Place)
 	-- TODO
 end
 
-function PlaceService:GeneratePlace(ownerId: number, mode: PlaceMode)
-	-- TODO
-
-	local placeIndex = GetNextFreeIndex()
-	local offset = GetPositionFromIndex(placeIndex)
-	local cframe = CFrame.new(basePosition + offset)
-
-	local placeModel = template:Clone()
-	placeModel:PivotTo(cframe)
-	placeModel.Parent = workspace
-
-	local stands: { [BasePart]: Stand } = {}
-	for i, descendant in placeModel:GetDescendants() do
-		if descendant:HasTag(Config.StandTag) and descendant:IsA("BasePart") then
-			stands[descendant] = {
-				roundedPosition = RoundedVector(descendant.Position),
-				item = nil,
-				part = descendant,
-			}
+function ShowcaseService:GeneratePlace(showcase: Types.Showcase, mode: PlaceMode)
+	return Future.new(function()
+		local positionStandMap: { [Vector3]: Types.Stand } = {}
+		for i, stand in showcase.stands do
+			positionStandMap[stand.roundedPosition] = stand
 		end
-	end
 
-	local place: Place = {
-		CFrame = cframe,
-		entranceCFrame = cframe,
-		stands = stands,
-		owner = ownerId,
-		model = placeModel,
-		playersPresent = {},
-		tableIndex = placeIndex,
-		mode = mode,
-	}
+		local placeIndex = GetNextFreeIndex()
+		local offset = GetPositionFromIndex(placeIndex)
+		local cframe = CFrame.new(basePosition + offset)
 
-	placeTable[placeIndex] = place
+		local placeModel = template:Clone()
+		placeModel:PivotTo(cframe)
+		placeModel.Parent = workspace
 
-	return place
+		local stands: { [BasePart]: PlaceStand } = {}
+
+		-- This loop happens synchronously - may cause a delay if there are a lot of items to fetch
+		for i, descendant in placeModel:GetDescendants() do
+			if descendant:HasTag(Config.StandTag) and descendant:IsA("BasePart") then
+				local roundedPosition = RoundedVector(descendant.Position)
+				local savedStand = positionStandMap[roundedPosition]
+				local itemDetails: Types.Item?
+
+				if savedStand and savedStand.item then
+					local success
+					success, itemDetails = ItemDetails.GetItemDetails(savedStand.item):Await()
+					if not success then
+						warn("Failed to fetch", itemDetails)
+						itemDetails = nil
+					end
+				end
+
+				stands[descendant] = {
+					roundedPosition = roundedPosition,
+					item = itemDetails,
+					part = descendant,
+				}
+			end
+		end
+
+		local place: Place = {
+			CFrame = cframe,
+			entranceCFrame = cframe,
+			stands = stands,
+			owner = showcase.owner,
+			model = placeModel,
+			playersPresent = {},
+			tableIndex = placeIndex,
+			mode = mode,
+		}
+
+		placeTable[placeIndex] = place
+
+		return place
+	end)
 end
 
-function PlaceService:UnloadPlace(place: Place)
+function ShowcaseService:UnloadPlace(place: Place)
 	for player, _ in place.playersPresent do
 		-- Players can leave
 		if player.Parent ~= nil then
@@ -189,4 +210,4 @@ function PlaceService:UnloadPlace(place: Place)
 	end
 end
 
-return PlaceService
+return ShowcaseService

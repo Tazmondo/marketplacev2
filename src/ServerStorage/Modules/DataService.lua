@@ -18,9 +18,19 @@ export type Stand = {
 	position: VectorTable,
 }
 
+local standTemplate: Stand = {
+	asset = 2041985255,
+	position = { x = 0, y = 0, z = 0 },
+}
+
 export type Showcase = {
 	stands: { Stand },
 	name: string,
+}
+
+local showcaseTemplate: Showcase = {
+	stands = {},
+	name = "Default",
 }
 
 export type Data = {
@@ -41,7 +51,7 @@ local ProfileStore =
 
 local Profiles: { [Player]: ProfileService.Profile<Data> } = {}
 
-function Reconcile(data: Data) end
+function Migrate(data: Data) end
 
 function DataService:VectorToTable(vector: Vector3): VectorTable
 	return {
@@ -60,7 +70,7 @@ function PlayerAdded(player: Player)
 	local profile = ProfileStore:LoadProfileAsync(profileKey)
 	if profile ~= nil then
 		profile:AddUserId(player.UserId)
-		Reconcile(profile.Data)
+		Migrate(profile.Data)
 		profile:ListenToRelease(function()
 			Profiles[player] = nil
 			player:Kick()

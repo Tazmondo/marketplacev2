@@ -9,5 +9,15 @@ export type NetworkStand = {
 	part: BasePart,
 	item: Item?,
 }
+export type Stand = {
+	item: number?,
+	roundedPosition: Vector3,
+}
+
+export type Showcase = {
+	name: string,
+	owner: number, -- UserId
+	stands: { Stand },
+}
 
 return {}
