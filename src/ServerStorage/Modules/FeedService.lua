@@ -25,10 +25,10 @@ function PlayerAdded(player: Player)
 	feedData[player] = { showcase }
 
 	-- Yields
-	local place = ShowcaseService:GeneratePlace(showcase, "View"):Await()
+	local place = ShowcaseService:GenerateShowcase(showcase, "View"):Await()
 
 	player:LoadCharacter()
-	ShowcaseService:EnterPlayerPlace(player, place)
+	ShowcaseService:EnterPlayerShowcase(player, place)
 end
 
 function PlayerRemoving(player: Player)

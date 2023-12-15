@@ -125,7 +125,7 @@ function UpdateStands(place: Place, specificPlayer: Player?)
 	end
 end
 
-function ShowcaseService:EnterPlayerPlace(player: Player, place: Place)
+function ShowcaseService:EnterPlayerShowcase(player: Player, place: Place)
 	local character = player.Character
 	if not character then
 		return
@@ -139,7 +139,7 @@ function SavePlace(place: Place)
 	-- TODO
 end
 
-function ShowcaseService:GeneratePlace(showcase: Types.Showcase, mode: PlaceMode)
+function ShowcaseService:GenerateShowcase(showcase: Types.Showcase, mode: PlaceMode)
 	return Future.new(function()
 		local positionStandMap: { [Vector3]: Types.Stand } = {}
 		for i, stand in showcase.stands do
