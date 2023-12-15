@@ -1,5 +1,6 @@
 local FeedService = {}
 
+local HttpService = game:GetService("HttpService")
 local PlacesService = game:GetService("PlacesService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,6 +14,7 @@ local DefaultShowcase: Types.Showcase = {
 	name = "N/A",
 	owner = 68252170,
 	stands = {},
+	GUID = HttpService:GenerateGUID(false),
 }
 TableUtil.Lock(DefaultShowcase)
 

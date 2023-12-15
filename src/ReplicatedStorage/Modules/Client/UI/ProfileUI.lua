@@ -5,6 +5,8 @@ local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local UILoader = require(script.Parent.UILoader)
 
+local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.CreateShowcaseEvent):Client()
+
 local gui = UILoader:GetMain()
 local profile = gui.Profile
 local showcaseList = profile.Frame.List
@@ -13,6 +15,8 @@ local showcaseTemplate = showcaseList.Row
 local create = gui.CreateShop
 
 function Populate(showcases: { Data.Showcase })
+	print("Populating profile", showcases)
+
 	for i, child in showcaseList:GetChildren() do
 		if child:GetAttribute("Temporary") then
 			child:Destroy()
@@ -33,6 +37,9 @@ function Populate(showcases: { Data.Showcase })
 		newRow.Price.Select.Activated:Connect(function()
 			-- TODO: Delete showcase
 		end)
+
+		newRow.Visible = true
+		newRow.Parent = showcaseTemplate.Parent
 	end
 end
 
@@ -46,7 +53,11 @@ function HideCreateShop()
 	profile.Visible = true
 end
 
-function CreateShop() end
+function CreateShop()
+	print("Create shop")
+	CreateShowcaseEvent:Fire()
+	HideCreateShop()
+end
 
 function ProfileUI:Show()
 	profile.Visible = true
@@ -71,6 +82,9 @@ function ProfileUI:Initialize()
 
 	DataController:GetData():After(function(data)
 		Populate(data.showcases)
+		DataController.Updated:Connect(function(data)
+			Populate(data.showcases)
+		end)
 	end)
 end
 

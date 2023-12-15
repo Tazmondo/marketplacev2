@@ -18,6 +18,7 @@ export type Showcase = {
 	name: string,
 	owner: number, -- UserId
 	stands: { Stand },
+	GUID: string,
 }
 
 return {}

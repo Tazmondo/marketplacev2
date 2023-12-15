@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService")
+local Types = require(script.Parent.Types)
 local Data = {}
 
 export type VectorTable = {
@@ -8,8 +8,8 @@ export type VectorTable = {
 }
 
 export type Stand = {
-	asset: number,
-	position: VectorTable,
+	item: number,
+	roundedPosition: VectorTable,
 }
 
 export type Showcase = {
@@ -42,5 +42,32 @@ function Data.TableToVector(vector: VectorTable): Vector3
 end
 
 function Data.Migrate(data: Data) end
+
+function Data.ToDataStand(stand: Types.Stand): Stand?
+	if stand.item then
+		return {
+			item = stand.item,
+			roundedPosition = Data.VectorToTable(stand.roundedPosition),
+		}
+	else
+		return nil
+	end
+end
+
+function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
+	local stands = {}
+	for i, stand in showcase.stands do
+		local dataStand = Data.ToDataStand(stand)
+		if dataStand then
+			table.insert(stands, dataStand)
+		end
+	end
+
+	return {
+		name = showcase.name,
+		GUID = showcase.GUID,
+		stands = stands,
+	}
+end
 
 return Data

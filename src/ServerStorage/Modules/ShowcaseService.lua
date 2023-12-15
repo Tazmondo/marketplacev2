@@ -1,16 +1,20 @@
 local ShowcaseService = {}
 
+local HttpService = game:GetService("HttpService")
 local InsertService = game:GetService("InsertService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
+local DataService = require(script.Parent.DataService)
 local ItemDetails = require(script.Parent.ItemDetails)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 
-local UpdateStandsEvent = require(ReplicatedStorage.Events.Place.UpdateStandsEvent):Server()
+local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.CreateShowcaseEvent):Server()
+local UpdateStandsEvent = require(ReplicatedStorage.Events.Showcase.UpdateStandsEvent):Server()
 
 type PlaceStand = {
 	item: Types.Item?,
@@ -209,5 +213,33 @@ function ShowcaseService:UnloadPlace(place: Place)
 		warn(debug.traceback("Tried to unload a place with the wrong index! Should never occur."))
 	end
 end
+
+function HandleCreatePlace(player: Player)
+	local data = DataService:ReadData(player):Await()
+	if not data then
+		return
+	end
+
+	if #data.showcases >= Config.MaxPlaces then
+		return
+	end
+
+	local newShowcase: Types.Showcase = {
+		name = "N/A",
+		stands = {},
+		GUID = HttpService:GenerateGUID(false),
+		owner = player.UserId,
+	}
+
+	DataService:WriteData(player, function(data)
+		table.insert(data.showcases, Data.ToDataShowcase(newShowcase))
+	end)
+end
+
+function ShowcaseService:Initialize()
+	CreateShowcaseEvent:On(HandleCreatePlace)
+end
+
+ShowcaseService:Initialize()
 
 return ShowcaseService

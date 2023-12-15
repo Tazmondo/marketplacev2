@@ -67,6 +67,30 @@ function DataService:ReadData(player: Player)
 	end)
 end
 
+function DataService:WriteData(player: Player, transform: (Data.Data) -> ())
+	return Future.new(function()
+		local data = DataService:ReadData(player):Await()
+		if not data then
+			return
+		end
+
+		-- We need to detect yielding because it could result in data not being replicated to the client
+		-- As it would be updated after the event is sent
+
+		local yielded = true
+		Spawn(function()
+			transform(data)
+			yielded = false
+		end)
+
+		if yielded then
+			warn(debug.traceback("Data transform function yielded!"))
+		end
+
+		ReplicateDataEvent:Fire(player, data)
+	end)
+end
+
 function DataService:Initialize()
 	Players.PlayerAdded:Connect(PlayerAdded)
 	for i, player in Players:GetPlayers() do
