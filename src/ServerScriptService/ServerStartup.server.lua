@@ -23,7 +23,7 @@ for i, moduleScript in ipairs(scripts) do
 	end)
 
 	if success == false then
-		error(message)
+		error(`{moduleScript:GetFullName()}: {message}`)
 	end
 
 	if yielded then
