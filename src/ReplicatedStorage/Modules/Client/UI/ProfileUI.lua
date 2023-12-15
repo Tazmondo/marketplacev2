@@ -17,6 +17,7 @@ local create = gui.CreateShop
 
 function EditShowcase(showcase: Data.Showcase)
 	EditShowcaseEvent:Fire(showcase.GUID)
+	ProfileUI:Hide()
 end
 
 function Populate(showcases: { Data.Showcase })
@@ -71,6 +72,7 @@ end
 
 function ProfileUI:Hide()
 	profile.Visible = false
+	create.Visible = false
 end
 
 function ProfileUI:Initialize()
