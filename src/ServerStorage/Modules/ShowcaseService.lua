@@ -13,30 +13,29 @@ local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
-local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EditShowcaseEvent):Server()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.CreateShowcaseEvent):Server()
 local UpdateStandsEvent = require(ReplicatedStorage.Events.Showcase.UpdateStandsEvent):Server()
+local EnterShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EnterShowcaseEvent):Server()
 
-type PlaceStand = {
+type ShowcaseStand = {
 	item: Types.Item?,
 	roundedPosition: Vector3,
 	part: BasePart,
 }
 
-type PlaceMode = "View" | "Edit"
-
-type Place = {
+type Showcase = {
 	CFrame: CFrame,
 	model: Model,
 	entranceCFrame: CFrame,
-	stands: { [BasePart]: PlaceStand },
+	stands: { [BasePart]: ShowcaseStand },
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
 	tableIndex: number,
-	mode: PlaceMode,
+	mode: Types.ShowcaseMode,
 	GUID: string,
+	name: string,
 }
 
 local template = ServerStorage:FindFirstChild("PlaceTemplate") :: Model?
@@ -61,9 +60,9 @@ local placeSlots = Vector3.new(10, 1, 10)
 local maxPlaces = placeSlots.X * placeSlots.Y * placeSlots.Z
 local basePosition = Vector3.new((-placeSlots.X * maxX) / 2, 500, (-placeSlots.Z * maxZ) / 2)
 
-local placeTable: { [number]: Place } = {}
+local placeTable: { [number]: Showcase } = {}
 
-local playerPlaces: { [Player]: Place } = {}
+local playerPlaces: { [Player]: Showcase } = {}
 
 if not RunService:IsStudio() then
 	assert(maxPlaces >= Players.MaxPlayers, "Not enough places for every player")
@@ -112,9 +111,27 @@ function ReplicateAsset(assetId: number)
 	end)
 end
 
-function UpdateStands(place: Place, specificPlayer: Player?)
+function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
+	local stands: { [BasePart]: Types.NetworkStand } = {}
+	for i, stand in showcase.stands do
+		stands[stand.part] = {
+			part = stand.part,
+			item = stand.item,
+		}
+	end
+
+	return {
+		GUID = showcase.GUID,
+		stands = stands,
+		mode = showcase.mode,
+		owner = showcase.owner,
+		name = showcase.name,
+	}
+end
+
+function UpdateStands(showcase: Showcase, specificPlayer: Player?)
 	local standsToSend: { Types.NetworkStand } = {}
-	for part, stand in place.stands do
+	for part, stand in showcase.stands do
 		if stand.item then
 			ReplicateAsset(stand.item.assetId)
 		end
@@ -131,15 +148,15 @@ function UpdateStands(place: Place, specificPlayer: Player?)
 	end
 end
 
-function ShowcaseService:ExitPlayerShowcase(player: Player, place: Place)
-	place.playersPresent[player] = nil
-	if next(place.playersPresent) == nil then
+function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: Showcase)
+	showcase.playersPresent[player] = nil
+	if next(showcase.playersPresent) == nil then
 		-- Empty
-		ShowcaseService:UnloadPlace(place)
+		ShowcaseService:UnloadPlace(showcase)
 	end
 end
 
-function ShowcaseService:EnterPlayerShowcase(player: Player, place: Place)
+function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
 	local oldPlace = playerPlaces[player]
 	if oldPlace then
 		ShowcaseService:ExitPlayerShowcase(player, oldPlace)
@@ -150,16 +167,17 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, place: Place)
 		return
 	end
 
-	character:PivotTo(place.entranceCFrame)
-	place.playersPresent[player] = true
-	playerPlaces[player] = place
+	character:PivotTo(showcase.entranceCFrame)
+	showcase.playersPresent[player] = true
+	playerPlaces[player] = showcase
+	EnterShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 end
 
-function SavePlace(place: Place)
+function SavePlace(place: Showcase)
 	-- TODO
 end
 
-function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: PlaceMode)
+function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.ShowcaseMode)
 	return Future.new(function()
 		-- Check for already existing showcase with the same GUID
 		for i, place in placeTable do
@@ -181,7 +199,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: PlaceMode)
 		placeModel:PivotTo(cframe)
 		placeModel.Parent = workspace
 
-		local stands: { [BasePart]: PlaceStand } = {}
+		local stands: { [BasePart]: ShowcaseStand } = {}
 
 		-- This loop happens synchronously - may cause a delay if there are a lot of items to fetch
 		for i, descendant in placeModel:GetDescendants() do
@@ -207,7 +225,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: PlaceMode)
 			end
 		end
 
-		local place: Place = {
+		local place: Showcase = {
 			CFrame = cframe,
 			entranceCFrame = cframe,
 			stands = stands,
@@ -217,6 +235,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: PlaceMode)
 			tableIndex = placeIndex,
 			mode = mode,
 			GUID = showcase.GUID,
+			name = showcase.name,
 		}
 
 		placeTable[placeIndex] = place
@@ -225,7 +244,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: PlaceMode)
 	end)
 end
 
-function ShowcaseService:UnloadPlace(place: Place)
+function ShowcaseService:UnloadPlace(place: Showcase)
 	for player, _ in place.playersPresent do
 		-- Players can leave
 		if player.Parent ~= nil then

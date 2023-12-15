@@ -27,4 +27,8 @@ function StringUtil.TruncateString(string: string, maxLength: number)
 	end
 end
 
+function StringUtil.LimitString(string: string, maxLength: number)
+	return string:sub(1, maxLength)
+end
+
 return StringUtil

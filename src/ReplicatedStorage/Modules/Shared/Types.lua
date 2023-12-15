@@ -21,4 +21,14 @@ export type Showcase = {
 	GUID: string,
 }
 
+export type ShowcaseMode = "View" | "Edit"
+
+export type NetworkShowcase = {
+	name: string,
+	owner: number,
+	stands: { [BasePart]: NetworkStand },
+	GUID: string,
+	mode: ShowcaseMode,
+}
+
 return {}
