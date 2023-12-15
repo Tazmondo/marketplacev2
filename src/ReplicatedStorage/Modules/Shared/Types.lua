@@ -7,10 +7,10 @@ export type Item = {
 
 export type NetworkStand = {
 	part: BasePart,
-	item: Item?,
+	assetId: number?,
 }
 export type Stand = {
-	item: number?,
+	assetId: number?,
 	roundedPosition: Vector3,
 }
 

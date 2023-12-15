@@ -208,9 +208,9 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 				local savedStand = positionStandMap[roundedPosition]
 				local itemDetails: Types.Item?
 
-				if savedStand and savedStand.item then
+				if savedStand and savedStand.assetId then
 					local success
-					success, itemDetails = ItemDetails.GetItemDetails(savedStand.item):Await()
+					success, itemDetails = ItemDetails.GetItemDetails(savedStand.assetId):Await()
 					if not success then
 						warn("Failed to fetch", itemDetails)
 						itemDetails = nil

@@ -8,7 +8,7 @@ export type VectorTable = {
 }
 
 export type Stand = {
-	item: number,
+	assetId: number,
 	roundedPosition: VectorTable,
 }
 
@@ -44,9 +44,9 @@ end
 function Data.Migrate(data: Data) end
 
 function Data.ToDataStand(stand: Types.Stand): Stand?
-	if stand.item then
+	if stand.assetId then
 		return {
-			item = stand.item,
+			assetId = stand.assetId,
 			roundedPosition = Data.VectorToTable(stand.roundedPosition),
 		}
 	else
@@ -73,7 +73,7 @@ end
 
 function Data.FromDataStand(stand: Stand): Types.Stand
 	return {
-		item = stand.item,
+		assetId = stand.assetId,
 		roundedPosition = Data.TableToVector(stand.roundedPosition),
 	}
 end
