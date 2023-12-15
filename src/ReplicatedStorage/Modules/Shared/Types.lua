@@ -26,7 +26,9 @@ export type ShowcaseMode = "View" | "Edit"
 export type NetworkShowcase = {
 	name: string,
 	owner: number,
-	stands: { [BasePart]: NetworkStand },
+
+	-- This would be a table with basepart keys but instance keys can't be sent across network boundaries
+	stands: { NetworkStand },
 	GUID: string,
 	mode: ShowcaseMode,
 }

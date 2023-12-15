@@ -14,13 +14,14 @@ local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 
-local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EditShowcaseEvent):Server()
-local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.CreateShowcaseEvent):Server()
-local UpdateStandsEvent = require(ReplicatedStorage.Events.Showcase.UpdateStandsEvent):Server()
-local EnterShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EnterShowcaseEvent):Server()
+local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent)
+local UpdateShowcaseEvent = UpdateShowcaseEventTypes:Server()
+local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
+local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
+local EnterShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.EnterShowcaseEvent):Server()
 
 type ShowcaseStand = {
-	item: Types.Item?,
+	assetId: number?,
 	roundedPosition: Vector3,
 	part: BasePart,
 }
@@ -62,7 +63,7 @@ local basePosition = Vector3.new((-placeSlots.X * maxX) / 2, 500, (-placeSlots.Z
 
 local placeTable: { [number]: Showcase } = {}
 
-local playerPlaces: { [Player]: Showcase } = {}
+local playerShowcases: { [Player]: Showcase } = {}
 
 if not RunService:IsStudio() then
 	assert(maxPlaces >= Players.MaxPlayers, "Not enough places for every player")
@@ -112,12 +113,12 @@ function ReplicateAsset(assetId: number)
 end
 
 function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
-	local stands: { [BasePart]: Types.NetworkStand } = {}
+	local stands: { Types.NetworkStand } = {}
 	for i, stand in showcase.stands do
-		stands[stand.part] = {
+		table.insert(stands, {
 			part = stand.part,
-			item = stand.item,
-		}
+			assetId = stand.assetId,
+		})
 	end
 
 	return {
@@ -129,25 +130,6 @@ function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 	}
 end
 
-function UpdateStands(showcase: Showcase, specificPlayer: Player?)
-	local standsToSend: { Types.NetworkStand } = {}
-	for part, stand in showcase.stands do
-		if stand.item then
-			ReplicateAsset(stand.item.assetId)
-		end
-		table.insert(standsToSend, {
-			part = part,
-			item = stand.item,
-		})
-	end
-
-	if specificPlayer then
-		UpdateStandsEvent:Fire(specificPlayer, standsToSend)
-	else
-		UpdateStandsEvent:FireAll(standsToSend)
-	end
-end
-
 function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: Showcase)
 	showcase.playersPresent[player] = nil
 	if next(showcase.playersPresent) == nil then
@@ -157,7 +139,7 @@ function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: Showcase)
 end
 
 function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
-	local oldPlace = playerPlaces[player]
+	local oldPlace = playerShowcases[player]
 	if oldPlace then
 		ShowcaseService:ExitPlayerShowcase(player, oldPlace)
 	end
@@ -169,7 +151,7 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
 
 	character:PivotTo(showcase.entranceCFrame)
 	showcase.playersPresent[player] = true
-	playerPlaces[player] = showcase
+	playerShowcases[player] = showcase
 	EnterShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 end
 
@@ -305,10 +287,32 @@ function HandleEditShowcase(player: Player, GUID: string)
 	ShowcaseService:EnterPlayerShowcase(player, place)
 end
 
+function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.Update)
+	local showcase = playerShowcases[player]
+	if not showcase then
+		warn(player, "Tried to update a showcase without being present in it.")
+		return
+	end
+
+	if showcase.mode ~= "Edit" then
+		warn(player, "Tried to update a showcase that was not in edit mode.")
+		return
+	end
+
+	if update.type == "UpdateStand" then
+		showcase.stands[update.part].assetId = update.assetId
+		if update.assetId then
+			ReplicateAsset(update.assetId)
+		end
+
+		EnterShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+	end
+end
+
 function PlayerRemoving(player: Player)
-	local currentPlace = playerPlaces[player]
+	local currentPlace = playerShowcases[player]
 	if currentPlace then
-		playerPlaces[player] = nil
+		playerShowcases[player] = nil
 		ShowcaseService:ExitPlayerShowcase(player, currentPlace)
 	end
 end
@@ -316,6 +320,7 @@ end
 function ShowcaseService:Initialize()
 	CreateShowcaseEvent:On(HandleCreatePlace)
 	EditShowcaseEvent:On(HandleEditShowcase)
+	UpdateShowcaseEvent:On(HandleUpdateShowcase)
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 end

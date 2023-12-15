@@ -5,8 +5,8 @@ local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local UILoader = require(script.Parent.UILoader)
 
-local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EditShowcaseEvent):Client()
-local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.CreateShowcaseEvent):Client()
+local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Client()
+local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Client()
 
 local gui = UILoader:GetMain()
 local profile = gui.Profile
@@ -44,6 +44,7 @@ function Populate(showcases: { Data.Showcase })
 		end)
 
 		newRow.Visible = true
+		newRow:SetAttribute("Temporary", true)
 		newRow.Parent = showcaseTemplate.Parent
 	end
 end

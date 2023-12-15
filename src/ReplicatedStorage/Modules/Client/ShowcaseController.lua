@@ -3,12 +3,14 @@ local ShowcaseController = {}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local AddItemUI = require(ReplicatedStorage.Modules.Client.UI.AddItemUI)
 local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 
-local EnterShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EnterShowcaseEvent):Client()
+local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent):Client()
+local EnterShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.EnterShowcaseEvent):Client()
 
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Accessory replication folder did not exist.")
@@ -73,7 +75,9 @@ end
 function UserRemovedItem(stand: RenderedStand) end
 
 function CreateStands(showcase: Types.NetworkShowcase)
-	for part, stand in showcase.stands do
+	for i, stand in showcase.stands do
+		local part = stand.part
+
 		local existingStand = renderedStands[part]
 		if existingStand then
 			if existingStand.assetId == stand.assetId then
@@ -134,7 +138,7 @@ function CreateStands(showcase: Types.NetworkShowcase)
 				prompt.ObjectText = "Stand"
 				prompt.Parent = stand.part
 				prompt.Triggered:Connect(function()
-					print("Todo: add items")
+					AddItemUI:Display(part)
 				end)
 			end
 		else
@@ -207,10 +211,20 @@ function RenderStepped(dt: number)
 	end
 end
 
+function HandleItemAdded(part: BasePart, assetId: number?)
+	UpdateShowcaseEvent:Fire({
+		type = "UpdateStand",
+		part = part,
+		assetId = assetId,
+	})
+end
+
 function ShowcaseController:Initialize()
 	EnterShowcaseEvent:On(HandleEnterShowcase)
 
 	RunService.RenderStepped:Connect(RenderStepped)
+
+	AddItemUI.Added:Connect(HandleItemAdded)
 end
 
 ShowcaseController:Initialize()
