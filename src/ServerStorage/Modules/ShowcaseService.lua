@@ -6,13 +6,16 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
+
 local DataService = require(script.Parent.DataService)
 local ItemDetails = require(script.Parent.ItemDetails)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
+local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EditShowcaseEvent):Server()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.CreateShowcaseEvent):Server()
 local UpdateStandsEvent = require(ReplicatedStorage.Events.Showcase.UpdateStandsEvent):Server()
 
@@ -33,6 +36,7 @@ type Place = {
 	owner: number, -- UserId since owner doesn't have to be in the server
 	tableIndex: number,
 	mode: PlaceMode,
+	GUID: string,
 }
 
 local template = ServerStorage:FindFirstChild("PlaceTemplate") :: Model?
@@ -58,6 +62,8 @@ local maxPlaces = placeSlots.X * placeSlots.Y * placeSlots.Z
 local basePosition = Vector3.new((-placeSlots.X * maxX) / 2, 500, (-placeSlots.Z * maxZ) / 2)
 
 local placeTable: { [number]: Place } = {}
+
+local playerPlaces: { [Player]: Place } = {}
 
 if not RunService:IsStudio() then
 	assert(maxPlaces >= Players.MaxPlayers, "Not enough places for every player")
@@ -125,7 +131,20 @@ function UpdateStands(place: Place, specificPlayer: Player?)
 	end
 end
 
+function ShowcaseService:ExitPlayerShowcase(player: Player, place: Place)
+	place.playersPresent[player] = nil
+	if next(place.playersPresent) == nil then
+		-- Empty
+		ShowcaseService:UnloadPlace(place)
+	end
+end
+
 function ShowcaseService:EnterPlayerShowcase(player: Player, place: Place)
+	local oldPlace = playerPlaces[player]
+	if oldPlace then
+		ShowcaseService:ExitPlayerShowcase(player, oldPlace)
+	end
+
 	local character = player.Character
 	if not character then
 		return
@@ -133,14 +152,22 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, place: Place)
 
 	character:PivotTo(place.entranceCFrame)
 	place.playersPresent[player] = true
+	playerPlaces[player] = place
 end
 
 function SavePlace(place: Place)
 	-- TODO
 end
 
-function ShowcaseService:GenerateShowcase(showcase: Types.Showcase, mode: PlaceMode)
+function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: PlaceMode)
 	return Future.new(function()
+		-- Check for already existing showcase with the same GUID
+		for i, place in placeTable do
+			if place.GUID == showcase.GUID and place.mode == "View" then
+				return place
+			end
+		end
+
 		local positionStandMap: { [Vector3]: Types.Stand } = {}
 		for i, stand in showcase.stands do
 			positionStandMap[stand.roundedPosition] = stand
@@ -189,6 +216,7 @@ function ShowcaseService:GenerateShowcase(showcase: Types.Showcase, mode: PlaceM
 			playersPresent = {},
 			tableIndex = placeIndex,
 			mode = mode,
+			GUID = showcase.GUID,
 		}
 
 		placeTable[placeIndex] = place
@@ -236,8 +264,41 @@ function HandleCreatePlace(player: Player)
 	end)
 end
 
+function HandleEditShowcase(player: Player, GUID: string)
+	local data = DataService:ReadData(player):Await()
+	if not data then
+		return
+	end
+
+	local chosenShowcase
+	for i, showcase in data.showcases do
+		if showcase.GUID == GUID then
+			chosenShowcase = Data.FromDataShowcase(showcase, player.UserId)
+			break
+		end
+	end
+
+	if not chosenShowcase then
+		return
+	end
+
+	local place = ShowcaseService:GetShowcase(chosenShowcase, "Edit"):Await()
+	ShowcaseService:EnterPlayerShowcase(player, place)
+end
+
+function PlayerRemoving(player: Player)
+	local currentPlace = playerPlaces[player]
+	if currentPlace then
+		playerPlaces[player] = nil
+		ShowcaseService:ExitPlayerShowcase(player, currentPlace)
+	end
+end
+
 function ShowcaseService:Initialize()
 	CreateShowcaseEvent:On(HandleCreatePlace)
+	EditShowcaseEvent:On(HandleEditShowcase)
+
+	Players.PlayerRemoving:Connect(PlayerRemoving)
 end
 
 ShowcaseService:Initialize()

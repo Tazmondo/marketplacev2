@@ -5,6 +5,7 @@ local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local UILoader = require(script.Parent.UILoader)
 
+local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.EditShowcaseEvent):Client()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.CreateShowcaseEvent):Client()
 
 local gui = UILoader:GetMain()
@@ -13,6 +14,10 @@ local showcaseList = profile.Frame.List
 local showcaseTemplate = showcaseList.Row
 
 local create = gui.CreateShop
+
+function EditShowcase(showcase: Data.Showcase)
+	EditShowcaseEvent:Fire(showcase.GUID)
+end
 
 function Populate(showcases: { Data.Showcase })
 	print("Populating profile", showcases)
@@ -30,7 +35,7 @@ function Populate(showcases: { Data.Showcase })
 		newRow.Details.Frame.Price.Text = "0" -- number of likes
 
 		newRow.Activated:Connect(function()
-			-- TODO: Select showcase
+			EditShowcase(showcase)
 		end)
 
 		-- Delete button

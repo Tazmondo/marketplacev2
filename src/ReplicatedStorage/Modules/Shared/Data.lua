@@ -55,7 +55,8 @@ function Data.ToDataStand(stand: Types.Stand): Stand?
 end
 
 function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
-	local stands = {}
+	local stands = table.create(#showcase.stands)
+
 	for i, stand in showcase.stands do
 		local dataStand = Data.ToDataStand(stand)
 		if dataStand then
@@ -67,6 +68,27 @@ function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
 		name = showcase.name,
 		GUID = showcase.GUID,
 		stands = stands,
+	}
+end
+
+function Data.FromDataStand(stand: Stand): Types.Stand
+	return {
+		item = stand.item,
+		roundedPosition = Data.TableToVector(stand.roundedPosition),
+	}
+end
+
+function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showcase
+	local stands = table.create(#showcase.stands)
+	for i, stand in showcase.stands do
+		table.insert(stands, Data.FromDataStand(stand))
+	end
+
+	return {
+		GUID = showcase.GUID,
+		owner = ownerId,
+		stands = stands,
+		name = showcase.name,
 	}
 end
 
