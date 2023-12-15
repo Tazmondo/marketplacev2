@@ -29,7 +29,8 @@ end
 function UILoader:Initialize()
 	-- Delete the extra UI that the server adds when the character loads
 	PlayerGui.ChildAdded:Connect(function(instance)
-		if instance:IsA("ScreenGui") then
+		-- Need to check the name too as roblox parents other guis to playergui, e.g. proximity prompts
+		if instance:IsA("ScreenGui") and StarterGui:FindFirstChild(instance.Name) then
 			print("Destroying cloned gui:", instance.Name)
 			instance:Destroy()
 		end
