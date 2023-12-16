@@ -46,7 +46,7 @@ type Showcase = {
 	GUID: string,
 }
 
-local template = ServerStorage:FindFirstChild("PlaceTemplate") :: Model?
+local template = ServerStorage:FindFirstChild("ShopTemplate") :: Model?
 assert(template, "Template did not exist")
 assert(template:IsA("Model"), "Template was not a model")
 
@@ -382,8 +382,6 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 		if update.assetId then
 			ReplicateAsset(update.assetId)
 		end
-
-		LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 	elseif update.type == "UpdateSettings" then
 		local primaryColorExists = Config.PrimaryColors[update.primaryColor:ToHex()]
 		if not primaryColorExists then
@@ -429,6 +427,7 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 		showcase.accentColor = update.accentColor
 	end
 
+	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 	SaveShowcase(showcase)
 end
 
