@@ -72,7 +72,9 @@ function DestroyStand(stand: RenderedStand)
 	end
 end
 
-function UserRemovedItem(stand: RenderedStand) end
+function UserRemovedItem(stand: RenderedStand)
+	HandleItemAdded(stand.standPart, nil)
+end
 
 function CreateStands(showcase: Types.NetworkShowcase)
 	for i, stand in showcase.stands do
