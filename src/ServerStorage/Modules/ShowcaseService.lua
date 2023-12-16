@@ -19,7 +19,7 @@ local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.Clien
 local UpdateShowcaseEvent = UpdateShowcaseEventTypes:Server()
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
-local EnterShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.EnterShowcaseEvent):Server()
+local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Server()
 
 type ShowcaseStand = {
 	assetId: number?,
@@ -161,7 +161,7 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
 	character:PivotTo(showcase.entranceCFrame)
 	showcase.playersPresent[player] = true
 	playerShowcases[player] = showcase
-	EnterShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 end
 
 function SaveShowcase(showcase: Showcase)
@@ -382,7 +382,7 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 			ReplicateAsset(update.assetId)
 		end
 
-		EnterShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+		LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 	elseif update.type == "UpdateSettings" then
 		local primaryColorExists = Config.PrimaryColors[update.primaryColor:ToHex()]
 		if not primaryColorExists then

@@ -10,7 +10,7 @@ local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 
 local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent):Client()
-local EnterShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.EnterShowcaseEvent):Client()
+local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Client()
 
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Accessory replication folder did not exist.")
@@ -159,7 +159,7 @@ function CreateStands(showcase: Types.NetworkShowcase)
 	end
 end
 
-function HandleEnterShowcase(showcase: Types.NetworkShowcase?)
+function HandleLoadShowcase(showcase: Types.NetworkShowcase?)
 	currentShowcase = showcase
 	ShowcaseEditUI:Hide()
 
@@ -259,7 +259,7 @@ function HandleUpdateName(name: string)
 end
 
 function ShowcaseController:Initialize()
-	EnterShowcaseEvent:On(HandleEnterShowcase)
+	LoadShowcaseEvent:On(HandleLoadShowcase)
 
 	RunService.RenderStepped:Connect(RenderStepped)
 
