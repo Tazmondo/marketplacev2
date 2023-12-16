@@ -194,7 +194,7 @@ function HandleLoadShowcase(showcase: Types.NetworkShowcase?)
 		CreateStands(showcase)
 
 		if showcase.mode == "Edit" then
-			ShowcaseEditUI:Display()
+			ShowcaseEditUI:Display(showcase)
 		end
 	end
 end
