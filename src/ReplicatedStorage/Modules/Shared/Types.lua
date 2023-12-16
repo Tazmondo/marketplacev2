@@ -34,6 +34,7 @@ export type NetworkShowcase = {
 
 	-- This would be a table with basepart keys but instance keys can't be sent across network boundaries
 	stands: { NetworkStand },
+	model: Model,
 	mode: ShowcaseMode,
 }
 

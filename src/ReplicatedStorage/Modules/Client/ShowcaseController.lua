@@ -161,11 +161,36 @@ function CreateStands(showcase: Types.NetworkShowcase)
 	end
 end
 
+function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
+	if not currentShowcase then
+		return
+	end
+
+	local model = currentShowcase.model
+
+	debug.profilebegin("LoadShowcaseAppearance")
+
+	-- Go through descendants here rather than using collectionservice, as there will be many places in the workspace.
+	for i, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			if descendant:HasTag(Config.PrimaryColorTag) then
+				descendant.Color = currentShowcase.primaryColor
+			elseif descendant:HasTag(Config.AccentColorTag) then
+				descendant.Color = currentShowcase.accentColor
+			end
+			-- TODO: Apply texture
+		end
+	end
+
+	debug.profileend()
+end
+
 function HandleLoadShowcase(showcase: Types.NetworkShowcase?)
 	currentShowcase = showcase
 	ShowcaseEditUI:Hide()
 
 	if showcase then
+		LoadShowcaseAppearance(showcase)
 		CreateStands(showcase)
 
 		if showcase.mode == "Edit" then

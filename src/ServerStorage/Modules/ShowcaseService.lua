@@ -130,6 +130,7 @@ function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 
 	return {
 		stands = stands,
+		model = showcase.model,
 		mode = showcase.mode,
 		owner = showcase.owner,
 		name = showcase.name,
