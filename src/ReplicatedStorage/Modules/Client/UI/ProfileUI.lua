@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ProfileUI = {}
 
@@ -80,6 +81,10 @@ function ProfileUI:Initialize()
 	create.Visible = false
 
 	showcaseTemplate.Visible = false
+
+	profile.Title.Title.TextLabel.Text = `@{Players.LocalPlayer.Name}`
+	profile.Title.Avatar.ImageButton.Image =
+		`rbxthumb://type=AvatarHeadShot&id={Players.LocalPlayer.UserId}&w=180&h=180`
 
 	profile.Title.Close.ImageButton.Activated:Connect(ProfileUI.Hide)
 
