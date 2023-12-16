@@ -245,24 +245,29 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 		-- This loop happens synchronously - may cause a delay if there are a lot of items to fetch
 		for i, descendant in placeModel:GetDescendants() do
 			if descendant:HasTag(Config.StandTag) and descendant:IsA("BasePart") then
-				local roundedPosition = RoundedVector(descendant.Position)
+				local roundedPosition = RoundedVector(cframe:PointToObjectSpace(descendant.Position))
 				local savedStand = positionStandMap[roundedPosition]
-				local itemDetails: Types.Item?
+				-- local itemDetails: Types.Item?
 
-				if savedStand and savedStand.assetId then
-					local success
-					success, itemDetails = ItemDetails.GetItemDetails(savedStand.assetId):Await()
-					if not success then
-						warn("Failed to fetch", itemDetails)
-						itemDetails = nil
-					end
+				-- if savedStand and savedStand.assetId then
+				-- 	local success
+				-- 	success, itemDetails = ItemDetails.GetItemDetails(savedStand.assetId):Await()
+				-- 	if not success then
+				-- 		warn("Failed to fetch", itemDetails)
+				-- 		itemDetails = nil
+				-- 	end
+				-- end
+
+				local assetId = if savedStand then savedStand.assetId else nil
+				if assetId then
+					ReplicateAsset(assetId)
 				end
 
 				stands[descendant] = {
 					roundedPosition = roundedPosition,
-					item = itemDetails,
 					part = descendant,
-				}
+					assetId = assetId,
+				} :: ShowcaseStand
 			end
 		end
 

@@ -41,7 +41,7 @@ local Config = {
 	DefaultScale = 2.5,
 
 	-- Won't allow you to create new places if you exceed this number
-	MaxPlaces = 20,
+	MaxPlaces = 30,
 
 	-- Place names can't be longer than this
 	MaxPlaceNameLength = 20,

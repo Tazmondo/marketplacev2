@@ -43,6 +43,7 @@ function GetAccessory(assetId: number, scale: number?)
 	return Future.new(function(assetId: number, scale: number?)
 		local accessoryTemplate = accessoryReplication:WaitForChild(tostring(assetId), 5) :: Model?
 		if not accessoryTemplate then
+			warn("Failed to load accessory: ", assetId)
 			return nil :: Model?
 		end
 

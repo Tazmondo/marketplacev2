@@ -11,7 +11,7 @@ local ProfileService = require(ServerStorage.ServerPackages.ProfileService)
 
 local ReplicateDataEvent = require(ReplicatedStorage.Events.Data.ReplicateDataEvent):Server()
 
-local STOREPREFIX = "PlayerData6"
+local STOREPREFIX = "PlayerData8"
 local PLAYERPREFIX = "Player_"
 
 local ProfileStore = assert(
