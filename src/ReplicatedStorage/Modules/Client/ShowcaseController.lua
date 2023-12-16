@@ -233,7 +233,7 @@ function RenderStepped(dt: number)
 		end
 
 		local hoverAlpha = GetTweenedStandAlpha(stand.hoverPosition)
-		local position = part.Position + Vector3.new(0, 4 + 2 * hoverAlpha, 0)
+		local position = part.Position + Vector3.new(0, 2 + 1.5 * hoverAlpha, 0)
 		model:PivotTo(CFrame.new(position) * CFrame.Angles(0, stand.rotation, 0))
 	end
 end
