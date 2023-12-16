@@ -3,6 +3,7 @@ local FeedService = {}
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local ShowcaseService = require(script.Parent.ShowcaseService)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
@@ -14,6 +15,8 @@ local DefaultShowcase: Types.Showcase = {
 	owner = 68252170,
 	stands = {},
 	GUID = HttpService:GenerateGUID(false),
+	primaryColor = Config.DefaultPrimaryColor,
+	accentColor = Config.DefaultAccentColor,
 }
 TableUtil.Lock(DefaultShowcase)
 

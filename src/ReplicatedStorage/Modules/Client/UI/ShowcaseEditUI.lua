@@ -7,7 +7,8 @@ local ShowcaseEditUI = {}
 
 local gui = UILoader:GetMain().ControllerEdit
 
-ShowcaseEditUI.UpdateColour = Signal()
+ShowcaseEditUI.UpdatePrimaryColor = Signal()
+ShowcaseEditUI.UpdateAccentColor = Signal()
 ShowcaseEditUI.UpdateName = Signal()
 ShowcaseEditUI.Exit = Signal()
 
@@ -15,8 +16,13 @@ function ToggleColorPicker()
 	gui.ColorPicker.Visible = not gui.ColorPicker.Visible
 end
 
-function PickColour(color: Color3)
-	ShowcaseEditUI.UpdateColour:Fire(color)
+function PickPrimaryColor(color: Color3)
+	ShowcaseEditUI.UpdatePrimaryColor:Fire(color)
+	gui.ColorPicker.Visible = false
+end
+
+function PickAccentColor(color: Color3)
+	ShowcaseEditUI.UpdateAccentColor:Fire(color)
 	gui.ColorPicker.Visible = false
 end
 
@@ -50,8 +56,18 @@ function ShowcaseEditUI:Initialize()
 	for i, child in gui.ColorPicker:GetChildren() do
 		if child:IsA("ImageButton") then
 			child.Activated:Connect(function()
-				PickColour(child.BackgroundColor3)
+				PickPrimaryColor(child.BackgroundColor3)
 			end)
+		end
+	end
+
+	-- Make sure all the colors in the color picker are actually valid
+	for i, child in gui.ColorPicker:GetChildren() do
+		if child:IsA("ImageButton") then
+			local color = child.BackgroundColor3
+			if not Config.PrimaryColors[color:ToHex()] then
+				warn("Invalid color found in color picker:", child:GetFullName())
+			end
 		end
 	end
 end

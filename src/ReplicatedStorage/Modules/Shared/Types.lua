@@ -15,21 +15,25 @@ export type Stand = {
 }
 
 export type Showcase = {
-	name: string,
 	owner: number, -- UserId
-	stands: { Stand },
+	name: string,
+	primaryColor: Color3,
+	accentColor: Color3,
 	GUID: string,
+	stands: { Stand },
 }
 
 export type ShowcaseMode = "View" | "Edit"
 
 export type NetworkShowcase = {
-	name: string,
 	owner: number,
+	name: string,
+	primaryColor: Color3,
+	accentColor: Color3,
+	GUID: string,
 
 	-- This would be a table with basepart keys but instance keys can't be sent across network boundaries
 	stands: { NetworkStand },
-	GUID: string,
 	mode: ShowcaseMode,
 }
 

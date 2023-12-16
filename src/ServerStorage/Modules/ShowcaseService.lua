@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
+local TextService = game:GetService("TextService")
 
 local DataService = require(script.Parent.DataService)
 local ItemDetails = require(script.Parent.ItemDetails)
@@ -35,8 +36,14 @@ type Showcase = {
 	owner: number, -- UserId since owner doesn't have to be in the server
 	tableIndex: number,
 	mode: Types.ShowcaseMode,
-	GUID: string,
+
+	-- Since updating is an asynchronous operation, we don't want old updates to override new ones
+	lastUpdate: number,
+
 	name: string,
+	primaryColor: Color3,
+	accentColor: Color3,
+	GUID: string,
 }
 
 local template = ServerStorage:FindFirstChild("PlaceTemplate") :: Model?
@@ -122,11 +129,13 @@ function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 	end
 
 	return {
-		GUID = showcase.GUID,
 		stands = stands,
 		mode = showcase.mode,
 		owner = showcase.owner,
 		name = showcase.name,
+		GUID = showcase.GUID,
+		primaryColor = showcase.primaryColor,
+		accentColor = showcase.accentColor,
 	}
 end
 
@@ -155,8 +164,57 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
 	EnterShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 end
 
-function SavePlace(place: Showcase)
-	-- TODO
+function SaveShowcase(showcase: Showcase)
+	local owner = Players:GetPlayerByUserId(showcase.owner)
+	if not owner then
+		warn("Tried to save showcase for player not in-game")
+		return
+	end
+
+	if showcase.mode ~= "Edit" then
+		warn("Tried to save showcase when not in edit mode.")
+		return
+	end
+
+	local data = DataService:ReadData(owner):Await()
+	if not data then
+		return
+	end
+
+	local showcaseIndex
+	for i, v in data.showcases do
+		if v.GUID == showcase.GUID then
+			showcaseIndex = i
+		end
+	end
+
+	if not showcaseIndex then
+		warn("Could not find owned showcase")
+		return
+	end
+
+	local stands: { Data.Stand } = {}
+
+	for part, stand in showcase.stands do
+		if stand.assetId then
+			table.insert(stands, {
+				assetId = stand.assetId,
+				roundedPosition = Data.VectorToTable(stand.roundedPosition),
+			})
+		end
+	end
+
+	local newShowcase: Data.Showcase = {
+		stands = stands,
+		GUID = showcase.GUID,
+		name = showcase.name,
+		primaryColor = showcase.primaryColor:ToHex(),
+		accentColor = showcase.accentColor:ToHex(),
+	}
+
+	DataService:WriteData(owner, function(data)
+		data.showcases[showcaseIndex] = newShowcase
+	end)
 end
 
 function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.ShowcaseMode)
@@ -218,6 +276,9 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			mode = mode,
 			GUID = showcase.GUID,
 			name = showcase.name,
+			primaryColor = showcase.primaryColor,
+			accentColor = showcase.accentColor,
+			lastUpdate = os.clock(),
 		}
 
 		placeTable[placeIndex] = place
@@ -258,6 +319,8 @@ function HandleCreatePlace(player: Player)
 		stands = {},
 		GUID = HttpService:GenerateGUID(false),
 		owner = player.UserId,
+		primaryColor = Config.DefaultPrimaryColor,
+		accentColor = Config.DefaultAccentColor,
 	}
 
 	DataService:WriteData(player, function(data)
@@ -294,19 +357,78 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 		return
 	end
 
+	local updateTime = os.clock()
+	showcase.lastUpdate = updateTime
+
 	if showcase.mode ~= "Edit" then
 		warn(player, "Tried to update a showcase that was not in edit mode.")
 		return
 	end
 
 	if update.type == "UpdateStand" then
-		showcase.stands[update.part].assetId = update.assetId
+		local stand = showcase.stands[update.part]
+		if not stand then
+			warn("Could not find stand when updating.")
+			return
+		end
+
+		if stand.assetId == update.assetId then
+			-- Asset did not change
+			return
+		end
+
+		stand.assetId = update.assetId
 		if update.assetId then
 			ReplicateAsset(update.assetId)
 		end
 
 		EnterShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+	elseif update.type == "UpdateSettings" then
+		local primaryColorExists = Config.PrimaryColors[update.primaryColor:ToHex()]
+		if not primaryColorExists then
+			warn("Invalid primary color sent:", update.primaryColor)
+			return
+		end
+
+		local accentColorExists = Config.AccentColors[update.accentColor:ToHex()]
+		if not accentColorExists then
+			warn("Invalid accent color sent:", update.accentColor)
+			return
+		end
+
+		if showcase.name ~= update.name then
+			-- Yields
+			local success, result = pcall(function()
+				return TextService:FilterStringAsync(
+					update.name,
+					player.UserId,
+					Enum.TextFilterContext.PublicChat
+				) :: TextFilterResult
+			end)
+
+			if not success then
+				-- Unable to filter, assume it's bad
+				-- This should really never happen
+				warn("TextService filter was unsuccessful!")
+				return
+			end
+
+			-- Yields
+			local filteredName = result:GetNonChatStringForBroadcastAsync()
+			print(update.name, filteredName)
+
+			if showcase.lastUpdate ~= updateTime then
+				return
+			end
+
+			showcase.name = filteredName
+		end
+
+		showcase.primaryColor = update.primaryColor
+		showcase.accentColor = update.accentColor
 	end
+
+	SaveShowcase(showcase)
 end
 
 function PlayerRemoving(player: Player)

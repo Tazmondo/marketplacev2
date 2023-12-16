@@ -11,7 +11,7 @@ local ProfileService = require(ServerStorage.ServerPackages.ProfileService)
 
 local ReplicateDataEvent = require(ReplicatedStorage.Events.Data.ReplicateDataEvent):Server()
 
-local STOREPREFIX = "PlayerData3"
+local STOREPREFIX = "PlayerData6"
 local PLAYERPREFIX = "Player_"
 
 local ProfileStore = assert(
@@ -87,6 +87,7 @@ function DataService:WriteData(player: Player, transform: (Data.Data) -> ())
 			warn(debug.traceback("Data transform function yielded!"))
 		end
 
+		print("Updated!", data)
 		ReplicateDataEvent:Fire(player, data)
 	end)
 end

@@ -11,6 +11,7 @@ local data: Data.Data?
 DataController.Updated = Signal()
 
 function HandleReplicateData(incomingData: Data.Data)
+	print("Received data!", incomingData)
 	data = incomingData
 	DataController.Updated:Fire(incomingData)
 end

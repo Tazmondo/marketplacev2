@@ -219,12 +219,54 @@ function HandleItemAdded(part: BasePart, assetId: number?)
 	})
 end
 
+function UpdateShowcaseSettings()
+	if not currentShowcase then
+		return
+	end
+	UpdateShowcaseEvent:Fire({
+		type = "UpdateSettings",
+		name = currentShowcase.name,
+		primaryColor = currentShowcase.primaryColor,
+		accentColor = currentShowcase.accentColor,
+	})
+end
+
+function HandleUpdatePrimaryColor(color: Color3)
+	if not currentShowcase then
+		return
+	end
+
+	currentShowcase.primaryColor = color
+	UpdateShowcaseSettings()
+end
+
+function HandleUpdateAccentColor(color: Color3)
+	if not currentShowcase then
+		return
+	end
+
+	currentShowcase.accentColor = color
+	UpdateShowcaseSettings()
+end
+
+function HandleUpdateName(name: string)
+	if not currentShowcase then
+		return
+	end
+
+	currentShowcase.name = name
+	UpdateShowcaseSettings()
+end
+
 function ShowcaseController:Initialize()
 	EnterShowcaseEvent:On(HandleEnterShowcase)
 
 	RunService.RenderStepped:Connect(RenderStepped)
 
 	AddItemUI.Added:Connect(HandleItemAdded)
+	ShowcaseEditUI.UpdatePrimaryColor:Connect(HandleUpdatePrimaryColor)
+	ShowcaseEditUI.UpdateAccentColor:Connect(HandleUpdateAccentColor)
+	ShowcaseEditUI.UpdateName:Connect(HandleUpdateName)
 end
 
 ShowcaseController:Initialize()

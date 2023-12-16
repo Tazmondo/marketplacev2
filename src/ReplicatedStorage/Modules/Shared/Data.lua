@@ -1,3 +1,4 @@
+local Config = require(script.Parent.Config)
 local Types = require(script.Parent.Types)
 local Data = {}
 
@@ -13,9 +14,14 @@ export type Stand = {
 }
 
 export type Showcase = {
-	stands: { Stand },
 	name: string,
+
+	-- Colours must be hex strings, Color3 cannot be stored in datastore
+	primaryColor: string,
+	accentColor: string,
+
 	GUID: string,
+	stands: { Stand },
 }
 
 export type Data = {
@@ -66,6 +72,8 @@ function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
 
 	return {
 		name = showcase.name,
+		primaryColor = showcase.primaryColor:ToHex(),
+		accentColor = showcase.accentColor:ToHex(),
 		GUID = showcase.GUID,
 		stands = stands,
 	}
@@ -84,11 +92,22 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		table.insert(stands, Data.FromDataStand(stand))
 	end
 
+	-- Since the color configs may change, ensure an invalid color is never loaded.
+	local primaryColor = if Config.PrimaryColors[showcase.primaryColor]
+		then Color3.fromHex(showcase.primaryColor)
+		else Config.DefaultPrimaryColor
+
+	local accentColor = if Config.AccentColors[showcase.accentColor]
+		then Color3.fromHex(showcase.accentColor)
+		else Config.DefaultAccentColor
+
 	return {
 		GUID = showcase.GUID,
 		owner = ownerId,
 		stands = stands,
 		name = showcase.name,
+		primaryColor = primaryColor,
+		accentColor = accentColor,
 	}
 end
 

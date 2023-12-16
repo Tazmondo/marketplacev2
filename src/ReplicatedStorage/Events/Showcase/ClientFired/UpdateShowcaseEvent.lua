@@ -12,6 +12,9 @@ export type UpdateStand = {
 export type UpdateSettings = {
 	-- TODO
 	type: "UpdateSettings",
+	name: string,
+	primaryColor: Color3,
+	accentColor: Color3,
 }
 
 export type Update = UpdateStand | UpdateSettings
@@ -29,6 +32,9 @@ function GuardUpdate(update: unknown): Update
 	elseif value.type == "UpdateSettings" then
 		return {
 			type = "UpdateSettings",
+			name = Guard.String(value.name),
+			primaryColor = Guard.Color3(value.primaryColor),
+			accentColor = Guard.Color3(value.accentColor),
 		}
 	else
 		error("Unexpected update type")
