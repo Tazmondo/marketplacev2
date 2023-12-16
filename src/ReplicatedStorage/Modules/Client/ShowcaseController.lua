@@ -174,8 +174,14 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 	for i, descendant in model:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			if descendant:HasTag(Config.PrimaryColorTag) then
+				if descendant:IsA("PartOperation") then
+					descendant.UsePartColor = true
+				end
 				descendant.Color = currentShowcase.primaryColor
 			elseif descendant:HasTag(Config.AccentColorTag) then
+				if descendant:IsA("PartOperation") then
+					descendant.UsePartColor = true
+				end
 				descendant.Color = currentShowcase.accentColor
 			end
 			-- TODO: Apply texture
