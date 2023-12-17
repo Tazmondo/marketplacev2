@@ -19,7 +19,7 @@ local ProfileStore = assert(
 	"Failed to load profile store"
 ) :: ProfileService.ProfileStore
 
-local Profiles: { [Player]: ProfileService.Profile<Data.Data> } = {}
+local profiles: { [Player]: ProfileService.Profile<Data.Data> } = {}
 
 function PlayerAdded(player: Player)
 	local profileKey = PLAYERPREFIX .. player.UserId
@@ -32,11 +32,11 @@ function PlayerAdded(player: Player)
 		ReplicateDataEvent:Fire(player, profile.Data)
 
 		profile:ListenToRelease(function()
-			Profiles[player] = nil
+			profiles[player] = nil
 			player:Kick()
 		end)
 		if player.Parent == Players then
-			Profiles[player] = profile
+			profiles[player] = profile
 		else
 			profile:Release()
 		end
@@ -46,7 +46,7 @@ function PlayerAdded(player: Player)
 end
 
 function PlayerRemoving(player: Player)
-	local profile = Profiles[player]
+	local profile = profiles[player]
 	if profile ~= nil then
 		profile:Release()
 	end
@@ -54,11 +54,11 @@ end
 
 function DataService:ReadData(player: Player)
 	return Future.new(function()
-		while player.Parent ~= nil and not Profiles[player] do
+		while player.Parent ~= nil and not profiles[player] do
 			task.wait()
 		end
 
-		local profile = Profiles[player]
+		local profile = profiles[player]
 		if profile then
 			return profile.Data :: Data.Data?
 		else
