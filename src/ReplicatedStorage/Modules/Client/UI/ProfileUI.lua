@@ -36,6 +36,8 @@ function Populate(showcases: { Data.Showcase })
 		newRow.Details.NameLabel.Text = showcase.name
 		newRow.Details.Frame.Price.Text = "0" -- number of likes
 
+		newRow.Thumb.Image = `rbxassetid://{showcase.thumbId}`
+
 		newRow.Activated:Connect(function()
 			EditShowcase(showcase)
 		end)

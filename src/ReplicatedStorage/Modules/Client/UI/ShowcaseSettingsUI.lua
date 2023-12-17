@@ -24,7 +24,8 @@ function Save()
 
 	gui.Frame.ShopName.TextBox.Text = name
 
-	local thumbId = tonumber(gui.Frame.Thumbnail.TextBox.Text)
+	local cleanedString = gui.Frame.Thumbnail.TextBox.Text:gsub("rbxassetid://", "")
+	local thumbId = tonumber(cleanedString)
 
 	UpdateShowcaseEvent:Fire({
 		type = "UpdateSettings",
