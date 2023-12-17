@@ -17,6 +17,7 @@ export type Stand = {
 export type Showcase = {
 	owner: number, -- UserId
 	name: string,
+	thumbId: number,
 	primaryColor: Color3,
 	accentColor: Color3,
 	GUID: string,
@@ -28,6 +29,7 @@ export type ShowcaseMode = "View" | "Edit"
 export type NetworkShowcase = {
 	owner: number,
 	name: string,
+	thumbId: number,
 	primaryColor: Color3,
 	accentColor: Color3,
 	GUID: string,

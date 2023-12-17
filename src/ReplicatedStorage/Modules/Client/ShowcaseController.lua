@@ -18,8 +18,16 @@ assert(accessoryReplication, "Accessory replication folder did not exist.")
 local renderedAccessoryFolder = Instance.new("Folder", workspace)
 renderedAccessoryFolder.Name = "Rendered Accessories"
 
+type DisplayPart = BasePart & {
+	PointLight: PointLight,
+	Attachment: Attachment & {
+		Shine: ParticleEmitter,
+	},
+}
+
 type RenderedStand = {
-	standPart: BasePart,
+	standPart: DisplayPart,
+	standId: number,
 	assetId: number?,
 	prompt: ProximityPrompt,
 
@@ -36,8 +44,28 @@ type RenderedStand = {
 	destroyed: boolean,
 }
 
-local renderedStands: { [BasePart]: RenderedStand } = {}
+local renderedStands: { [DisplayPart]: RenderedStand } = {}
 local currentShowcase: Types.NetworkShowcase?
+
+-- Allows for comparison between stand objects.
+-- I would do this by comparing the tables are the same but luau type system doesn't like that?
+local standId = 0
+function GetNextStandId()
+	standId += 1
+	return standId
+end
+
+function SetDisplayVisibility(display: DisplayPart, isVisible: boolean)
+	if isVisible then
+		display.Transparency = 0.8
+		display.PointLight.Enabled = true
+		display.Attachment.Shine.Enabled = true
+	else
+		display.Transparency = 1
+		display.PointLight.Enabled = false
+		display.Attachment.Shine.Enabled = false
+	end
+end
 
 function GetAccessory(assetId: number, scale: number?)
 	return Future.new(function(assetId: number, scale: number?)
@@ -68,7 +96,8 @@ function DestroyStand(stand: RenderedStand)
 	end
 
 	stand.prompt:Destroy()
-	if renderedStands[stand.standPart] == stand then
+
+	if renderedStands[stand.standPart].standId == stand.standId then
 		renderedStands[stand.standPart] = nil
 	end
 end
@@ -79,7 +108,7 @@ end
 
 function CreateStands(showcase: Types.NetworkShowcase)
 	for i, stand in showcase.stands do
-		local part = stand.part
+		local part = stand.part :: DisplayPart
 
 		local existingStand = renderedStands[part]
 		if existingStand then
@@ -103,6 +132,7 @@ function CreateStands(showcase: Types.NetworkShowcase)
 			assetId = stand.assetId,
 			standPart = part,
 			prompt = prompt,
+			standId = GetNextStandId(),
 
 			shouldBob = shouldBob,
 			hoverPosition = if shouldBob then math.random() else 0.5,
@@ -124,6 +154,9 @@ function CreateStands(showcase: Types.NetworkShowcase)
 				else
 					model.Parent = renderedAccessoryFolder
 					renderedStand.renderModel = model
+
+					-- Set this here, so that the placeholder is still there until the model has loaded
+					SetDisplayVisibility(part, false)
 				end
 			end)
 		end
@@ -137,6 +170,7 @@ function CreateStands(showcase: Types.NetworkShowcase)
 					UserRemovedItem(renderedStand)
 				end)
 			else
+				SetDisplayVisibility(part, true)
 				prompt.ActionText = "Add Item"
 				prompt.ObjectText = "Stand"
 				prompt.Parent = stand.part
@@ -145,6 +179,7 @@ function CreateStands(showcase: Types.NetworkShowcase)
 				end)
 			end
 		else
+			SetDisplayVisibility(part, false)
 			if stand.assetId then
 				prompt.ActionText = "View Item"
 				prompt.ObjectText = "Stand"
@@ -218,9 +253,11 @@ function RenderStepped(dt: number)
 	if not currentShowcase then
 		return
 	end
+	debug.profilebegin("RenderStands")
 
 	for part, stand in renderedStands do
 		local model = stand.renderModel
+
 		if not model then
 			continue
 		end
@@ -243,6 +280,7 @@ function RenderStepped(dt: number)
 		local position = part.Position + Vector3.new(0, 0.5 + 0.5 * hoverAlpha, 0)
 		model:PivotTo(CFrame.new(position) * CFrame.Angles(0, stand.rotation, 0))
 	end
+	debug.profileend()
 end
 
 function HandleItemAdded(part: BasePart, assetId: number?)
@@ -253,54 +291,12 @@ function HandleItemAdded(part: BasePart, assetId: number?)
 	})
 end
 
-function UpdateShowcaseSettings()
-	if not currentShowcase then
-		return
-	end
-	UpdateShowcaseEvent:Fire({
-		type = "UpdateSettings",
-		name = currentShowcase.name,
-		primaryColor = currentShowcase.primaryColor,
-		accentColor = currentShowcase.accentColor,
-	})
-end
-
-function HandleUpdatePrimaryColor(color: Color3)
-	if not currentShowcase then
-		return
-	end
-
-	currentShowcase.primaryColor = color
-	UpdateShowcaseSettings()
-end
-
-function HandleUpdateAccentColor(color: Color3)
-	if not currentShowcase then
-		return
-	end
-
-	currentShowcase.accentColor = color
-	UpdateShowcaseSettings()
-end
-
-function HandleUpdateName(name: string)
-	if not currentShowcase then
-		return
-	end
-
-	currentShowcase.name = name
-	UpdateShowcaseSettings()
-end
-
 function ShowcaseController:Initialize()
 	LoadShowcaseEvent:On(HandleLoadShowcase)
 
 	RunService.RenderStepped:Connect(RenderStepped)
 
 	AddItemUI.Added:Connect(HandleItemAdded)
-	ShowcaseEditUI.UpdatePrimaryColor:Connect(HandleUpdatePrimaryColor)
-	ShowcaseEditUI.UpdateAccentColor:Connect(HandleUpdateAccentColor)
-	ShowcaseEditUI.UpdateName:Connect(HandleUpdateName)
 end
 
 ShowcaseController:Initialize()

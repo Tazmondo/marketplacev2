@@ -48,8 +48,11 @@ local Config = {
 
 	PrimaryColors = PrimaryColors,
 	AccentColors = AccentColors,
+
 	DefaultPrimaryColor = Color3.fromRGB(215, 197, 154),
 	DefaultAccentColor = Color3.fromRGB(215, 197, 154),
+
+	DefaultShopThumbnail = 15664989981,
 }
 
 assert(PrimaryColors[Config.DefaultPrimaryColor:ToHex()], "Default primary color was not a valid color")

@@ -8,7 +8,7 @@ local UILoader = require(script.Parent.UILoader)
 local gui = UILoader:GetNavigation()
 
 function ProfileClicked()
-	ProfileUI:Show()
+	ProfileUI:Toggle()
 end
 
 function NavigationUI:Initialize()

@@ -164,6 +164,40 @@ export type Main = ScreenGui & {
 		UISizeConstraint: UISizeConstraint,
 		UICorner: UICorner,
 	},
+	AddItemID: Frame & {
+		UIPadding: UIPadding,
+		UICorner: UICorner,
+		Frame: Frame & {
+			TextLabel: TextLabel,
+			TextBox: TextBox & {
+				UICorner: UICorner,
+			},
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Actions: Frame & {
+				UIListLayout: UIListLayout,
+				UISizeConstraint: UISizeConstraint,
+				Add: TextButton & {
+					UICorner: UICorner,
+					TextLabel: TextLabel,
+					UIListLayout: UIListLayout,
+				},
+			},
+			ImageButton: ImageLabel & {
+				UICorner: UICorner,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			Close: Frame & {
+				UIListLayout: UIListLayout,
+				ImageButton: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+		},
+	},
 	Item: Frame & {
 		UISizeConstraint: UISizeConstraint,
 		UIPadding: UIPadding,
@@ -332,6 +366,13 @@ export type Main = ScreenGui & {
 		UIListLayout: UIListLayout,
 	},
 	ControllerEdit: Frame & {
+		LayoutPicker: Frame & {
+			UICorner: UICorner,
+			ScrollingFrame: ScrollingFrame & {
+				UIListLayout: UIListLayout,
+				UIPadding: UIPadding,
+			},
+		},
 		Wrapper: Frame & {
 			Exit: TextButton & {
 				UIListLayout: UIListLayout,
@@ -345,10 +386,12 @@ export type Main = ScreenGui & {
 				UIPadding: UIPadding,
 			},
 			UIPadding: UIPadding,
-			TextBox: TextBox & {
+			CurrentLayout: ImageButton & {
 				UICorner: UICorner,
+				SelectedOutline: UIStroke,
 				UIPadding: UIPadding,
 			},
+			UIListLayout: UIListLayout,
 			CurrentPrimaryColor: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
@@ -359,7 +402,11 @@ export type Main = ScreenGui & {
 				SelectedOutline: UIStroke,
 				UIPadding: UIPadding,
 			},
-			UIListLayout: UIListLayout,
+			ShopSettings: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
 		},
 		PrimaryColorPicker: Frame & {
 			UIPadding: UIPadding,
@@ -499,40 +546,6 @@ export type Main = ScreenGui & {
 		},
 		UIPadding: UIPadding,
 	},
-	AddItemID: Frame & {
-		UIPadding: UIPadding,
-		UICorner: UICorner,
-		Frame: Frame & {
-			TextLabel: TextLabel,
-			TextBox: TextBox & {
-				UICorner: UICorner,
-			},
-			UIListLayout: UIListLayout,
-			UIPadding: UIPadding,
-			Actions: Frame & {
-				UIListLayout: UIListLayout,
-				UISizeConstraint: UISizeConstraint,
-				Add: TextButton & {
-					UICorner: UICorner,
-					TextLabel: TextLabel,
-					UIListLayout: UIListLayout,
-				},
-			},
-			ImageButton: ImageLabel & {
-				UICorner: UICorner,
-			},
-		},
-		UISizeConstraint: UISizeConstraint,
-		Title: Frame & {
-			UIListLayout: UIListLayout,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-		},
-	},
 	ControllerNav: Frame & {
 		UIStroke: UIStroke,
 		UIPadding: UIPadding,
@@ -565,6 +578,61 @@ export type Main = ScreenGui & {
 		Back: ImageButton & {
 			UICorner: UICorner,
 			UIPadding: UIPadding,
+		},
+	},
+	ShopSettings: Frame & {
+		UIPadding: UIPadding,
+		UICorner: UICorner,
+		Frame: Frame & {
+			Thumbnail: Frame & {
+				UICorner: UICorner,
+				TextBox: TextBox & {
+					UICorner: UICorner,
+					UIPadding: UIPadding,
+				},
+				TextLabel: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+			UIPadding: UIPadding,
+			ShopThumbnail: ImageLabel & {
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+			},
+			UIListLayout: UIListLayout,
+			Music: Frame & {
+				UICorner: UICorner,
+				TextBox: TextBox & {
+					UICorner: UICorner,
+					UIPadding: UIPadding,
+				},
+				TextLabel: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+			Actions: Frame & {
+				UIListLayout: UIListLayout,
+				Save: TextButton & {
+					UICorner: UICorner,
+					TextLabel: TextLabel,
+					UIListLayout: UIListLayout,
+				},
+			},
+			ShopName: Frame & {
+				UICorner: UICorner,
+				["Shop Name"]: TextLabel,
+				TextBox: TextBox & {
+					UICorner: UICorner,
+					UIPadding: UIPadding,
+				},
+				UIListLayout: UIListLayout,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			Close: ImageButton & {
+				UICorner: UICorner,
+				UIPadding: UIPadding,
+			},
 		},
 	},
 }

@@ -67,6 +67,14 @@ function CreateShop()
 	HideCreateShop()
 end
 
+function ProfileUI:Toggle()
+	if profile.Visible or create.Visible then
+		ProfileUI:Hide()
+	else
+		ProfileUI:Show()
+	end
+end
+
 function ProfileUI:Show()
 	profile.Visible = true
 end

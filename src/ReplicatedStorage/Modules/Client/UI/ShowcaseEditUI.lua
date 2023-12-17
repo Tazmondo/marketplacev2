@@ -1,22 +1,18 @@
--- Sorry this code is ugly. It's not that complicated though.
+-- Sorry this code is ugly, but it gets the job done.
+
+local ShowcaseEditUI = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
-local StringUtil = require(ReplicatedStorage.Modules.Shared.StringUtil)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
-local Signal = require(ReplicatedStorage.Packages.Signal)
 local UILoader = require(script.Parent.UILoader)
-local ShowcaseEditUI = {}
+
+local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent):Client()
 
 local gui = UILoader:GetMain().ControllerEdit
 
 local activeShowcase: Types.NetworkShowcase? = nil
-
-ShowcaseEditUI.UpdatePrimaryColor = Signal()
-ShowcaseEditUI.UpdateAccentColor = Signal()
-ShowcaseEditUI.UpdateTexture = Signal()
-ShowcaseEditUI.UpdateName = Signal()
-ShowcaseEditUI.Exit = Signal()
 
 function TogglePrimaryColor()
 	gui.PrimaryColorPicker.Visible = not gui.PrimaryColorPicker.Visible
@@ -49,15 +45,15 @@ function ToggleTexture()
 end
 
 function PickPrimaryColor(color: Color3)
-	ShowcaseEditUI.UpdatePrimaryColor:Fire(color)
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = color
 	UpdatePrimaryColourPickerSelection(color)
+	Update()
 end
 
 function PickAccentColor(color: Color3)
-	ShowcaseEditUI.UpdateAccentColor:Fire(color)
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = color
 	UpdateAccentColourPickerSelection(color)
+	Update()
 end
 
 function UpdatePrimaryColourPickerSelection(color: Color3)
@@ -78,24 +74,29 @@ function UpdateAccentColourPickerSelection(color: Color3)
 	end
 end
 
-function Exit()
-	ShowcaseEditUI.Exit:Fire()
-end
-
-function UpdateName()
+function Update()
 	if not activeShowcase then
 		return
 	end
 
-	local name = StringUtil.LimitString(gui.Wrapper.TextBox.Text, Config.MaxPlaceNameLength)
-	if #name == 0 then
-		gui.Wrapper.TextBox.Text = activeShowcase.name
+	UpdateShowcaseEvent:Fire({
+		type = "UpdateSettings",
+		name = activeShowcase.name,
+		primaryColor = gui.Wrapper.CurrentPrimaryColor.BackgroundColor3,
+		accentColor = gui.Wrapper.CurrentAccentColor.BackgroundColor3,
+		thumbId = activeShowcase.thumbId,
+	})
+end
+
+function ShowSettings()
+	if not activeShowcase then
 		return
 	end
-	gui.Wrapper.TextBox.Text = name
 
-	ShowcaseEditUI.UpdateName:Fire(name)
+	ShowcaseSettingsUI:Display(activeShowcase)
 end
+
+function Exit() end
 
 function ShowcaseEditUI:Hide()
 	gui.Visible = false
@@ -107,7 +108,6 @@ function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
 	gui.Visible = true
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = showcase.primaryColor
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = showcase.accentColor
-	gui.Wrapper.TextBox.Text = showcase.name
 
 	UpdatePrimaryColourPickerSelection(showcase.primaryColor)
 	UpdateAccentColourPickerSelection(showcase.accentColor)
@@ -123,8 +123,8 @@ function ShowcaseEditUI:Initialize()
 	gui.Wrapper.CurrentAccentColor.Activated:Connect(ToggleAccentColor)
 	gui.Wrapper.CurrentTexture.Activated:Connect(ToggleTexture)
 
+	gui.Wrapper.ShopSettings.Activated:Connect(ShowSettings)
 	gui.Wrapper.Exit.Activated:Connect(Exit)
-	gui.Wrapper.TextBox.FocusLost:Connect(UpdateName)
 
 	-- Not the prettiest but gets the job done
 	for i, child in gui.PrimaryColorPicker:GetChildren() do

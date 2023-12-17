@@ -17,6 +17,7 @@ local DefaultShowcase: Types.Showcase = {
 	GUID = HttpService:GenerateGUID(false),
 	primaryColor = Config.DefaultPrimaryColor,
 	accentColor = Config.DefaultAccentColor,
+	thumbId = Config.DefaultShopThumbnail,
 }
 TableUtil.Lock(DefaultShowcase)
 

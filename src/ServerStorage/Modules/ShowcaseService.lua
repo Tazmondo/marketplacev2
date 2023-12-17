@@ -15,6 +15,7 @@ local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 
 local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent)
+local StringUtil = require(ReplicatedStorage.Modules.Shared.StringUtil)
 local UpdateShowcaseEvent = UpdateShowcaseEventTypes:Server()
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
@@ -43,6 +44,7 @@ type Showcase = {
 	primaryColor: Color3,
 	accentColor: Color3,
 	GUID: string,
+	thumbId: number,
 }
 
 local template = ServerStorage:FindFirstChild("ShopTemplate") :: Model?
@@ -138,6 +140,7 @@ function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 		GUID = showcase.GUID,
 		primaryColor = showcase.primaryColor,
 		accentColor = showcase.accentColor,
+		thumbId = showcase.thumbId,
 	}
 end
 
@@ -212,6 +215,7 @@ function SaveShowcase(showcase: Showcase)
 		name = showcase.name,
 		primaryColor = showcase.primaryColor:ToHex(),
 		accentColor = showcase.accentColor:ToHex(),
+		thumbId = showcase.thumbId,
 	}
 
 	DataService:WriteData(owner, function(data)
@@ -286,6 +290,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			primaryColor = showcase.primaryColor,
 			accentColor = showcase.accentColor,
 			lastUpdate = os.clock(),
+			thumbId = showcase.thumbId,
 		}
 
 		placeTable[placeIndex] = place
@@ -322,12 +327,13 @@ function HandleCreatePlace(player: Player)
 	end
 
 	local newShowcase: Types.Showcase = {
-		name = "Untitled Shop",
+		name = `{player.Name}'s Shop`,
 		stands = {},
 		GUID = HttpService:GenerateGUID(false),
 		owner = player.UserId,
 		primaryColor = Config.DefaultPrimaryColor,
 		accentColor = Config.DefaultAccentColor,
+		thumbId = Config.DefaultShopThumbnail,
 	}
 
 	DataService:WriteData(player, function(data)
@@ -422,15 +428,17 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 			local filteredName = result:GetNonChatStringForBroadcastAsync()
 			print(update.name, filteredName)
 
+			-- Eliminates race conditions caused by updating name quickly
 			if showcase.lastUpdate ~= updateTime then
 				return
 			end
 
-			showcase.name = filteredName
+			showcase.name = StringUtil.LimitString(filteredName, Config.MaxPlaceNameLength)
 		end
 
 		showcase.primaryColor = update.primaryColor
 		showcase.accentColor = update.accentColor
+		showcase.thumbId = update.thumbId
 	end
 
 	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
