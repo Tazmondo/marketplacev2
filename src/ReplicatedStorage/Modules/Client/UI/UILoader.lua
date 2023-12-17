@@ -8,15 +8,20 @@ local UITypes = require(script.Parent.UITypes)
 
 local PlayerGui = Players.LocalPlayer.PlayerGui
 
-local main = StarterGui:FindFirstChild("Main") :: UITypes.Main?
-assert(main, "Main ui did not exist")
-main = main:Clone()
-main.Parent = PlayerGui
+function GetUI(uiName: string)
+	if PlayerGui:FindFirstChild(uiName) then
+		return PlayerGui[uiName]
+	else
+		local template = assert(StarterGui:FindFirstChild(uiName), `{uiName} did not exist in startergui`)
+		local newUI = template:Clone()
+		newUI.Parent = PlayerGui
+		return newUI
+	end
+end
 
-local nav = StarterGui:FindFirstChild("Nav") :: UITypes.Nav?
-assert(nav, "Navigation ui did not exist")
-nav = nav:Clone()
-nav.Parent = PlayerGui
+local main = GetUI("Main") :: UITypes.Main
+
+local nav = GetUI("Nav") :: UITypes.Nav
 
 function UILoader:GetMain(): UITypes.Main
 	return main
