@@ -13,13 +13,14 @@ local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
-
 local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent)
 local StringUtil = require(ReplicatedStorage.Modules.Shared.StringUtil)
+
 local UpdateShowcaseEvent = UpdateShowcaseEventTypes:Server()
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
 local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Server()
+local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Server()
 
 type ShowcaseStand = {
 	assetId: number?,
@@ -445,6 +446,19 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 	SaveShowcase(showcase)
 end
 
+function HandleDeleteShowcase(player: Player, guid: string)
+	DataService:WriteData(player, function(data)
+		for i, showcase in data.showcases do
+			if showcase.GUID == guid then
+				table.remove(data.showcases, i)
+				return
+			end
+		end
+
+		warn("Tried to delete a non-existent showcase")
+	end)
+end
+
 function PlayerRemoving(player: Player)
 	local currentPlace = playerShowcases[player]
 	if currentPlace then
@@ -457,6 +471,7 @@ function ShowcaseService:Initialize()
 	CreateShowcaseEvent:On(HandleCreatePlace)
 	EditShowcaseEvent:On(HandleEditShowcase)
 	UpdateShowcaseEvent:On(HandleUpdateShowcase)
+	DeleteShowcaseEvent:On(HandleDeleteShowcase)
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 end

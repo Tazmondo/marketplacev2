@@ -6,6 +6,7 @@ local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local UILoader = require(script.Parent.UILoader)
 
+local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Client()
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Client()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Client()
 
@@ -22,8 +23,6 @@ function EditShowcase(showcase: Data.Showcase)
 end
 
 function Populate(showcases: { Data.Showcase })
-	print("Populating profile", showcases)
-
 	for i, child in showcaseList:GetChildren() do
 		if child:GetAttribute("Temporary") then
 			child:Destroy()
@@ -44,7 +43,7 @@ function Populate(showcases: { Data.Showcase })
 
 		-- Delete button
 		newRow.Price.Select.Activated:Connect(function()
-			-- TODO: Delete showcase
+			DeleteShowcaseEvent:Fire(showcase.GUID)
 		end)
 
 		newRow.Visible = true
