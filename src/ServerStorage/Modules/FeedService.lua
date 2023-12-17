@@ -11,7 +11,7 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 type FeedData = { Types.Showcase }
 
 local DefaultShowcase: Types.Showcase = {
-	name = "N/A",
+	name = "Untitled Shop",
 	owner = 68252170,
 	stands = {},
 	GUID = HttpService:GenerateGUID(false),

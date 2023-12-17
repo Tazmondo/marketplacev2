@@ -105,7 +105,7 @@ function CreateStands(showcase: Types.NetworkShowcase)
 			prompt = prompt,
 
 			shouldBob = shouldBob,
-			hoverPosition = if shouldBob then math.random() else 0.25,
+			hoverPosition = if shouldBob then math.random() else 0.5,
 
 			shouldSpin = shouldSpin,
 			rotation = if shouldSpin then math.random() * math.rad(360) else rotY,
@@ -240,7 +240,7 @@ function RenderStepped(dt: number)
 		end
 
 		local hoverAlpha = GetTweenedStandAlpha(stand.hoverPosition)
-		local position = part.Position + Vector3.new(0, 2 + 1.5 * hoverAlpha, 0)
+		local position = part.Position + Vector3.new(0, 0.5 + 0.5 * hoverAlpha, 0)
 		model:PivotTo(CFrame.new(position) * CFrame.Angles(0, stand.rotation, 0))
 	end
 end
