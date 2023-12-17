@@ -1,3 +1,5 @@
+-- Sorry this code is ugly. It's not that complicated though.
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local StringUtil = require(ReplicatedStorage.Modules.Shared.StringUtil)
@@ -7,6 +9,8 @@ local UILoader = require(script.Parent.UILoader)
 local ShowcaseEditUI = {}
 
 local gui = UILoader:GetMain().ControllerEdit
+
+local activeShowcase: Types.NetworkShowcase? = nil
 
 ShowcaseEditUI.UpdatePrimaryColor = Signal()
 ShowcaseEditUI.UpdateAccentColor = Signal()
@@ -79,7 +83,15 @@ function Exit()
 end
 
 function UpdateName()
+	if not activeShowcase then
+		return
+	end
+
 	local name = StringUtil.LimitString(gui.Wrapper.TextBox.Text, Config.MaxPlaceNameLength)
+	if #name == 0 then
+		gui.Wrapper.TextBox.Text = activeShowcase.name
+		return
+	end
 	gui.Wrapper.TextBox.Text = name
 
 	ShowcaseEditUI.UpdateName:Fire(name)
@@ -87,12 +99,15 @@ end
 
 function ShowcaseEditUI:Hide()
 	gui.Visible = false
+	activeShowcase = nil
 end
 
 function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
+	activeShowcase = showcase
 	gui.Visible = true
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = showcase.primaryColor
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = showcase.accentColor
+	gui.Wrapper.TextBox.Text = showcase.name
 
 	UpdatePrimaryColourPickerSelection(showcase.primaryColor)
 	UpdateAccentColourPickerSelection(showcase.accentColor)
