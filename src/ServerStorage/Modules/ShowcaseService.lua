@@ -9,7 +9,6 @@ local ServerStorage = game:GetService("ServerStorage")
 local TextService = game:GetService("TextService")
 
 local DataService = require(script.Parent.DataService)
-local ItemDetails = require(script.Parent.ItemDetails)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
@@ -96,11 +95,13 @@ function GetNextFreeIndex()
 end
 
 function GetPositionFromIndex(index: number): Vector3
-	local offsetX = index % placeSlots.X
-	local offsetZ = math.floor(index / placeSlots.X) % placeSlots.Z
-	local offsetY = math.floor(index / (placeSlots.X * placeSlots.Z)) % placeSlots.Y
+	local zeroIndex = index - 1
 
-	return Vector3.new(offsetX, offsetY, offsetZ)
+	local offsetX = zeroIndex % placeSlots.X
+	local offsetZ = math.floor(zeroIndex / placeSlots.X) % placeSlots.Z
+	local offsetY = math.floor(zeroIndex / (placeSlots.X * placeSlots.Z)) % placeSlots.Y
+
+	return Vector3.new(offsetX * maxX, offsetY * maxY, offsetZ * maxZ)
 end
 
 function ReplicateAsset(assetId: number)
