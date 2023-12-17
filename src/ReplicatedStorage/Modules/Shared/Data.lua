@@ -47,7 +47,34 @@ function Data.TableToVector(vector: VectorTable): Vector3
 	return Vector3.new(vector.x, vector.y, vector.z)
 end
 
-function Data.Migrate(data: Data) end
+function Data.Migrate(data: Data)
+	if data.version == dataTemplate.version then
+		-- Data shape hasn't updated, no need to reconcile
+		return
+	end
+
+	for k, v in pairs(dataTemplate) do
+		if not data[k] then
+			data[k] = v
+		end
+	end
+
+	for i, showcase in data.showcases do
+		for k, v in pairs(showcaseTemplate) do
+			if not showcase[k] then
+				showcase[k] = v
+			end
+		end
+
+		for i, stand in showcase.stands do
+			for k, v in pairs(standTemplate) do
+				if not stand[k] then
+					stand[k] = v
+				end
+			end
+		end
+	end
+end
 
 function Data.ToDataStand(stand: Types.Stand): Stand?
 	if stand.assetId then
