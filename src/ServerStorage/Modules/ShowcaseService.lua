@@ -322,7 +322,7 @@ function HandleCreatePlace(player: Player)
 	end
 
 	local newShowcase: Types.Showcase = {
-		name = "N/A",
+		name = "Untitled Shop",
 		stands = {},
 		GUID = HttpService:GenerateGUID(false),
 		owner = player.UserId,
