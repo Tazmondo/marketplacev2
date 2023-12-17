@@ -3,8 +3,11 @@ local FeedService = {}
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local DataService = require(script.Parent.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
+local Future = require(ReplicatedStorage.Packages.Future)
 local ShowcaseService = require(script.Parent.ShowcaseService)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
@@ -23,10 +26,43 @@ TableUtil.Lock(DefaultShowcase)
 
 local feedData: { [Player]: FeedData } = {}
 
+local cachedEditorPicks: { Types.Showcase }? = nil
+
+function GetEditorsPicks()
+	return Future.new(function()
+		if cachedEditorPicks then
+			return cachedEditorPicks :: { Types.Showcase }?
+		end
+
+		local elijahId = 2294598404
+		local editorData = DataService:ReadOfflineData(elijahId):Await()
+		if not editorData then
+			warn("Could not fetch editor data")
+			return nil
+		end
+
+		local editorPicks = {}
+
+		for i, showcase in editorData.showcases do
+			editorPicks[i] = Data.FromDataShowcase(showcase, elijahId)
+		end
+
+		cachedEditorPicks = editorPicks
+		return editorPicks
+	end)
+end
+
 function PlayerAdded(player: Player)
 	-- TODO: get actual feed
-	local showcase = TableUtil.Copy(DefaultShowcase, true)
-	feedData[player] = { showcase }
+	local editorPicks = GetEditorsPicks():Await()
+
+	if editorPicks then
+		feedData[player] = editorPicks
+	else
+		feedData[player] = { TableUtil.Copy(DefaultShowcase, true) }
+	end
+
+	local showcase = feedData[player][1]
 
 	-- Yields
 	local place = ShowcaseService:GetShowcase(showcase, "View"):Await()
