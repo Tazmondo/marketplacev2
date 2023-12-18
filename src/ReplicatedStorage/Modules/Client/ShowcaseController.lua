@@ -229,8 +229,10 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 end
 
 function HandleLoadShowcase(showcase: Types.NetworkShowcase?)
+	print("Loading showcase", showcase)
 	if showcase and showcase.model.Parent == nil then
 		-- When switching quickly, showcase parents can arrive as nil
+		warn("Showcase loaded without a model!")
 		return
 	end
 	currentShowcase = showcase
