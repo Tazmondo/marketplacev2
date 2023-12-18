@@ -1,11 +1,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local InstanceGuard = require(ReplicatedStorage.Modules.Shared.InstanceGuard)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 local Red = require(ReplicatedStorage.Packages.Red)
 
 export type UpdateStand = {
 	type: "UpdateStand",
-	part: BasePart,
+	roundedPosition: Vector3,
 	assetId: number?,
 }
 
@@ -26,7 +25,7 @@ function GuardUpdate(update: unknown): Update
 	if value.type == "UpdateStand" then
 		return {
 			type = "UpdateStand",
-			part = InstanceGuard.BasePart(value.part),
+			roundedPosition = Guard.Vector3(value.roundedPosition),
 			assetId = Guard.Optional(Guard.Number)(value.assetId),
 		}
 	elseif value.type == "UpdateSettings" then
@@ -43,5 +42,6 @@ function GuardUpdate(update: unknown): Update
 end
 
 return Red.Event("Showcase_UpdateShowcase", function(update)
+	print(update)
 	return GuardUpdate(update)
 end)

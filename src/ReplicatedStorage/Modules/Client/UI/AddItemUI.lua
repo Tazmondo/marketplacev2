@@ -7,27 +7,27 @@ local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().AddItemID
 
-local currentStand: BasePart? = nil
+local current: Vector3? = nil
 
 AddItemUI.Added = Signal()
 
-function AddItemUI:Display(stand: BasePart)
+function AddItemUI:Display(roundedPosition: Vector3)
 	gui.Visible = true
-	currentStand = stand
+	current = roundedPosition
 end
 
 function AddItemUI:Hide()
 	gui.Visible = false
-	currentStand = nil
+	current = nil
 end
 
 function Add()
-	if not currentStand then
+	if not current then
 		return
 	end
 
 	local assetId = tonumber(gui.Frame.TextBox.Text)
-	AddItemUI.Added:Fire(currentStand, assetId)
+	AddItemUI.Added:Fire(current, assetId)
 	AddItemUI:Hide()
 end
 

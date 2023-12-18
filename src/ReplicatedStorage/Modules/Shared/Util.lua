@@ -1,6 +1,6 @@
-local StringUtil = {}
+local Util = {}
 
-function StringUtil.NumberWithCommas(number: number)
+function Util.NumberWithCommas(number: number)
 	local numString = tostring(number)
 	local newString = ""
 	local offset = 3 - (#numString % 3)
@@ -18,7 +18,7 @@ function StringUtil.NumberWithCommas(number: number)
 	return newString
 end
 
-function StringUtil.TruncateString(string: string, maxLength: number)
+function Util.TruncateString(string: string, maxLength: number)
 	maxLength = math.max(3, maxLength)
 	if #string <= maxLength then
 		return string
@@ -27,8 +27,12 @@ function StringUtil.TruncateString(string: string, maxLength: number)
 	end
 end
 
-function StringUtil.LimitString(string: string, maxLength: number)
+function Util.LimitString(string: string, maxLength: number)
 	return string:sub(1, maxLength)
 end
 
-return StringUtil
+function Util.RoundedVector(vector: Vector3)
+	return Vector3.new(math.round(vector.X), math.round(vector.Y), math.round(vector.Z))
+end
+
+return Util

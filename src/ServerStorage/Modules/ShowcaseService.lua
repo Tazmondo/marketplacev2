@@ -4,8 +4,6 @@ local HttpService = game:GetService("HttpService")
 local InsertService = game:GetService("InsertService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local ServerStorage = game:GetService("ServerStorage")
 local TextService = game:GetService("TextService")
 
 local DataService = require(script.Parent.DataService)
@@ -14,28 +12,22 @@ local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent)
-local StringUtil = require(ReplicatedStorage.Modules.Shared.StringUtil)
+local Util = require(ReplicatedStorage.Modules.Shared.Util)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local UpdateShowcaseEvent = UpdateShowcaseEventTypes:Server()
+local UpdateVisiblePlayersEvent =
+	require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateVisiblePlayersEvent):Server()
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
 local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Server()
 local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Server()
 
-type ShowcaseStand = {
-	assetId: number?,
-	roundedPosition: Vector3,
-	part: BasePart,
-}
-
 type Showcase = {
-	CFrame: CFrame,
-	model: Model,
-	entranceCFrame: CFrame,
-	stands: { [BasePart]: ShowcaseStand },
+	stands: { Types.Stand },
+	validPositions: { [Vector3]: true },
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
-	tableIndex: number,
 	mode: Types.ShowcaseMode,
 
 	-- Since updating is an asynchronous operation, we don't want old updates to override new ones
@@ -48,63 +40,23 @@ type Showcase = {
 	thumbId: number,
 }
 
-local template = ServerStorage:FindFirstChild("ShopTemplate") :: Model?
-assert(template, "Template did not exist")
-assert(template:IsA("Model"), "Template was not a model")
+local placeTemplate = ReplicatedStorage.Assets.Layouts.ShopTemplate :: Model
+assert(placeTemplate, "No place template found")
 
-local maxX = 600
-local maxY = 250
-local maxZ = maxX
-
-local extentsCFrame, extents = template:GetBoundingBox()
-local templateExtents = extentsCFrame:VectorToWorldSpace(extents)
-
-local absoluteExtents =
-	Vector3.new(math.abs(templateExtents.X), math.abs(templateExtents.Y), math.abs(templateExtents.Z))
-
-assert(absoluteExtents.X <= maxX, "Template X was too large")
-assert(absoluteExtents.Y <= maxY, "Template Y was too large")
-assert(absoluteExtents.Z <= maxZ, "Template Z was too large")
-
-local placeSlots = Vector3.new(10, 1, 10)
-local maxPlaces = placeSlots.X * placeSlots.Y * placeSlots.Z
-local basePosition = Vector3.new((-placeSlots.X * maxX) / 2, 500, (-placeSlots.Z * maxZ) / 2)
-
-local placeTable: { [number]: Showcase } = {}
+local placeTable: { Showcase } = {}
 
 local playerShowcases: { [Player]: Showcase } = {}
-
-if not RunService:IsStudio() then
-	assert(maxPlaces >= Players.MaxPlayers, "Not enough places for every player")
-end
 
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Expected ReplicatedStorage.AccessoryReplication folder.")
 
-function RoundedVector(vector: Vector3)
-	return Vector3.new(math.round(vector.X), math.round(vector.Y), math.round(vector.Z))
-end
-
-function GetNextFreeIndex()
-	local index = 1
-	while index <= maxPlaces do
-		if placeTable[index] == nil then
-			return index
-		end
-		index += 1
+local validPositions: { [Vector3]: true } = {}
+for i, descendant in placeTemplate:GetDescendants() do
+	if descendant:IsA("BasePart") and descendant:HasTag(Config.StandTag) then
+		local roundedPosition = Util.RoundedVector(placeTemplate:GetPivot():PointToObjectSpace(descendant.Position))
+		validPositions[roundedPosition] = true
 	end
-	error("There was no free place available!")
-end
-
-function GetPositionFromIndex(index: number): Vector3
-	local zeroIndex = index - 1
-
-	local offsetX = zeroIndex % placeSlots.X
-	local offsetZ = math.floor(zeroIndex / placeSlots.X) % placeSlots.Z
-	local offsetY = math.floor(zeroIndex / (placeSlots.X * placeSlots.Z)) % placeSlots.Y
-
-	return Vector3.new(offsetX * maxX, offsetY * maxY, offsetZ * maxZ)
 end
 
 function ReplicateAsset(assetId: number)
@@ -124,17 +76,8 @@ function ReplicateAsset(assetId: number)
 end
 
 function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
-	local stands: { Types.NetworkStand } = {}
-	for i, stand in showcase.stands do
-		table.insert(stands, {
-			part = stand.part,
-			assetId = stand.assetId,
-		})
-	end
-
 	return {
-		stands = stands,
-		model = showcase.model,
+		stands = showcase.stands,
 		mode = showcase.mode,
 		owner = showcase.owner,
 		name = showcase.name,
@@ -147,10 +90,18 @@ end
 
 function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: Showcase)
 	showcase.playersPresent[player] = nil
+
 	if next(showcase.playersPresent) == nil then
 		-- Empty
 		ShowcaseService:UnloadPlace(showcase)
+		return
 	end
+
+	local visiblePlayers = {}
+	for player, _ in showcase.playersPresent do
+		table.insert(visiblePlayers, player)
+	end
+	UpdateVisiblePlayersEvent:FireList(visiblePlayers, visiblePlayers)
 end
 
 function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
@@ -159,15 +110,16 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
 		ShowcaseService:ExitPlayerShowcase(player, oldPlace)
 	end
 
-	local character = player.Character
-	if not character then
-		return
-	end
-
-	character:PivotTo(showcase.entranceCFrame)
 	showcase.playersPresent[player] = true
 	playerShowcases[player] = showcase
+
 	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+
+	local visiblePlayers = {}
+	for player, _ in showcase.playersPresent do
+		table.insert(visiblePlayers, player)
+	end
+	UpdateVisiblePlayersEvent:FireList(visiblePlayers, visiblePlayers)
 end
 
 function SaveShowcase(showcase: Showcase)
@@ -233,58 +185,34 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			end
 		end
 
-		local positionStandMap: { [Vector3]: Types.Stand } = {}
+		local standMap: { [Vector3]: Types.Stand } = {}
 		for i, stand in showcase.stands do
-			positionStandMap[stand.roundedPosition] = stand
+			standMap[stand.roundedPosition] = stand
 		end
 
-		local placeIndex = GetNextFreeIndex()
-		local offset = GetPositionFromIndex(placeIndex)
-		local cframe = CFrame.new(basePosition + offset)
-
-		local placeModel = template:Clone()
-		placeModel:PivotTo(cframe)
-		placeModel.Parent = workspace
-
-		local stands: { [BasePart]: ShowcaseStand } = {}
-
-		-- This loop happens synchronously - may cause a delay if there are a lot of items to fetch
-		for i, descendant in placeModel:GetDescendants() do
-			if descendant:HasTag(Config.StandTag) and descendant:IsA("BasePart") then
-				local roundedPosition = RoundedVector(cframe:PointToObjectSpace(descendant.Position))
-				local savedStand = positionStandMap[roundedPosition]
-				-- local itemDetails: Types.Item?
-
-				-- if savedStand and savedStand.assetId then
-				-- 	local success
-				-- 	success, itemDetails = ItemDetails.GetItemDetails(savedStand.assetId):Await()
-				-- 	if not success then
-				-- 		warn("Failed to fetch", itemDetails)
-				-- 		itemDetails = nil
-				-- 	end
-				-- end
-
-				local assetId = if savedStand then savedStand.assetId else nil
-				if assetId then
-					ReplicateAsset(assetId)
+		-- Every physical part should have a registered stand
+		-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
+		local stands: { Types.Stand } = {}
+		for position, _ in validPositions do
+			local stand = standMap[position]
+			if stand then
+				table.insert(stands, stand)
+				if stand.assetId then
+					ReplicateAsset(stand.assetId)
 				end
-
-				stands[descendant] = {
-					roundedPosition = roundedPosition,
-					part = descendant,
-					assetId = assetId,
-				} :: ShowcaseStand
+			else
+				table.insert(stands, {
+					assetId = nil,
+					roundedPosition = position,
+				})
 			end
 		end
 
 		local place: Showcase = {
-			CFrame = cframe,
-			entranceCFrame = cframe,
 			stands = stands,
+			validPositions = validPositions,
 			owner = showcase.owner,
-			model = placeModel,
 			playersPresent = {},
-			tableIndex = placeIndex,
 			mode = mode,
 			GUID = showcase.GUID,
 			name = showcase.name,
@@ -294,24 +222,20 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			thumbId = showcase.thumbId,
 		}
 
-		placeTable[placeIndex] = place
+		table.insert(placeTable, place)
 
 		return place
 	end)
 end
 
 function ShowcaseService:UnloadPlace(place: Showcase)
-	for player, _ in place.playersPresent do
-		-- Players can leave
-		if player.Parent ~= nil then
-			player:LoadCharacter()
-		end
+	if next(place.playersPresent) ~= nil then
+		warn("Unloaded a place while players were still inside it!")
 	end
 
-	place.model:Destroy()
-
-	if placeTable[place.tableIndex] == place then
-		placeTable[place.tableIndex] = nil
+	local index = table.find(placeTable, place)
+	if index then
+		table.remove(placeTable, index)
 	else
 		warn(debug.traceback("Tried to unload a place with the wrong index! Should never occur."))
 	end
@@ -380,9 +304,17 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 	end
 
 	if update.type == "UpdateStand" then
-		local stand = showcase.stands[update.part]
+		if not validPositions[update.roundedPosition] then
+			warn("Updated with an invalid position:", update.roundedPosition)
+			return
+		end
+
+		local stand = TableUtil.Find(showcase.stands, function(stand)
+			return stand.roundedPosition == update.roundedPosition
+		end)
+
 		if not stand then
-			warn("Could not find stand when updating.")
+			warn("Could not find stand when updating:", update.roundedPosition)
 			return
 		end
 
@@ -427,14 +359,13 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 
 			-- Yields
 			local filteredName = result:GetNonChatStringForBroadcastAsync()
-			print(update.name, filteredName)
 
 			-- Eliminates race conditions caused by updating name quickly
 			if showcase.lastUpdate ~= updateTime then
 				return
 			end
 
-			showcase.name = StringUtil.LimitString(filteredName, Config.MaxPlaceNameLength)
+			showcase.name = Util.LimitString(filteredName, Config.MaxPlaceNameLength)
 		end
 
 		showcase.primaryColor = update.primaryColor

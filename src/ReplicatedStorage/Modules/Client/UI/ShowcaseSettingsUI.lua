@@ -3,7 +3,7 @@ local ShopSettingsUI = {}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
-local StringUtil = require(ReplicatedStorage.Modules.Shared.StringUtil)
+local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local UILoader = require(script.Parent.UILoader)
 
@@ -17,7 +17,7 @@ function Save()
 	if not activeShowcase then
 		return
 	end
-	local name = StringUtil.LimitString(gui.Frame.ShopName.TextBox.Text, Config.MaxPlaceNameLength)
+	local name = Util.LimitString(gui.Frame.ShopName.TextBox.Text, Config.MaxPlaceNameLength)
 	if #name == 0 then
 		name = activeShowcase.name
 	end

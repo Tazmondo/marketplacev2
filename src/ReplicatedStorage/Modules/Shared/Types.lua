@@ -5,10 +5,6 @@ export type Item = {
 	price: number?,
 }
 
-export type NetworkStand = {
-	part: BasePart,
-	assetId: number?,
-}
 export type Stand = {
 	assetId: number?,
 	roundedPosition: Vector3,
@@ -25,7 +21,6 @@ export type Showcase = {
 }
 
 export type ShowcaseMode = "View" | "Edit"
-
 export type NetworkShowcase = {
 	owner: number,
 	name: string,
@@ -35,8 +30,7 @@ export type NetworkShowcase = {
 	GUID: string,
 
 	-- This would be a table with basepart keys but instance keys can't be sent across network boundaries
-	stands: { NetworkStand },
-	model: Model,
+	stands: { Stand },
 	mode: ShowcaseMode,
 }
 
