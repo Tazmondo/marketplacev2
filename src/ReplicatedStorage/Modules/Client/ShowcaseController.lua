@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local AddItemUI = require(ReplicatedStorage.Modules.Client.UI.AddItemUI)
 local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
+local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -234,6 +235,7 @@ function HandleLoadShowcase(showcase: Types.NetworkShowcase?)
 	end
 	currentShowcase = showcase
 	ShowcaseEditUI:Hide()
+	ShowcaseNavigationUI:Hide()
 
 	if showcase then
 		LoadShowcaseAppearance(showcase)
@@ -241,6 +243,8 @@ function HandleLoadShowcase(showcase: Types.NetworkShowcase?)
 
 		if showcase.mode == "Edit" then
 			ShowcaseEditUI:Display(showcase)
+		else
+			ShowcaseNavigationUI:Display()
 		end
 	end
 end

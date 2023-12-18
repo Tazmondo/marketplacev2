@@ -18,7 +18,7 @@ function ShowcaseNavigationUI:Hide()
 	gui.Visible = false
 end
 
-function Display()
+function ShowcaseNavigationUI:Display()
 	print("Display feed:", currentFeed, currentIndex)
 
 	if not currentFeed or #currentFeed == 0 or not currentIndex then
@@ -91,7 +91,14 @@ function HandleUpdateFeed(feed: { Types.Showcase })
 	currentIndex = newIndex
 	currentFeed = feed
 
-	Display()
+	ShowcaseNavigationUI:Display()
+end
+
+function ShowcaseNavigationUI:RejoinPlace()
+	if currentIndex then
+		MoveFeedEvent:Fire(currentIndex)
+		ShowcaseNavigationUI:Display()
+	end
 end
 
 function ShowcaseNavigationUI:Initialize()
@@ -102,7 +109,7 @@ function ShowcaseNavigationUI:Initialize()
 		if currentIndex then
 			currentIndex += 1
 			MoveFeedEvent:Fire(currentIndex)
-			Display()
+			ShowcaseNavigationUI:Display()
 		end
 	end)
 
@@ -110,7 +117,7 @@ function ShowcaseNavigationUI:Initialize()
 		if currentIndex then
 			currentIndex -= 1
 			MoveFeedEvent:Fire(currentIndex)
-			Display()
+			ShowcaseNavigationUI:Display()
 		end
 	end)
 end

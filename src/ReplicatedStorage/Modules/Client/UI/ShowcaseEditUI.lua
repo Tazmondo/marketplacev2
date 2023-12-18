@@ -3,6 +3,7 @@
 local ShowcaseEditUI = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ShowcaseNavigationUI = require(script.Parent.ShowcaseNavigationUI)
 local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
@@ -96,7 +97,9 @@ function ShowSettings()
 	ShowcaseSettingsUI:Display(activeShowcase)
 end
 
-function Exit() end
+function Exit()
+	ShowcaseNavigationUI:RejoinPlace()
+end
 
 function ShowcaseEditUI:Hide()
 	gui.Visible = false
