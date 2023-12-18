@@ -46,7 +46,7 @@ function ShowcaseNavigationUI:Display()
 		end
 
 		if success then
-			gui.ShopInfo.Text.CreatorName.Text = name
+			gui.ShopInfo.Text.CreatorName.Text = `By {name}`
 		else
 			gui.ShopInfo.Text.CreatorName.Text = "failed to load creator name"
 			warn("Failed to load creator name for:", showcase.owner)
@@ -97,7 +97,6 @@ end
 function ShowcaseNavigationUI:RejoinPlace()
 	if currentIndex then
 		MoveFeedEvent:Fire(currentIndex)
-		ShowcaseNavigationUI:Display()
 	end
 end
 
