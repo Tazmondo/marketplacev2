@@ -7,12 +7,24 @@ local DataService = require(script.Parent.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
+local Util = require(ReplicatedStorage.Modules.Shared.Util)
+local Base64 = require(ReplicatedStorage.Packages.Base64)
 local Future = require(ReplicatedStorage.Packages.Future)
+local Guard = require(ReplicatedStorage.Packages.Guard)
 local ShowcaseService = require(script.Parent.ShowcaseService)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local MoveFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.MoveFeedEvent):Server()
 local UpdateFeedEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateFeedEvent):Server()
+
+function GuardJoinData(data: unknown): Types.LaunchData
+	local value: any = data
+
+	return {
+		ownerId = Guard.Number(value.ownerId),
+		GUID = Guard.String(value.GUID),
+	}
+end
 
 type FeedData = { Types.Showcase }
 
@@ -55,15 +67,59 @@ function GetEditorsPicks()
 	end)
 end
 
-function PlayerAdded(player: Player)
-	-- TODO: get actual feed
-	local editorPicks = GetEditorsPicks():Await()
+function GetShowcase(ownerId: number, showcaseGUID: string)
+	return Future.new(function()
+		local ownerData = DataService:ReadOfflineData(ownerId):Await()
+		if not ownerData then
+			return nil :: Types.Showcase?
+		end
 
-	if editorPicks then
-		feedData[player] = editorPicks
-	else
-		feedData[player] = { TableUtil.Copy(DefaultShowcase, true) }
+		local showcase = TableUtil.Find(ownerData.showcases, function(showcase)
+			return showcase.GUID == showcaseGUID
+		end)
+		if showcase then
+			return Data.FromDataShowcase(showcase, ownerId)
+		end
+		return nil
+	end)
+end
+
+function PlayerAdded(player: Player)
+	local joinData = player:GetJoinData()
+	local encodedLaunchData: string? = joinData.LaunchData
+
+	local launchData: Types.LaunchData?
+
+	if encodedLaunchData then
+		local success, data = pcall(function()
+			local json = Base64.decode(encodedLaunchData)
+			local data = GuardJoinData(HttpService:JSONDecode(json))
+			print("User had join data:")
+			Util.PrettyPrint(data)
+			return data
+		end)
+
+		if not success then
+			print("Join Data failed: ", data)
+		else
+			launchData = data
+		end
 	end
+
+	local targetedShowcase = if launchData then GetShowcase(launchData.ownerId, launchData.GUID):Await() else nil
+
+	if targetedShowcase then
+		feedData[player] = { targetedShowcase }
+	else
+		local editorPicks = GetEditorsPicks():Await()
+
+		if editorPicks then
+			feedData[player] = editorPicks
+		else
+			feedData[player] = { TableUtil.Copy(DefaultShowcase, true) }
+		end
+	end
+
 	UpdateFeedEvent:Fire(player, feedData[player])
 
 	local showcase = feedData[player][1]

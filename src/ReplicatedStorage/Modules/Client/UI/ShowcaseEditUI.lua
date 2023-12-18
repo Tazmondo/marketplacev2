@@ -7,6 +7,7 @@ local ShowcaseNavigationUI = require(script.Parent.ShowcaseNavigationUI)
 local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
+local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local UILoader = require(script.Parent.UILoader)
 
 local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent):Client()
@@ -116,8 +117,14 @@ function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = showcase.primaryColor
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = showcase.accentColor
 
+	gui.ShareLink.TextBox.Text = Util.GenerateDeeplink(showcase.owner, showcase.GUID)
+
 	UpdatePrimaryColourPickerSelection(showcase.primaryColor)
 	UpdateAccentColourPickerSelection(showcase.accentColor)
+end
+
+function ToggleShareFrame()
+	gui.ShareLink.Visible = not gui.ShareLink.Visible
 end
 
 function ShowcaseEditUI:Initialize()
@@ -125,12 +132,14 @@ function ShowcaseEditUI:Initialize()
 	gui.PrimaryColorPicker.Visible = false
 	gui.AccentColorPicker.Visible = false
 	gui.TexturePicker.Visible = false
+	gui.ShareLink.Visible = false
 
 	gui.Wrapper.CurrentPrimaryColor.Activated:Connect(TogglePrimaryColor)
 	gui.Wrapper.CurrentAccentColor.Activated:Connect(ToggleAccentColor)
 	gui.Wrapper.CurrentTexture.Activated:Connect(ToggleTexture)
 
 	gui.Wrapper.ShopSettings.Activated:Connect(ShowSettings)
+	gui.Wrapper.ShareLink.Activated:Connect(ToggleShareFrame)
 	gui.Wrapper.Exit.Activated:Connect(Exit)
 
 	-- Not the prettiest but gets the job done

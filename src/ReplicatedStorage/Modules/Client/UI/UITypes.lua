@@ -366,6 +366,20 @@ export type Main = ScreenGui & {
 		UIListLayout: UIListLayout,
 	},
 	ControllerEdit: Frame & {
+		ShareLink: Frame & {
+			UIPadding: UIPadding,
+			Thumb: ImageLabel,
+			UICorner: UICorner,
+			Details: Frame & {
+				UIListLayout: UIListLayout,
+				Title: TextLabel,
+				Body: TextLabel,
+			},
+			UIListLayout: UIListLayout,
+			TextBox: TextBox & {
+				UICorner: UICorner,
+			},
+		},
 		LayoutPicker: Frame & {
 			UICorner: UICorner,
 			ScrollingFrame: ScrollingFrame & {
@@ -385,18 +399,12 @@ export type Main = ScreenGui & {
 				SelectedOutline: UIStroke,
 				UIPadding: UIPadding,
 			},
-			UIPadding: UIPadding,
-			CurrentLayout: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			UIListLayout: UIListLayout,
 			CurrentPrimaryColor: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 				UIPadding: UIPadding,
 			},
+			UIListLayout: UIListLayout,
 			CurrentTexture: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
@@ -407,6 +415,17 @@ export type Main = ScreenGui & {
 				SelectedOutline: UIStroke,
 				UIPadding: UIPadding,
 			},
+			CurrentLayout: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			ShareLink: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			UIPadding: UIPadding,
 		},
 		PrimaryColorPicker: Frame & {
 			UIPadding: UIPadding,

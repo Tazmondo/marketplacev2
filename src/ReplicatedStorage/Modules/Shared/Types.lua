@@ -34,4 +34,9 @@ export type NetworkShowcase = {
 	mode: ShowcaseMode,
 }
 
+export type LaunchData = {
+	ownerId: number,
+	GUID: string,
+}
+
 return {}
