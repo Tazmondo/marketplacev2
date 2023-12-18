@@ -2,7 +2,7 @@ local PhysicsService = game:GetService("PhysicsService")
 local Players = game:GetService("Players")
 
 -- Probably won't collide with any potential future code
-local TAG = "TAZ_Players"
+local TAG = "SHOPPLACE_Players"
 
 PhysicsService:RegisterCollisionGroup(TAG)
 PhysicsService:CollisionGroupSetCollidable(TAG, TAG, false)
