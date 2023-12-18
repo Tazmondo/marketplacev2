@@ -51,6 +51,10 @@ function ShopSettingsUI:Display(showcase: Types.NetworkShowcase)
 	gui.Frame.Thumbnail.TextBox.Text = tostring(showcase.thumbId)
 end
 
+function ShopSettingsUI:IsOpen()
+	return gui.Visible
+end
+
 function ShopSettingsUI:Initialize()
 	gui.Title.Close.Activated:Connect(ShopSettingsUI.Close)
 

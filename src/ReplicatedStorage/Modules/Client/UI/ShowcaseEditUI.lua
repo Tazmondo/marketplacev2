@@ -90,11 +90,15 @@ function Update()
 end
 
 function ShowSettings()
-	if not activeShowcase then
-		return
-	end
+	if ShowcaseSettingsUI:IsOpen() then
+		ShowcaseSettingsUI:Close()
+	else
+		if not activeShowcase then
+			return
+		end
 
-	ShowcaseSettingsUI:Display(activeShowcase)
+		ShowcaseSettingsUI:Display(activeShowcase)
+	end
 end
 
 function Exit()
