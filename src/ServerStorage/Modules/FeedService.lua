@@ -11,6 +11,9 @@ local Future = require(ReplicatedStorage.Packages.Future)
 local ShowcaseService = require(script.Parent.ShowcaseService)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
+local MoveFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.MoveFeedEvent):Server()
+local UpdateFeedEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateFeedEvent):Server()
+
 type FeedData = { Types.Showcase }
 
 local DefaultShowcase: Types.Showcase = {
@@ -61,6 +64,7 @@ function PlayerAdded(player: Player)
 	else
 		feedData[player] = { TableUtil.Copy(DefaultShowcase, true) }
 	end
+	UpdateFeedEvent:Fire(player, feedData[player])
 
 	local showcase = feedData[player][1]
 
@@ -75,6 +79,21 @@ function PlayerRemoving(player: Player)
 	feedData[player] = nil
 end
 
+function HandleMoveFeed(player: Player, newIndex: number)
+	local playerFeedData = feedData[player]
+	if not playerFeedData then
+		return
+	end
+
+	local showcase = playerFeedData[newIndex]
+	if not showcase then
+		return
+	end
+
+	local place = ShowcaseService:GetShowcase(showcase, "View"):Await()
+	ShowcaseService:EnterPlayerShowcase(player, place)
+end
+
 function FeedService:Initialize()
 	Players.CharacterAutoLoads = false
 
@@ -84,6 +103,8 @@ function FeedService:Initialize()
 	end
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
+
+	MoveFeedEvent:On(HandleMoveFeed)
 end
 
 FeedService:Initialize()

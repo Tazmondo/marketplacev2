@@ -228,6 +228,10 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 end
 
 function HandleLoadShowcase(showcase: Types.NetworkShowcase?)
+	if showcase and showcase.model.Parent == nil then
+		-- When switching quickly, showcase parents can arrive as nil
+		return
+	end
 	currentShowcase = showcase
 	ShowcaseEditUI:Hide()
 
