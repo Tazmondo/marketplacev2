@@ -8,6 +8,7 @@ realm = "shared"
 TableUtil = "sleitnick/table-util@^1.2.0"
 Cmdr = "evaera/cmdr@^1.12.0"
 Iris = "michael-48/iris@^2.1.4"
+Base64 = "reselim/base64@2.0.3"
 
 Red = "red-blox/red@2.1.0"
 Future = "red-blox/future@1.0.1"
