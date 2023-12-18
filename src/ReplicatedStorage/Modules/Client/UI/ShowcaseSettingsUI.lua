@@ -49,6 +49,7 @@ function ShopSettingsUI:Display(showcase: Types.NetworkShowcase)
 
 	gui.Frame.ShopName.TextBox.Text = showcase.name
 	gui.Frame.Thumbnail.TextBox.Text = tostring(showcase.thumbId)
+	gui.Frame.ShopThumbnail.Image = `rbxthumb://type=Asset&id={showcase.thumbId}&w=420&h=420`
 end
 
 function ShopSettingsUI:IsOpen()
@@ -56,6 +57,8 @@ function ShopSettingsUI:IsOpen()
 end
 
 function ShopSettingsUI:Initialize()
+	gui.Visible = false
+
 	gui.Title.Close.Activated:Connect(ShopSettingsUI.Close)
 
 	gui.Frame.Actions.Save.Activated:Connect(Save)

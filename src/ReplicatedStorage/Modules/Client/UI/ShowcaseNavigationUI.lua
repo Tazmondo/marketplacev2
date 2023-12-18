@@ -31,7 +31,7 @@ function ShowcaseNavigationUI:Display()
 		return
 	end
 
-	gui.ShopInfo.ProfileImage.Image = `rbxassetid://{showcase.thumbId}`
+	gui.ShopInfo.ProfileImage.Image = `rbxthumb://type=Asset&id={showcase.thumbId}&w=420&h=420`
 
 	gui.ShopInfo.Text.ShopName.Text = showcase.name
 
