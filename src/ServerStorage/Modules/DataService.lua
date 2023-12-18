@@ -86,7 +86,9 @@ end
 function DataService:ReadOfflineData(userId: number, bypassCache: boolean?)
 	return Future.new(function()
 		local player = Players:GetPlayerByUserId(userId)
-		if player then
+
+		-- Since they may not have loaded yet
+		if player and profiles[player] then
 			return profiles[player].Data :: Data.Data?
 		end
 
