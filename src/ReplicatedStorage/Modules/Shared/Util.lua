@@ -1,7 +1,3 @@
-local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Base64 = require(ReplicatedStorage.Packages.Base64)
-local Types = require(script.Parent.Types)
 local Util = {}
 
 function Util.NumberWithCommas(number: number)
@@ -46,17 +42,6 @@ function Util.PrettyPrint(table: { [any]: any })
 	end
 	out ..= "}"
 	print(out)
-end
-
-function Util.GenerateDeeplink(ownerId: number, GUID: string)
-	local data: Types.LaunchData = {
-		ownerId = ownerId,
-		GUID = GUID,
-	}
-	local json = HttpService:JSONEncode(data)
-	local b64 = Base64.encode(json)
-
-	return `https://www.roblox.com/games/start?placeId={game.PlaceId}&launchData={b64}`
 end
 
 return Util

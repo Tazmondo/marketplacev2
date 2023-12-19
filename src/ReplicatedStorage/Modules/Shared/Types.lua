@@ -1,3 +1,4 @@
+local Layouts = require(script.Parent.Layouts)
 export type Item = {
 	creator: string,
 	name: string,
@@ -12,6 +13,7 @@ export type Stand = {
 
 export type Showcase = {
 	owner: number, -- UserId
+	layoutId: Layouts.LayoutId,
 	name: string,
 	thumbId: number,
 	primaryColor: Color3,
@@ -23,6 +25,7 @@ export type Showcase = {
 export type ShowcaseMode = "View" | "Edit"
 export type NetworkShowcase = {
 	owner: number,
+	layoutId: Layouts.LayoutId,
 	name: string,
 	thumbId: number,
 	primaryColor: Color3,

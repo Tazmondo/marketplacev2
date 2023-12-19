@@ -12,6 +12,7 @@ local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent)
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
@@ -25,7 +26,6 @@ local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFire
 
 type Showcase = {
 	stands: { Types.Stand },
-	validPositions: { [Vector3]: true },
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
 	mode: Types.ShowcaseMode,
@@ -34,14 +34,12 @@ type Showcase = {
 	lastUpdate: number,
 
 	name: string,
+	layout: Layouts.Layout,
 	primaryColor: Color3,
 	accentColor: Color3,
 	GUID: string,
 	thumbId: number,
 }
-
-local placeTemplate = ReplicatedStorage.Assets.Layouts.ShopTemplate :: Model
-assert(placeTemplate, "No place template found")
 
 local placeTable: { Showcase } = {}
 
@@ -50,14 +48,6 @@ local playerShowcases: { [Player]: Showcase } = {}
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Expected ReplicatedStorage.AccessoryReplication folder.")
-
-local validPositions: { [Vector3]: true } = {}
-for i, descendant in placeTemplate:GetDescendants() do
-	if descendant:IsA("BasePart") and descendant:HasTag(Config.StandTag) then
-		local roundedPosition = Util.RoundedVector(placeTemplate:GetPivot():PointToObjectSpace(descendant.Position))
-		validPositions[roundedPosition] = true
-	end
-end
 
 function ReplicateAsset(assetId: number)
 	return Future.new(function()
@@ -78,6 +68,7 @@ end
 function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 	return {
 		stands = showcase.stands,
+		layoutId = showcase.layout.id,
 		mode = showcase.mode,
 		owner = showcase.owner,
 		name = showcase.name,
@@ -164,6 +155,7 @@ function SaveShowcase(showcase: Showcase)
 
 	local newShowcase: Data.Showcase = {
 		stands = stands,
+		layoutId = showcase.layout.id,
 		GUID = showcase.GUID,
 		name = showcase.name,
 		primaryColor = showcase.primaryColor:ToHex(),
@@ -190,10 +182,12 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			standMap[stand.roundedPosition] = stand
 		end
 
+		local layout = Layouts:GetLayout(showcase.layoutId)
+
 		-- Every physical part should have a registered stand
 		-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
 		local stands: { Types.Stand } = {}
-		for position, _ in validPositions do
+		for position, _ in layout.getValidStandPositions() do
 			local stand = standMap[position]
 			if stand then
 				table.insert(stands, stand)
@@ -210,7 +204,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 
 		local place: Showcase = {
 			stands = stands,
-			validPositions = validPositions,
+			layout = layout,
 			owner = showcase.owner,
 			playersPresent = {},
 			mode = mode,
@@ -253,6 +247,7 @@ function HandleCreatePlace(player: Player)
 
 	local newShowcase: Types.Showcase = {
 		name = `{player.Name}'s Shop`,
+		layoutId = Layouts:GetDefaultLayoutId(),
 		stands = {},
 		GUID = HttpService:GenerateGUID(false),
 		owner = player.UserId,
@@ -304,7 +299,7 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 	end
 
 	if update.type == "UpdateStand" then
-		if not validPositions[update.roundedPosition] then
+		if not showcase.layout.getValidStandPositions()[update.roundedPosition] then
 			warn("Updated with an invalid position:", update.roundedPosition)
 			return
 		end

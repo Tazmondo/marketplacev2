@@ -2,12 +2,13 @@
 
 local ShowcaseEditUI = {}
 
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ShowcaseNavigationUI = require(script.Parent.ShowcaseNavigationUI)
 local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
-local Util = require(ReplicatedStorage.Modules.Shared.Util)
+local Base64 = require(ReplicatedStorage.Packages.Base64)
 local UILoader = require(script.Parent.UILoader)
 
 local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent):Client()
@@ -106,6 +107,17 @@ function Exit()
 	ShowcaseNavigationUI:RejoinPlace()
 end
 
+function GenerateDeeplink(ownerId: number, GUID: string)
+	local data: Types.LaunchData = {
+		ownerId = ownerId,
+		GUID = GUID,
+	}
+	local json = HttpService:JSONEncode(data)
+	local b64 = Base64.encode(json)
+
+	return `https://www.roblox.com/games/start?placeId={game.PlaceId}&launchData={b64}`
+end
+
 function ShowcaseEditUI:Hide()
 	gui.Visible = false
 	activeShowcase = nil
@@ -117,7 +129,7 @@ function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = showcase.primaryColor
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = showcase.accentColor
 
-	gui.ShareLink.TextBox.Text = Util.GenerateDeeplink(showcase.owner, showcase.GUID)
+	gui.ShareLink.TextBox.Text = GenerateDeeplink(showcase.owner, showcase.GUID)
 
 	UpdatePrimaryColourPickerSelection(showcase.primaryColor)
 	UpdateAccentColourPickerSelection(showcase.accentColor)

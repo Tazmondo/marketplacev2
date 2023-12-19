@@ -8,6 +8,7 @@ local AddItemUI = require(ReplicatedStorage.Modules.Client.UI.AddItemUI)
 local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
 local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -20,9 +21,6 @@ assert(accessoryReplication, "Accessory replication folder did not exist.")
 
 local renderedAccessoryFolder = Instance.new("Folder", workspace)
 renderedAccessoryFolder.Name = "Rendered Accessories"
-
-local placeTemplate = ReplicatedStorage.Assets.Layouts.ShopTemplate :: Model
-assert(placeTemplate, "No place template found")
 
 type DisplayPart = BasePart & {
 	PointLight: PointLight,
@@ -247,7 +245,7 @@ function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 			currentModel:Destroy()
 		end
 
-		currentModel = placeTemplate:Clone()
+		currentModel = Layouts:GetLayout(showcase.layoutId).modelTemplate:Clone()
 		assert(currentModel)
 
 		currentModel:PivotTo(CFrame.new())

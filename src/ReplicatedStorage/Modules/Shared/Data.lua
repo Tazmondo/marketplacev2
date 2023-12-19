@@ -1,5 +1,6 @@
 local HttpService = game:GetService("HttpService")
 local Config = require(script.Parent.Config)
+local Layouts = require(script.Parent.Layouts)
 local Types = require(script.Parent.Types)
 local Data = {}
 
@@ -21,6 +22,7 @@ local standTemplate: Stand = {
 export type Showcase = {
 	name: string,
 	thumbId: number,
+	layoutId: Layouts.LayoutId,
 
 	-- Colours must be hex strings, Color3 cannot be stored in datastore
 	primaryColor: string,
@@ -32,6 +34,7 @@ export type Showcase = {
 local showcaseTemplate: Showcase = {
 	name = "Untitled Shop",
 	thumbId = Config.DefaultShopThumbnail,
+	layoutId = Layouts:GetDefaultLayoutId(),
 	GUID = HttpService:GenerateGUID(false),
 	stands = {},
 	primaryColor = Config.DefaultPrimaryColor:ToHex(),
@@ -45,7 +48,7 @@ export type Data = {
 
 local dataTemplate: Data = {
 	showcases = {},
-	version = 3,
+	version = 5,
 }
 Data.dataTemplate = dataTemplate
 
@@ -66,6 +69,7 @@ function Data.Migrate(data: Data)
 		-- Data shape hasn't updated, no need to reconcile
 		return
 	end
+	print(`Migrating data from {data.version} to {dataTemplate.version}`)
 
 	for k, v in pairs(dataTemplate) do
 		if not data[k] then
@@ -88,6 +92,8 @@ function Data.Migrate(data: Data)
 			end
 		end
 	end
+
+	data.version = dataTemplate.version
 end
 
 function Data.ToDataStand(stand: Types.Stand): Stand?
@@ -113,6 +119,7 @@ function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
 
 	return {
 		thumbId = showcase.thumbId,
+		layoutId = showcase.layoutId,
 		name = showcase.name,
 		primaryColor = showcase.primaryColor:ToHex(),
 		accentColor = showcase.accentColor:ToHex(),
@@ -145,6 +152,7 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 
 	return {
 		GUID = showcase.GUID,
+		layoutId = showcase.layoutId,
 		owner = ownerId,
 		stands = stands,
 		name = showcase.name,
