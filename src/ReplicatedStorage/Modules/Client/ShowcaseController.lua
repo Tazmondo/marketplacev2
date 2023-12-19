@@ -110,8 +110,8 @@ function DestroyStand(stand: RenderedStand)
 	end
 end
 
-function UserRemovedItem(stand: RenderedStand)
-	HandleItemAdded(stand.standPart, nil)
+function UserRemovedItem(roundedPosition: Vector3)
+	HandleItemAdded(roundedPosition, nil)
 end
 
 function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: DisplayPart })
@@ -181,7 +181,7 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 				prompt.ObjectText = "Stand"
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					UserRemovedItem(renderedStand)
+					UserRemovedItem(roundedPosition)
 				end)
 			else
 				SetDisplayVisibility(part, true)

@@ -11,9 +11,10 @@ local current: Vector3? = nil
 
 AddItemUI.Added = Signal()
 
-function AddItemUI:Display(roundedPosition: Vector3)
+function AddItemUI:Display(roundedPosition: Vector3, currentId: number?)
 	gui.Visible = true
 	current = roundedPosition
+	gui.Frame.TextBox.Text = if currentId then tostring(currentId) else ""
 end
 
 function AddItemUI:Hide()
