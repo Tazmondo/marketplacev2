@@ -22,7 +22,7 @@ local standTemplate: Stand = {
 export type Showcase = {
 	name: string,
 	thumbId: number,
-	layoutId: Layouts.LayoutId,
+	layoutId: string, -- Not using Layouts.LayoutId here because the data could become invalid if layouts change. So we need to verify when loading it.
 
 	-- Colours must be hex strings, Color3 cannot be stored in datastore
 	primaryColor: string,
@@ -141,7 +141,7 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		table.insert(stands, Data.FromDataStand(stand))
 	end
 
-	-- Since the color configs may change, ensure an invalid color is never loaded.
+	-- Since these may become invalidated as the game progresses, need to make sure they don't cause cascading errors into the rest of the code.
 	local primaryColor = if Config.PrimaryColors[showcase.primaryColor]
 		then Color3.fromHex(showcase.primaryColor)
 		else Config.DefaultPrimaryColor
@@ -150,9 +150,13 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		then Color3.fromHex(showcase.accentColor)
 		else Config.DefaultAccentColor
 
+	local layoutId: Layouts.LayoutId = if Layouts:LayoutIdExists(showcase.layoutId)
+		then showcase.layoutId :: Layouts.LayoutId
+		else Layouts:GetDefaultLayoutId()
+
 	return {
 		GUID = showcase.GUID,
-		layoutId = showcase.layoutId,
+		layoutId = layoutId,
 		owner = ownerId,
 		stands = stands,
 		name = showcase.name,
