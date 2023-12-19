@@ -69,6 +69,8 @@ function FetchOfflineData(userId: number)
 	return Future.new(function()
 		local profile = ProfileStore:ViewProfileAsync(GetKey(userId))
 		if profile then
+			Data.Migrate(profile.Data)
+
 			cachedShowcases[userId] = {
 				cachedTime = tick(),
 				data = profile.Data,
