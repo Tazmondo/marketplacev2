@@ -3,6 +3,7 @@ local ShopSettingsUI = {}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local UILoader = require(script.Parent.UILoader)
@@ -49,7 +50,7 @@ function ShopSettingsUI:Display(showcase: Types.NetworkShowcase)
 
 	gui.Frame.ShopName.TextBox.Text = showcase.name
 	gui.Frame.Thumbnail.TextBox.Text = tostring(showcase.thumbId)
-	gui.Frame.ShopThumbnail.Image = `rbxthumb://type=Asset&id={showcase.thumbId}&w=420&h=420`
+	gui.Frame.ShopThumbnail.Image = Thumbs.GetAsset(showcase.thumbId)
 end
 
 function ShopSettingsUI:IsOpen()

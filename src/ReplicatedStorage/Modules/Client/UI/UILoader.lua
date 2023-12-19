@@ -1,5 +1,5 @@
 -- So that we don't need to waitforchild any UI objects, we can guarantee they exist at client runtime
--- By default, UI is tied to initial character loading, but this behaviour sucks
+-- By default, UI is tied to initial character loading, but this behaviour sucks as we want access to UI before the character has loaded
 
 local UILoader = {}
 local Players = game:GetService("Players")

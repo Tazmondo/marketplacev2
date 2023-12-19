@@ -2,6 +2,7 @@ local ShowcaseNavigationUI = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local UILoader = require(script.Parent.UILoader)
@@ -31,7 +32,7 @@ function ShowcaseNavigationUI:Display()
 		return
 	end
 
-	gui.ShopInfo.ProfileImage.Image = `rbxthumb://type=Asset&id={showcase.thumbId}&w=420&h=420`
+	gui.ShopInfo.ProfileImage.Image = Thumbs.GetAsset(showcase.thumbId)
 
 	gui.ShopInfo.Text.ShopName.Text = showcase.name
 

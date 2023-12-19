@@ -4,6 +4,7 @@ local ProfileUI = {}
 
 local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
+local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local UILoader = require(script.Parent.UILoader)
 
 local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Client()
@@ -35,7 +36,7 @@ function Populate(showcases: { Data.Showcase })
 		newRow.Details.NameLabel.Text = showcase.name
 		newRow.Details.Frame.Price.Text = "0" -- number of likes
 
-		newRow.Thumb.Image = `rbxthumb://type=Asset&id={showcase.thumbId}&w=420&h=420`
+		newRow.Thumb.Image = Thumbs.GetAsset(showcase.thumbId)
 
 		newRow.Activated:Connect(function()
 			EditShowcase(showcase)
@@ -92,8 +93,7 @@ function ProfileUI:Initialize()
 	showcaseTemplate.Visible = false
 
 	profile.Title.Title.TextLabel.Text = `@{Players.LocalPlayer.Name}`
-	profile.Title.Avatar.ImageButton.Image =
-		`rbxthumb://type=AvatarHeadShot&id={Players.LocalPlayer.UserId}&w=180&h=180`
+	profile.Title.Avatar.ImageButton.Image = Thumbs.GetHeadShot(Players.LocalPlayer.UserId)
 
 	profile.Title.Close.ImageButton.Activated:Connect(ProfileUI.Hide)
 
