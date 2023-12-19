@@ -142,11 +142,14 @@ function SaveShowcase(showcase: Showcase)
 		return
 	end
 
-	local stands: { Data.Stand } = {}
+	-- Filter out stands that are invalid or lack an asset id
+	-- Invalid stands can be caused when switching layouts - the old stands may not have valid positions anymore.
+	local filteredStands: { Data.Stand } = {}
+	local validPositions = showcase.layout.getValidStandPositions()
 
 	for part, stand in showcase.stands do
-		if stand.assetId then
-			table.insert(stands, {
+		if stand.assetId and validPositions[stand.roundedPosition] then
+			table.insert(filteredStands, {
 				assetId = stand.assetId,
 				roundedPosition = Data.VectorToTable(stand.roundedPosition),
 			})
@@ -154,7 +157,7 @@ function SaveShowcase(showcase: Showcase)
 	end
 
 	local newShowcase: Data.Showcase = {
-		stands = stands,
+		stands = filteredStands,
 		layoutId = showcase.layout.id,
 		GUID = showcase.GUID,
 		name = showcase.name,
@@ -168,6 +171,32 @@ function SaveShowcase(showcase: Showcase)
 	end)
 end
 
+function PopulateLayoutStands(savedStands: { Types.Stand }, standPositions: { [Vector3]: boolean }): { Types.Stand }
+	local savedStandMap: { [Vector3]: Types.Stand } = {}
+	for i, stand in savedStands do
+		savedStandMap[stand.roundedPosition] = stand
+	end
+
+	local outputStands = {}
+
+	for position, _ in standPositions do
+		local stand = savedStandMap[position]
+		if stand then
+			table.insert(outputStands, stand)
+			if stand.assetId then
+				ReplicateAsset(stand.assetId)
+			end
+		else
+			table.insert(outputStands, {
+				assetId = nil,
+				roundedPosition = position,
+			})
+		end
+	end
+
+	return outputStands
+end
+
 function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.ShowcaseMode)
 	return Future.new(function()
 		-- Check for already existing showcase with the same GUID
@@ -177,30 +206,11 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			end
 		end
 
-		local standMap: { [Vector3]: Types.Stand } = {}
-		for i, stand in showcase.stands do
-			standMap[stand.roundedPosition] = stand
-		end
-
 		local layout = Layouts:GetLayout(showcase.layoutId)
 
 		-- Every physical part should have a registered stand
 		-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
-		local stands: { Types.Stand } = {}
-		for position, _ in layout.getValidStandPositions() do
-			local stand = standMap[position]
-			if stand then
-				table.insert(stands, stand)
-				if stand.assetId then
-					ReplicateAsset(stand.assetId)
-				end
-			else
-				table.insert(stands, {
-					assetId = nil,
-					roundedPosition = position,
-				})
-			end
-		end
+		local stands = PopulateLayoutStands(showcase.stands, layout.getValidStandPositions())
 
 		local place: Showcase = {
 			stands = stands,
