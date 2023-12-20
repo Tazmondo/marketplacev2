@@ -199,9 +199,10 @@ end
 
 function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.ShowcaseMode)
 	return Future.new(function()
-		-- Check for already existing showcase with the same GUID
+		-- Check for already existing showcase with the same GUID, but only for viewing. Showcases in edit mode should
+		-- Be kept entirely separate because the mode is stored within the showcase data itself, and not on a per-player basis.
 		for i, place in placeTable do
-			if place.GUID == showcase.GUID and place.mode == "View" then
+			if place.GUID == showcase.GUID and mode == "View" and place.mode == "View" then
 				return place
 			end
 		end

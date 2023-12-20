@@ -51,8 +51,8 @@ function GetEditorsPicks()
 			return cachedEditorPicks :: { Types.Showcase }?
 		end
 
-		local elijahId = 2294598404
-		local editorData = DataService:ReadOfflineData(elijahId):Await()
+		local editorId = 2294598404
+		local editorData = DataService:ReadOfflineData(editorId):Await()
 		if not editorData then
 			warn("Could not fetch editor data")
 			return nil
@@ -61,7 +61,7 @@ function GetEditorsPicks()
 		local editorPicks = {}
 
 		for i, showcase in editorData.showcases do
-			editorPicks[i] = Data.FromDataShowcase(showcase, elijahId)
+			editorPicks[i] = Data.FromDataShowcase(showcase, editorId)
 		end
 
 		cachedEditorPicks = editorPicks
