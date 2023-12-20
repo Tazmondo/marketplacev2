@@ -261,8 +261,9 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 
 	-- Already asserted in Layouts.lua
 	local logo = currentModel:FindFirstChild("ShopLogo") :: BasePart
-	local decal = logo:FindFirstChild("Decal") :: Decal
-	decal.Texture = if showcase.logoId then Thumbs.GetAsset(showcase.logoId) else ""
+	local gui = logo:FindFirstChild("SurfaceGui") :: SurfaceGui
+	local image = gui:FindFirstChild("ImageLabel") :: ImageLabel
+	image.Image = if showcase.logoId then Thumbs.GetAsset(showcase.logoId) else ""
 
 	debug.profileend()
 end

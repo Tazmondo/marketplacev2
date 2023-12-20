@@ -63,10 +63,13 @@ function SetupLayout(id: LayoutId, thumbId: number)
 	assert(model and model:IsA("Model"), `Could not find model layout with id: {id}`)
 
 	local logo = model:FindFirstChild("ShopLogo")
-	assert(logo and logo:IsA("BasePart"), `Layout {id} did not have a ShopLogo`)
+	assert(logo and logo:IsA("BasePart"), `ShopLogo not found in {id}`)
 
-	local decal = logo:FindFirstChild("Decal")
-	assert(decal and decal:IsA("Decal"), `ShopLogo did not have a decal in {id}`)
+	local gui = logo:FindFirstChildOfClass("SurfaceGui")
+	assert(gui, `ShopLogo did not have gui in {id}`)
+
+	local image = gui:FindFirstChildOfClass("ImageLabel")
+	assert(image, `ShopLogo did not have an imagelabel in {id}`)
 
 	savedLayouts[id] = TableUtil.Lock({
 		id = id,
