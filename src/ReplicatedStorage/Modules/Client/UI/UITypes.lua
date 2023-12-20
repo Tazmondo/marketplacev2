@@ -176,7 +176,6 @@ export type Main = ScreenGui & {
 			UIPadding: UIPadding,
 			Actions: Frame & {
 				UIListLayout: UIListLayout,
-				UISizeConstraint: UISizeConstraint,
 				Add: TextButton & {
 					UICorner: UICorner,
 					TextLabel: TextLabel,
@@ -199,66 +198,11 @@ export type Main = ScreenGui & {
 		},
 	},
 	Item: Frame & {
-		UISizeConstraint: UISizeConstraint,
-		UIPadding: UIPadding,
-		UIListLayout: UIListLayout,
 		UICorner: UICorner,
-		Topbar: Frame & {
-			Avatar: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UIListLayout: UIListLayout,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UISizeConstraint: UISizeConstraint,
-			Back: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-		},
 		Content: Frame & {
-			ImageFrame: Frame & {
-				UIListLayout: UIListLayout,
-				UICorner: UICorner,
-				UISizeConstraint: UISizeConstraint,
-				ItemImage: ImageLabel,
-			},
-			Owners: Frame & {
-				UIListLayout: UIListLayout,
-				Frame: Frame & {
-					UIListLayout: UIListLayout,
-					TextLabel: TextLabel,
-				},
-				UIPadding: UIPadding,
-				Row: Frame & {
-					UICorner: UICorner,
-					UIListLayout: UIListLayout,
-					Right: Frame & {
-						UIListLayout: UIListLayout,
-						Price: TextLabel,
-						Buy: TextButton & {
-							UICorner: UICorner,
-						},
-					},
-					Left: Frame & {
-						UIListLayout: UIListLayout,
-					},
-					ImageLabel: ImageLabel & {
-						UICorner: UICorner,
-						UIStroke: UIStroke,
-					},
-				},
-			},
+			UIPadding: UIPadding,
 			Details: Frame & {
+				UIPadding: UIPadding,
 				Available: Frame & {
 					UIListLayout: UIListLayout,
 					TextLabel: TextLabel,
@@ -266,7 +210,6 @@ export type Main = ScreenGui & {
 				},
 				UICorner: UICorner,
 				UIListLayout: UIListLayout,
-				UISizeConstraint: UISizeConstraint,
 				Names: Frame & {
 					UIListLayout: UIListLayout,
 					ItemName: TextLabel,
@@ -275,41 +218,27 @@ export type Main = ScreenGui & {
 			},
 			UIListLayout: UIListLayout,
 			Actions: Frame & {
-				["Try On"]: TextButton & {
-					UICorner: UICorner,
-				},
-				UIPadding: UIPadding,
 				UIListLayout: UIListLayout,
-				UISizeConstraint: UISizeConstraint,
+				Try: TextButton & {
+					UICorner: UICorner,
+					TextLabel: TextLabel,
+					UIListLayout: UIListLayout,
+				},
 				Buy: TextButton & {
 					UICorner: UICorner,
+					UIListLayout: UIListLayout,
+					TextLabel: TextLabel,
+					ImageLabel: ImageLabel,
 				},
 			},
-			Price: Frame & {
-				Floor: Frame & {
-					UIListLayout: UIListLayout,
-					Frame: Frame & {
-						UIListLayout: UIListLayout,
-						ImageLabel: ImageLabel,
-						Amount: TextLabel,
-					},
-					TextLabel: TextLabel,
-				},
-				UICorner: UICorner,
+			ImageFrame: Frame & {
 				UIListLayout: UIListLayout,
+				UICorner: UICorner,
 				UISizeConstraint: UISizeConstraint,
-				Listed: Frame & {
-					UIListLayout: UIListLayout,
-					Frame: Frame & {
-						UIListLayout: UIListLayout,
-						ImageLabel: ImageLabel,
-						Amount: TextLabel,
-					},
-					TextLabel: TextLabel,
-				},
+				ItemImage: ImageLabel,
 			},
 		},
-		UIGradient: UIGradient,
+		UISizeConstraint: UISizeConstraint,
 	},
 	Showcase: Frame & {
 		UIPadding: UIPadding,
@@ -378,12 +307,18 @@ export type Main = ScreenGui & {
 			UIListLayout: UIListLayout,
 			TextBox: TextBox & {
 				UICorner: UICorner,
+				UIStroke: UIStroke,
+				UIPadding: UIPadding,
 			},
 		},
 		LayoutPicker: Frame & {
 			UICorner: UICorner,
 			ScrollingFrame: ScrollingFrame & {
 				UIListLayout: UIListLayout,
+				Layout: ImageButton & {
+					UICorner: UICorner,
+					SelectedOutline: UIStroke,
+				},
 				UIPadding: UIPadding,
 			},
 		},
@@ -564,6 +499,7 @@ export type Main = ScreenGui & {
 			ImageButton: ImageLabel,
 		},
 		UIPadding: UIPadding,
+		UISizeConstraint: UISizeConstraint,
 	},
 	ControllerNav: Frame & {
 		UIStroke: UIStroke,

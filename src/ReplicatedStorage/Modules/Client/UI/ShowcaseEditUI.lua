@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ShowcaseNavigationUI = require(script.Parent.ShowcaseNavigationUI)
 local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Base64 = require(ReplicatedStorage.Packages.Base64)
 local UILoader = require(script.Parent.UILoader)
@@ -107,6 +108,11 @@ function Exit()
 	ShowcaseNavigationUI:RejoinPlace()
 end
 
+function ShowcaseEditUI:Hide()
+	gui.Visible = false
+	activeShowcase = nil
+end
+
 function GenerateDeeplink(ownerId: number, GUID: string)
 	local data: Types.LaunchData = {
 		ownerId = ownerId,
@@ -116,11 +122,6 @@ function GenerateDeeplink(ownerId: number, GUID: string)
 	local b64 = Base64.encode(json)
 
 	return `https://www.roblox.com/games/start?placeId={game.PlaceId}&launchData={b64}`
-end
-
-function ShowcaseEditUI:Hide()
-	gui.Visible = false
-	activeShowcase = nil
 end
 
 function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
@@ -139,20 +140,59 @@ function ToggleShareFrame()
 	gui.ShareLink.Visible = not gui.ShareLink.Visible
 end
 
+function ToggleLayoutFrame()
+	gui.LayoutPicker.Visible = not gui.LayoutPicker.Visible
+end
+
+function SwitchLayout(id: Layouts.LayoutId)
+	UpdateShowcaseEvent:Fire({
+		type = "UpdateLayout",
+		layoutId = id,
+	})
+end
+
+-- Should only be called once
+function PopulateLayoutFrame()
+	local frame = gui.LayoutPicker.ScrollingFrame
+	local template = frame.Layout
+	template.Visible = false
+	local layouts = Layouts:GetLayouts()
+
+	for id, layout in layouts do
+		local newLayout = template:Clone()
+		newLayout.Visible = true
+		newLayout.Image = `rbxassetid://{layout.displayThumbId}`
+
+		newLayout.Activated:Connect(function()
+			SwitchLayout(layout.id)
+		end)
+
+		if id == Layouts:GetDefaultLayoutId() then
+			newLayout.LayoutOrder = -1
+		end
+
+		newLayout.Parent = frame
+	end
+end
+
 function ShowcaseEditUI:Initialize()
 	gui.Visible = false
 	gui.PrimaryColorPicker.Visible = false
 	gui.AccentColorPicker.Visible = false
 	gui.TexturePicker.Visible = false
 	gui.ShareLink.Visible = false
+	gui.LayoutPicker.Visible = false
 
 	gui.Wrapper.CurrentPrimaryColor.Activated:Connect(TogglePrimaryColor)
 	gui.Wrapper.CurrentAccentColor.Activated:Connect(ToggleAccentColor)
 	gui.Wrapper.CurrentTexture.Activated:Connect(ToggleTexture)
 
+	gui.Wrapper.CurrentLayout.Activated:Connect(ToggleLayoutFrame)
 	gui.Wrapper.ShopSettings.Activated:Connect(ShowSettings)
 	gui.Wrapper.ShareLink.Activated:Connect(ToggleShareFrame)
 	gui.Wrapper.Exit.Activated:Connect(Exit)
+
+	PopulateLayoutFrame()
 
 	-- Not the prettiest but gets the job done
 	for i, child in gui.PrimaryColorPicker:GetChildren() do

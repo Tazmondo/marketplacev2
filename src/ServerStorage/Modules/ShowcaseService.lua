@@ -376,6 +376,9 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 		showcase.primaryColor = update.primaryColor
 		showcase.accentColor = update.accentColor
 		showcase.thumbId = update.thumbId
+	elseif update.type == "UpdateLayout" then
+		local newLayout = Layouts:GetLayout(update.layoutId)
+		showcase.layout = newLayout
 	end
 
 	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))

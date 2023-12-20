@@ -40,8 +40,21 @@ function GenerateValidPositionFunction(model: Model): () -> { [Vector3]: boolean
 	end
 end
 
+function Layouts:LayoutIdExists(id: string)
+	return savedLayouts[id :: LayoutId] ~= nil
+end
+
+function Layouts:GuardLayoutId(id: unknown): LayoutId
+	assert(typeof(id) == "string" and savedLayouts[id :: LayoutId] ~= nil)
+	return id :: LayoutId
+end
+
 function Layouts:GetLayout(id: LayoutId)
 	return savedLayouts[id]
+end
+
+function Layouts:GetLayouts()
+	return savedLayouts
 end
 
 -- Cause writing the table out every time is a pain
@@ -59,7 +72,7 @@ end
 
 SetupLayout("Shop 1", 15666375140)
 SetupLayout("Shop 2", 15666387406)
-SetupLayout("Shop 3", 15618783295)
+-- SetupLayout("Shop 3", 15618783295)
 
 function Layouts:GetDefaultLayoutId(): LayoutId
 	return "Shop 1"

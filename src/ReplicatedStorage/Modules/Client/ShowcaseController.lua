@@ -22,15 +22,8 @@ assert(accessoryReplication, "Accessory replication folder did not exist.")
 local renderedAccessoryFolder = Instance.new("Folder", workspace)
 renderedAccessoryFolder.Name = "Rendered Accessories"
 
-type DisplayPart = BasePart & {
-	PointLight: PointLight,
-	Attachment: Attachment & {
-		Shine: ParticleEmitter,
-	},
-}
-
 type RenderedStand = {
-	standPart: DisplayPart,
+	standPart: BasePart,
 	roundedPosition: Vector3,
 	standId: number,
 	assetId: number?,
@@ -61,15 +54,27 @@ function GetNextStandId()
 	return standId
 end
 
-function SetDisplayVisibility(display: DisplayPart, isVisible: boolean)
+function SetDisplayVisibility(display: BasePart, isVisible: boolean)
+	local light = display:FindFirstChild("PointLight") :: PointLight?
+	local attachment = display:FindFirstChild("Attachment")
+	local shine = if attachment then attachment:FindFirstChild("Shine") :: ParticleEmitter? else nil
+
 	if isVisible then
 		display.Transparency = 0.8
-		display.PointLight.Enabled = true
-		display.Attachment.Shine.Enabled = true
+		if light then
+			light.Enabled = true
+		end
+		if shine then
+			shine.Enabled = true
+		end
 	else
 		display.Transparency = 1
-		display.PointLight.Enabled = false
-		display.Attachment.Shine.Enabled = false
+		if light then
+			light.Enabled = false
+		end
+		if shine then
+			shine.Enabled = false
+		end
 	end
 end
 
@@ -105,6 +110,14 @@ function DestroyStand(stand: RenderedStand)
 
 	if renderedStands[stand.roundedPosition].standId == stand.standId then
 		renderedStands[stand.roundedPosition] = nil
+	else
+		warn("Destroyed old stand at a position", renderedStands[stand.roundedPosition].standId, stand.standId)
+	end
+end
+
+function ClearStands()
+	for position, stand in renderedStands do
+		DestroyStand(stand)
 	end
 end
 
@@ -112,7 +125,7 @@ function UserRemovedItem(roundedPosition: Vector3)
 	HandleItemAdded(roundedPosition, nil)
 end
 
-function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: DisplayPart })
+function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: BasePart })
 	local standMap: { [Vector3]: Types.Stand? } = {}
 	for i, stand in showcase.stands do
 		standMap[stand.roundedPosition] = stand
@@ -203,9 +216,6 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 		end
 
 		renderedStands[roundedPosition] = renderedStand
-		part.Destroying:Once(function()
-			DestroyStand(renderedStand)
-		end)
 	end
 end
 
@@ -240,10 +250,15 @@ end
 function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 	print("Loading showcase", showcase)
 
-	if not currentShowcase or currentShowcase.GUID ~= showcase.GUID then
+	if
+		not currentShowcase
+		or currentShowcase.GUID ~= showcase.GUID
+		or currentShowcase.layoutId ~= showcase.layoutId
+	then
 		if currentModel then
 			currentModel:Destroy()
 		end
+		ClearStands()
 
 		currentModel = Layouts:GetLayout(showcase.layoutId).modelTemplate:Clone()
 		assert(currentModel)
@@ -263,11 +278,11 @@ function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 	if showcase then
 		LoadShowcaseAppearance(showcase)
 
-		local positionMap: { [Vector3]: DisplayPart } = {}
+		local positionMap: { [Vector3]: BasePart } = {}
 		for i, descendant in currentModel:GetDescendants() do
 			if descendant:IsA("BasePart") and descendant:HasTag(Config.StandTag) then
-				positionMap[Util.RoundedVector(currentModel:GetPivot():PointToObjectSpace(descendant.Position))] =
-					descendant :: DisplayPart
+				local position = Util.RoundedVector(currentModel:GetPivot():PointToObjectSpace(descendant.Position))
+				positionMap[position] = descendant
 			end
 		end
 		CreateStands(showcase, positionMap)

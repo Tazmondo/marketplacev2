@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 local Red = require(ReplicatedStorage.Packages.Red)
 
@@ -16,7 +17,12 @@ export type UpdateSettings = {
 	thumbId: number,
 }
 
-export type Update = UpdateStand | UpdateSettings
+export type UpdateLayout = {
+	type: "UpdateLayout",
+	layoutId: Layouts.LayoutId,
+}
+
+export type Update = UpdateStand | UpdateSettings | UpdateLayout
 
 function GuardUpdate(update: unknown): Update
 	assert(typeof(update) == "table")
@@ -35,6 +41,11 @@ function GuardUpdate(update: unknown): Update
 			primaryColor = Guard.Color3(value.primaryColor),
 			accentColor = Guard.Color3(value.accentColor),
 			thumbId = Guard.Number(value.thumbId),
+		}
+	elseif value.type == "UpdateLayout" then
+		return {
+			type = "UpdateLayout",
+			layoutId = Layouts:GuardLayoutId(value.layoutId),
 		}
 	else
 		error("Unexpected update type")
