@@ -97,7 +97,8 @@ function GetAccessory(assetId: number, scale: number?)
 			end
 		end
 
-		accessory:ScaleTo(Config.DefaultScale * (scale or 1))
+		local insertedScale = accessory:GetScale()
+		accessory:ScaleTo(insertedScale * Config.DefaultScale * (scale or 1))
 
 		return accessory
 	end, assetId, scale)

@@ -1,7 +1,6 @@
 local ShowcaseService = {}
 
 local HttpService = game:GetService("HttpService")
-local InsertService = game:GetService("InsertService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -54,17 +53,69 @@ local playerShowcases: { [Player]: Showcase } = {}
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Expected ReplicatedStorage.AccessoryReplication folder.")
 
+-- Specialmeshes do not support a way to get their size.
+-- MeshParts do.
+-- When using Players:CreateHumanoidModelFromDescription with R15 rigs, it generates accessories using MeshParts
+-- So we can use this to generate a MeshPart and normalize its size.
 function ReplicateAsset(assetId: number)
 	return Future.new(function()
 		if not accessoryReplication:FindFirstChild(tostring(assetId)) then
-			local asset = InsertService:LoadAsset(assetId)
-			asset.Name = tostring(assetId)
+			local description = Instance.new("HumanoidDescription")
+			description.FaceAccessory = tostring(assetId)
 
-			-- Since fetching is async, this could get called twice, but we don't want unnecessary duplicates.
-			if not accessoryReplication:FindFirstChild(tostring(assetId)) then
-				asset.Parent = accessoryReplication
-				return true
+			local playerModel = Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R15)
+
+			if accessoryReplication:FindFirstChild(tostring(assetId)) then
+				-- Already found while this was yielding
+				return
 			end
+
+			local accessory = playerModel:FindFirstChildOfClass("Accessory")
+			if not accessory then
+				warn(`Failed to fetch accessory for {assetId}`)
+				return
+			end
+			local meshPart = accessory:FindFirstChildOfClass("MeshPart")
+			if not meshPart then
+				warn(`Accessory generated without meshpart {assetId}`)
+				return
+			end
+
+			local model = Instance.new("Model")
+			meshPart.Parent = model
+			model.PrimaryPart = meshPart
+			model.Name = tostring(assetId)
+
+			playerModel:Destroy()
+
+			local vectorSize = meshPart.Size
+			local maxSize = math.max(vectorSize.X, vectorSize.Y, vectorSize.Z)
+
+			-- Scale meshpart so it fits within a 1x1x1 cube
+			local scale = 1 / maxSize
+
+			-- Accessories sometimes have sideways pivots (not sure why)
+			meshPart.PivotOffset = CFrame.new()
+			local wrapLayer = meshPart:FindFirstChildOfClass("WrapLayer")
+			if wrapLayer then
+				wrapLayer:Destroy()
+			end
+
+			model:ScaleTo(scale)
+			model.Parent = accessoryReplication
+			return true
+
+			-- This is the old code for fetching models through InsertService
+			-- It wasn't suitable because there was no way to get consistent sizing for the items.
+
+			-- local asset = InsertService:LoadAsset(assetId)
+			-- asset.Name = tostring(assetId)
+
+			-- -- Since fetching is async, this could get called twice, but we don't want unnecessary duplicates.
+			-- if not accessoryReplication:FindFirstChild(tostring(assetId)) then
+			-- 	asset.Parent = accessoryReplication
+			-- 	return true
+			-- end
 		end
 		return false
 	end)

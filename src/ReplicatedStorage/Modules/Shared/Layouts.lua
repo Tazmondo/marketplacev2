@@ -3,7 +3,7 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local Config = require(script.Parent.Config)
 local Util = require(script.Parent.Util)
 
-export type LayoutId = "Shop 1" | "Shop 2" | "Shop 3"
+export type LayoutId = "Shop 1" | "Shop 2" | "Shop 3" | "Shop 4"
 
 export type Layout = {
 	id: LayoutId,
@@ -79,6 +79,7 @@ end
 SetupLayout("Shop 1", 15688473519)
 SetupLayout("Shop 2", 15688473638)
 SetupLayout("Shop 3", 15688473772)
+SetupLayout("Shop 4", 15693431898)
 
 function Layouts:GetDefaultLayoutId(): LayoutId
 	return "Shop 1"
