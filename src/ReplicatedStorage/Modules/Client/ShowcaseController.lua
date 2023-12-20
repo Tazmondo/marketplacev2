@@ -10,6 +10,7 @@ local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditU
 local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
+local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -227,6 +228,13 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 
 	debug.profilebegin("LoadShowcaseAppearance")
 
+	local materialSet = Material:GetMaterialSet(showcase.texture)
+	if not materialSet then
+		materialSet = Material:GetMaterialSet(Material:GetDefault())
+		warn("Invalid texture found, should never be reached.", showcase.texture)
+	end
+	assert(materialSet)
+
 	-- Go through descendants here rather than using collectionservice, as there will be many places in the workspace.
 	for i, descendant in currentModel:GetDescendants() do
 		if descendant:IsA("BasePart") then
@@ -241,7 +249,11 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 				end
 				descendant.Color = currentShowcase.accentColor
 			end
-			-- TODO: Apply texture
+
+			if descendant:HasTag(Config.TextureTag) then
+				descendant.Material = materialSet.material
+				descendant.MaterialVariant = materialSet.variant or ""
+			end
 		end
 	end
 

@@ -17,35 +17,66 @@ local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFire
 local gui = UILoader:GetMain().ControllerEdit
 
 local activeShowcase: Types.NetworkShowcase? = nil
+local selectedTexture: string? = nil
+
+function SelectButton(button: Instance?, visible: boolean)
+	local wrapper = gui.Wrapper
+	for i, v in wrapper:GetChildren() do
+		local outline = v:FindFirstChild("SelectedOutline") :: UIStroke?
+		if outline then
+			if v == button and visible then
+				outline.Enabled = true
+			else
+				outline.Enabled = false
+			end
+		end
+	end
+end
+
+function SelectFrame(frame: Instance?)
+	local ret = false
+
+	for i, v in gui:GetChildren() do
+		if v.Name == "Wrapper" or not v:IsA("Frame") then
+			continue
+		end
+
+		if v == frame then
+			v.Visible = not v.Visible
+			ret = v.Visible
+		else
+			v.Visible = false
+		end
+	end
+
+	ShowcaseSettingsUI:Close()
+
+	return ret
+end
 
 function TogglePrimaryColor()
-	gui.PrimaryColorPicker.Visible = not gui.PrimaryColorPicker.Visible
-	gui.Wrapper.CurrentPrimaryColor.SelectedOutline.Enabled = gui.PrimaryColorPicker.Visible
-	gui.Wrapper.CurrentAccentColor.SelectedOutline.Enabled = false
-	gui.Wrapper.CurrentTexture.SelectedOutline.Enabled = false
-
-	gui.AccentColorPicker.Visible = false
-	gui.TexturePicker.Visible = false
+	local visible = SelectFrame(gui.PrimaryColorPicker)
+	SelectButton(gui.Wrapper.CurrentPrimaryColor, visible)
 end
 
 function ToggleAccentColor()
-	gui.AccentColorPicker.Visible = not gui.AccentColorPicker.Visible
-	gui.Wrapper.CurrentAccentColor.SelectedOutline.Enabled = gui.AccentColorPicker.Visible
-	gui.Wrapper.CurrentPrimaryColor.SelectedOutline.Enabled = false
-	gui.Wrapper.CurrentTexture.SelectedOutline.Enabled = false
-
-	gui.PrimaryColorPicker.Visible = false
-	gui.TexturePicker.Visible = false
+	local visible = SelectFrame(gui.AccentColorPicker)
+	SelectButton(gui.Wrapper.CurrentAccentColor, visible)
 end
 
 function ToggleTexture()
-	gui.TexturePicker.Visible = not gui.TexturePicker.Visible
-	gui.Wrapper.CurrentTexture.SelectedOutline.Enabled = gui.TexturePicker.Visible
-	gui.Wrapper.CurrentAccentColor.SelectedOutline.Enabled = false
-	gui.Wrapper.CurrentPrimaryColor.SelectedOutline.Enabled = false
+	local visible = SelectFrame(gui.TexturePicker)
+	SelectButton(gui.Wrapper.CurrentTexture, visible)
+end
 
-	gui.PrimaryColorPicker.Visible = false
-	gui.AccentColorPicker.Visible = false
+function ToggleLayoutFrame()
+	local visible = SelectFrame(gui.LayoutPicker)
+	SelectButton(gui.Wrapper.CurrentLayout, visible)
+end
+
+function ToggleShareFrame()
+	local visible = SelectFrame(gui.ShareLink)
+	SelectButton(gui.Wrapper.ShareLink, visible)
 end
 
 function PickPrimaryColor(color: Color3)
@@ -58,6 +89,27 @@ function PickAccentColor(color: Color3)
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = color
 	UpdateAccentColourPickerSelection(color)
 	Update()
+end
+
+function PickTexture(texture: string)
+	UpdateTextureSelection(texture)
+	selectedTexture = texture
+	Update()
+end
+
+function ShowSettings()
+	if ShowcaseSettingsUI:IsOpen() then
+		ShowcaseSettingsUI:Close()
+		SelectButton(gui.Wrapper.ShopSettings, false)
+	else
+		if not activeShowcase then
+			return
+		end
+
+		SelectFrame()
+		ShowcaseSettingsUI:Display(activeShowcase)
+		SelectButton(gui.Wrapper.ShopSettings, true)
+	end
 end
 
 function UpdatePrimaryColourPickerSelection(color: Color3)
@@ -78,8 +130,31 @@ function UpdateAccentColourPickerSelection(color: Color3)
 	end
 end
 
+function UpdateTextureSelection(texture: string)
+	for i, child in gui.TexturePicker:GetChildren() do
+		if child:IsA("ImageButton") then
+			local outline = assert(child:FindFirstChild("SelectedOutline"), "Button did not have outline") :: UIStroke
+			local enabled = child.Name == texture
+			outline.Enabled = enabled
+
+			if enabled then
+				gui.Wrapper.CurrentTexture.Image = child.Image
+			end
+		end
+	end
+end
+
+function UpdateLayoutSelection(layoutId: string)
+	for i, layout in gui.LayoutPicker.ScrollingFrame:GetChildren() do
+		if layout:IsA("ImageButton") then
+			local outline = assert(layout:FindFirstChild("SelectedOutline"), "Layout did not have outline") :: UIStroke
+			outline.Enabled = layout.Name == layoutId
+		end
+	end
+end
+
 function Update()
-	if not activeShowcase then
+	if not activeShowcase or not selectedTexture then
 		return
 	end
 
@@ -89,19 +164,8 @@ function Update()
 		primaryColor = gui.Wrapper.CurrentPrimaryColor.BackgroundColor3,
 		accentColor = gui.Wrapper.CurrentAccentColor.BackgroundColor3,
 		thumbId = activeShowcase.thumbId,
+		texture = selectedTexture,
 	})
-end
-
-function ShowSettings()
-	if ShowcaseSettingsUI:IsOpen() then
-		ShowcaseSettingsUI:Close()
-	else
-		if not activeShowcase then
-			return
-		end
-
-		ShowcaseSettingsUI:Display(activeShowcase)
-	end
 end
 
 function Exit()
@@ -111,6 +175,7 @@ end
 function ShowcaseEditUI:Hide()
 	gui.Visible = false
 	activeShowcase = nil
+	selectedTexture = nil
 end
 
 function GenerateDeeplink(ownerId: number, GUID: string)
@@ -126,6 +191,8 @@ end
 
 function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
 	activeShowcase = showcase
+	selectedTexture = showcase.texture
+
 	gui.Visible = true
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = showcase.primaryColor
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = showcase.accentColor
@@ -134,17 +201,12 @@ function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
 
 	UpdatePrimaryColourPickerSelection(showcase.primaryColor)
 	UpdateAccentColourPickerSelection(showcase.accentColor)
-end
-
-function ToggleShareFrame()
-	gui.ShareLink.Visible = not gui.ShareLink.Visible
-end
-
-function ToggleLayoutFrame()
-	gui.LayoutPicker.Visible = not gui.LayoutPicker.Visible
+	UpdateTextureSelection(showcase.texture)
+	UpdateLayoutSelection(showcase.layoutId)
 end
 
 function SwitchLayout(id: Layouts.LayoutId)
+	UpdateLayoutSelection(id)
 	UpdateShowcaseEvent:Fire({
 		type = "UpdateLayout",
 		layoutId = id,
@@ -162,6 +224,7 @@ function PopulateLayoutFrame()
 		local newLayout = template:Clone()
 		newLayout.Visible = true
 		newLayout.Image = `rbxassetid://{layout.displayThumbId}`
+		newLayout.Name = id
 
 		newLayout.Activated:Connect(function()
 			SwitchLayout(layout.id)
@@ -177,11 +240,8 @@ end
 
 function ShowcaseEditUI:Initialize()
 	gui.Visible = false
-	gui.PrimaryColorPicker.Visible = false
-	gui.AccentColorPicker.Visible = false
-	gui.TexturePicker.Visible = false
-	gui.ShareLink.Visible = false
-	gui.LayoutPicker.Visible = false
+	SelectFrame()
+	SelectButton(nil, false)
 
 	gui.Wrapper.CurrentPrimaryColor.Activated:Connect(TogglePrimaryColor)
 	gui.Wrapper.CurrentAccentColor.Activated:Connect(ToggleAccentColor)
@@ -207,6 +267,14 @@ function ShowcaseEditUI:Initialize()
 		if child:IsA("ImageButton") then
 			child.Activated:Connect(function()
 				PickAccentColor(child.BackgroundColor3)
+			end)
+		end
+	end
+
+	for i, child in gui.TexturePicker:GetChildren() do
+		if child:IsA("ImageButton") then
+			child.Activated:Connect(function()
+				PickTexture(child.Name)
 			end)
 		end
 	end

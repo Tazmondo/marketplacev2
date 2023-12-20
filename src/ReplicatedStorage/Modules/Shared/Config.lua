@@ -19,13 +19,6 @@ for i, v in colorPickers.AccentColorPicker:GetChildren() do
 	end
 end
 
--- local Textures: { [string]: boolean } = {}
--- for i, v in colorPickers.TexturePicker:GetChildren() do
--- 	if v:IsA("ImageButton") then
--- 		Textures[v.Image] = true
--- 	end
--- end
-
 local Config = {
 	StandTag = "DisplayStandSpot",
 	NoBobTag = "NoBob",

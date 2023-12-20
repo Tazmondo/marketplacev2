@@ -1,6 +1,7 @@
 local HttpService = game:GetService("HttpService")
 local Config = require(script.Parent.Config)
 local Layouts = require(script.Parent.Layouts)
+local Material = require(script.Parent.Material)
 local Types = require(script.Parent.Types)
 local Data = {}
 
@@ -27,6 +28,7 @@ export type Showcase = {
 	-- Colours must be hex strings, Color3 cannot be stored in datastore
 	primaryColor: string,
 	accentColor: string,
+	texture: string,
 
 	GUID: string,
 	stands: { Stand },
@@ -39,6 +41,7 @@ local showcaseTemplate: Showcase = {
 	stands = {},
 	primaryColor = Config.DefaultPrimaryColor:ToHex(),
 	accentColor = Config.DefaultAccentColor:ToHex(),
+	texture = Material:GetDefault(),
 }
 
 export type Data = {
@@ -48,7 +51,7 @@ export type Data = {
 
 local dataTemplate: Data = {
 	showcases = {},
-	version = 5,
+	version = 6,
 }
 Data.dataTemplate = dataTemplate
 
@@ -123,6 +126,7 @@ function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
 		name = showcase.name,
 		primaryColor = showcase.primaryColor:ToHex(),
 		accentColor = showcase.accentColor:ToHex(),
+		texture = showcase.texture,
 		GUID = showcase.GUID,
 		stands = stands,
 	}
@@ -154,6 +158,8 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		then showcase.layoutId :: Layouts.LayoutId
 		else Layouts:GetDefaultLayoutId()
 
+	local texture: string = if Material:TextureExists(showcase.texture) then showcase.texture else Material:GetDefault()
+
 	return {
 		GUID = showcase.GUID,
 		layoutId = layoutId,
@@ -163,6 +169,7 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		thumbId = showcase.thumbId,
 		primaryColor = primaryColor,
 		accentColor = accentColor,
+		texture = texture,
 	}
 end
 

@@ -7,6 +7,7 @@ local DataService = require(script.Parent.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
+local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Base64 = require(ReplicatedStorage.Packages.Base64)
@@ -39,6 +40,7 @@ local DefaultShowcase: Types.Showcase = {
 	primaryColor = Config.DefaultPrimaryColor,
 	accentColor = Config.DefaultAccentColor,
 	thumbId = Config.DefaultShopThumbnail,
+	texture = Material:GetDefault(),
 }
 TableUtil.Lock(DefaultShowcase)
 

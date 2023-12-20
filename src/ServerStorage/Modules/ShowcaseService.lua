@@ -14,6 +14,7 @@ local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
+local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
@@ -39,6 +40,7 @@ type Showcase = {
 	layout: Layouts.Layout,
 	primaryColor: Color3,
 	accentColor: Color3,
+	texture: string,
 	GUID: string,
 	thumbId: number,
 }
@@ -77,6 +79,7 @@ function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 		GUID = showcase.GUID,
 		primaryColor = showcase.primaryColor,
 		accentColor = showcase.accentColor,
+		texture = showcase.texture,
 		thumbId = showcase.thumbId,
 	}
 end
@@ -165,6 +168,7 @@ function SaveShowcase(showcase: Showcase)
 		name = showcase.name,
 		primaryColor = showcase.primaryColor:ToHex(),
 		accentColor = showcase.accentColor:ToHex(),
+		texture = showcase.texture,
 		thumbId = showcase.thumbId,
 	}
 
@@ -225,6 +229,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			name = showcase.name,
 			primaryColor = showcase.primaryColor,
 			accentColor = showcase.accentColor,
+			texture = showcase.texture,
 			lastUpdate = os.clock(),
 			thumbId = showcase.thumbId,
 		}
@@ -266,6 +271,7 @@ function HandleCreatePlace(player: Player)
 		owner = player.UserId,
 		primaryColor = Config.DefaultPrimaryColor,
 		accentColor = Config.DefaultAccentColor,
+		texture = Material:GetDefault(),
 		thumbId = Config.DefaultShopThumbnail,
 	}
 
@@ -348,6 +354,12 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 			return
 		end
 
+		local textureExists = Material:TextureExists(update.texture)
+		if not textureExists then
+			warn("Invalid texture sent:", update.texture)
+			return
+		end
+
 		if showcase.name ~= update.name then
 			-- Yields
 			local success, result = pcall(function()
@@ -379,6 +391,7 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 		showcase.primaryColor = update.primaryColor
 		showcase.accentColor = update.accentColor
 		showcase.thumbId = update.thumbId
+		showcase.texture = update.texture
 	elseif update.type == "UpdateLayout" then
 		local newLayout = Layouts:GetLayout(update.layoutId)
 		showcase.layout = newLayout

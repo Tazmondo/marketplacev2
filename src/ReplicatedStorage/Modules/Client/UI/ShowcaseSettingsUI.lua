@@ -33,6 +33,7 @@ function Save()
 		name = name,
 		primaryColor = activeShowcase.primaryColor,
 		accentColor = activeShowcase.accentColor,
+		texture = activeShowcase.texture,
 		thumbId = thumbId or activeShowcase.thumbId,
 	})
 

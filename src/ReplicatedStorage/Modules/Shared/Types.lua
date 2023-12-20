@@ -18,6 +18,7 @@ export type Showcase = {
 	thumbId: number,
 	primaryColor: Color3,
 	accentColor: Color3,
+	texture: string,
 	GUID: string,
 	stands: { Stand },
 }
@@ -30,6 +31,7 @@ export type NetworkShowcase = {
 	thumbId: number,
 	primaryColor: Color3,
 	accentColor: Color3,
+	texture: string,
 	GUID: string,
 
 	-- This would be a table with basepart keys but instance keys can't be sent across network boundaries
