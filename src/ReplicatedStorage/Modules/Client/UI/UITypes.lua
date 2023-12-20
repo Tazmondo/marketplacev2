@@ -199,16 +199,7 @@ export type Main = ScreenGui & {
 	},
 	Item: Frame & {
 		UICorner: UICorner,
-		Title: Frame & {
-			UIListLayout: UIListLayout,
-			UIPadding: UIPadding,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-		},
+		UISizeConstraint: UISizeConstraint,
 		Content: Frame & {
 			UIPadding: UIPadding,
 			Details: Frame & {
@@ -248,7 +239,16 @@ export type Main = ScreenGui & {
 				ItemImage: ImageLabel,
 			},
 		},
-		UISizeConstraint: UISizeConstraint,
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Close: Frame & {
+				UIListLayout: UIListLayout,
+				ImageButton: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+		},
 	},
 	Showcase: Frame & {
 		UIPadding: UIPadding,
@@ -305,6 +305,35 @@ export type Main = ScreenGui & {
 		UIListLayout: UIListLayout,
 	},
 	ControllerEdit: Frame & {
+		TexturePicker: Frame & {
+			WoodColourless: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pattern: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Tile: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UICorner: UICorner,
+			Plastic: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIGridLayout: UIGridLayout,
+			Concrete: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Tile2: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIPadding: UIPadding,
+		},
 		ShareLink: Frame & {
 			UIPadding: UIPadding,
 			Thumb: ImageLabel,
@@ -318,17 +347,6 @@ export type Main = ScreenGui & {
 			TextBox: TextBox & {
 				UICorner: UICorner,
 				UIStroke: UIStroke,
-				UIPadding: UIPadding,
-			},
-		},
-		LayoutPicker: Frame & {
-			UICorner: UICorner,
-			ScrollingFrame: ScrollingFrame & {
-				UIListLayout: UIListLayout,
-				Layout: ImageButton & {
-					UICorner: UICorner,
-					SelectedOutline: UIStroke,
-				},
 				UIPadding: UIPadding,
 			},
 		},
@@ -418,34 +436,16 @@ export type Main = ScreenGui & {
 			},
 		},
 		UICorner: UICorner,
-		TexturePicker: Frame & {
-			Wood: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Pattern: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Tile: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
+		LayoutPicker: Frame & {
 			UICorner: UICorner,
-			Plastic: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
+			ScrollingFrame: ScrollingFrame & {
+				UIListLayout: UIListLayout,
+				Layout: ImageButton & {
+					UICorner: UICorner,
+					SelectedOutline: UIStroke,
+				},
+				UIPadding: UIPadding,
 			},
-			UIGridLayout: UIGridLayout,
-			Concrete: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Tile2: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UIPadding: UIPadding,
 		},
 		UISizeConstraint: UISizeConstraint,
 		AccentColorPicker: Frame & {
@@ -524,6 +524,7 @@ export type Main = ScreenGui & {
 		UISizeConstraint: UISizeConstraint,
 	},
 	ControllerNav: Frame & {
+		UIListLayout: UIListLayout,
 		UIStroke: UIStroke,
 		UIPadding: UIPadding,
 		ShopInfo: Frame & {
@@ -551,7 +552,7 @@ export type Main = ScreenGui & {
 			UICorner: UICorner,
 			UIPadding: UIPadding,
 		},
-		UIListLayout: UIListLayout,
+		UISizeConstraint: UISizeConstraint,
 		Back: ImageButton & {
 			UICorner: UICorner,
 			UIPadding: UIPadding,
@@ -576,7 +577,7 @@ export type Main = ScreenGui & {
 				UIStroke: UIStroke,
 			},
 			UIListLayout: UIListLayout,
-			Music: Frame & {
+			Logo: Frame & {
 				UICorner: UICorner,
 				TextBox: TextBox & {
 					UICorner: UICorner,

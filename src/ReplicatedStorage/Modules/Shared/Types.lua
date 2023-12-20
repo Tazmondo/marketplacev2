@@ -16,6 +16,7 @@ export type Showcase = {
 	layoutId: Layouts.LayoutId,
 	name: string,
 	thumbId: number,
+	logoId: number?,
 	primaryColor: Color3,
 	accentColor: Color3,
 	texture: string,
@@ -24,11 +25,13 @@ export type Showcase = {
 }
 
 export type ShowcaseMode = "View" | "Edit"
+
 export type NetworkShowcase = {
 	owner: number,
 	layoutId: Layouts.LayoutId,
 	name: string,
 	thumbId: number,
+	logoId: number?,
 	primaryColor: Color3,
 	accentColor: Color3,
 	texture: string,

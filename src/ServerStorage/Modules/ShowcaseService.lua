@@ -41,6 +41,7 @@ type Showcase = {
 	primaryColor: Color3,
 	accentColor: Color3,
 	texture: string,
+	logoId: number?,
 	GUID: string,
 	thumbId: number,
 }
@@ -81,6 +82,7 @@ function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 		accentColor = showcase.accentColor,
 		texture = showcase.texture,
 		thumbId = showcase.thumbId,
+		logoId = showcase.logoId,
 	}
 end
 
@@ -170,6 +172,7 @@ function SaveShowcase(showcase: Showcase)
 		accentColor = showcase.accentColor:ToHex(),
 		texture = showcase.texture,
 		thumbId = showcase.thumbId,
+		logoId = showcase.logoId,
 	}
 
 	DataService:WriteData(owner, function(data)
@@ -232,6 +235,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 			texture = showcase.texture,
 			lastUpdate = os.clock(),
 			thumbId = showcase.thumbId,
+			logoId = showcase.logoId,
 		}
 
 		table.insert(placeTable, place)
@@ -273,6 +277,7 @@ function HandleCreatePlace(player: Player)
 		accentColor = Config.DefaultAccentColor,
 		texture = Material:GetDefault(),
 		thumbId = Config.DefaultShopThumbnail,
+		logoId = nil,
 	}
 
 	DataService:WriteData(player, function(data)
@@ -391,6 +396,7 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 		showcase.primaryColor = update.primaryColor
 		showcase.accentColor = update.accentColor
 		showcase.thumbId = update.thumbId
+		showcase.logoId = update.logoId
 		showcase.texture = update.texture
 	elseif update.type == "UpdateLayout" then
 		local newLayout = Layouts:GetLayout(update.layoutId)

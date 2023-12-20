@@ -25,8 +25,10 @@ function Save()
 
 	gui.Frame.ShopName.TextBox.Text = name
 
-	local cleanedString = gui.Frame.Thumbnail.TextBox.Text:gsub("rbxassetid://", "")
-	local thumbId = tonumber(cleanedString)
+	local cleanedThumbString = gui.Frame.Thumbnail.TextBox.Text:gsub("rbxassetid://", "")
+	local thumbId = tonumber(cleanedThumbString)
+
+	local logoId = tonumber(gui.Frame.Logo.TextBox.Text)
 
 	UpdateShowcaseEvent:Fire({
 		type = "UpdateSettings",
@@ -35,6 +37,7 @@ function Save()
 		accentColor = activeShowcase.accentColor,
 		texture = activeShowcase.texture,
 		thumbId = thumbId or activeShowcase.thumbId,
+		logoId = logoId or activeShowcase.logoId,
 	})
 
 	ShopSettingsUI:Close()

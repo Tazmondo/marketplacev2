@@ -11,6 +11,7 @@ local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.Showcas
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
+local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -256,6 +257,11 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 			end
 		end
 	end
+
+	-- Already asserted in Layouts.lua
+	local logo = currentModel:FindFirstChild("ShopLogo") :: BasePart
+	local decal = logo:FindFirstChild("Decal") :: Decal
+	decal.Texture = if showcase.logoId then Thumbs.GetAsset(showcase.logoId) else ""
 
 	debug.profileend()
 end

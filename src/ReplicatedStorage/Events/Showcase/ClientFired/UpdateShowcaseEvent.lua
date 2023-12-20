@@ -15,6 +15,7 @@ export type UpdateSettings = {
 	primaryColor: Color3,
 	accentColor: Color3,
 	thumbId: number,
+	logoId: number?,
 	texture: string,
 }
 
@@ -43,6 +44,7 @@ function GuardUpdate(update: unknown): Update
 			accentColor = Guard.Color3(value.accentColor),
 			thumbId = Guard.Number(value.thumbId),
 			texture = Guard.String(value.texture),
+			logoId = Guard.Optional(Guard.Number)(value.logoId),
 		}
 	elseif value.type == "UpdateLayout" then
 		return {

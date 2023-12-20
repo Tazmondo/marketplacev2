@@ -23,6 +23,7 @@ local standTemplate: Stand = {
 export type Showcase = {
 	name: string,
 	thumbId: number,
+	logoId: number?,
 	layoutId: string, -- Not using Layouts.LayoutId here because the data could become invalid if layouts change. So we need to verify when loading it.
 
 	-- Colours must be hex strings, Color3 cannot be stored in datastore
@@ -129,6 +130,7 @@ function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
 		texture = showcase.texture,
 		GUID = showcase.GUID,
 		stands = stands,
+		logoId = showcase.logoId,
 	}
 end
 
@@ -167,6 +169,7 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		stands = stands,
 		name = showcase.name,
 		thumbId = showcase.thumbId,
+		logoId = showcase.logoId,
 		primaryColor = primaryColor,
 		accentColor = accentColor,
 		texture = texture,
