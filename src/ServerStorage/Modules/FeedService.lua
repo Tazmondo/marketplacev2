@@ -29,6 +29,7 @@ end
 
 type FeedData = { Types.Showcase }
 
+-- Only used if no other feeds can be fetched
 local DefaultShowcase: Types.Showcase = {
 	name = "Untitled Shop",
 	owner = 68252170,
