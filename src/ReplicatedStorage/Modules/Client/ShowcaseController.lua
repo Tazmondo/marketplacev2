@@ -267,6 +267,7 @@ function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 		not currentShowcase
 		or currentShowcase.GUID ~= showcase.GUID
 		or currentShowcase.layoutId ~= showcase.layoutId
+		or currentShowcase.mode ~= showcase.mode
 	then
 		if currentModel then
 			currentModel:Destroy()
