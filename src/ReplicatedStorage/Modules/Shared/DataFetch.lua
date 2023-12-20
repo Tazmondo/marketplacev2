@@ -9,6 +9,11 @@ type ProductInfo = {
 	Name: string,
 	Creator: { Name: string? },
 	PriceInRobux: number?,
+	CollectiblesItemDetails: {
+		CollectibleLowestResalePrice: number?,
+		TotalQuantity: number?,
+	}?,
+	Remaining: number?,
 }
 
 local cachedItems: { [number]: Types.Item } = {}
@@ -28,11 +33,17 @@ function DataFetch.GetItemDetails(assetId: number)
 			return nil
 		end
 
+		local price = if details.Remaining
+				and details.Remaining == 0
+				and details.CollectiblesItemDetails
+			then details.CollectiblesItemDetails.CollectibleLowestResalePrice
+			else details.PriceInRobux
+
 		local item: Types.Item = {
 			assetId = assetId,
 			name = details.Name,
 			creator = details.Creator.Name or "Roblox",
-			price = details.PriceInRobux,
+			price = price,
 		}
 
 		cachedItems[assetId] = item

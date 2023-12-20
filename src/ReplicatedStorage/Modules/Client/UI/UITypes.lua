@@ -199,6 +199,16 @@ export type Main = ScreenGui & {
 	},
 	Item: Frame & {
 		UICorner: UICorner,
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Close: Frame & {
+				UIListLayout: UIListLayout,
+				ImageButton: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+		},
 		Content: Frame & {
 			UIPadding: UIPadding,
 			Details: Frame & {
@@ -409,21 +419,33 @@ export type Main = ScreenGui & {
 		},
 		UICorner: UICorner,
 		TexturePicker: Frame & {
-			UIGridLayout: UIGridLayout,
-			UIPadding: UIPadding,
+			Wood: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pattern: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Tile: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			UICorner: UICorner,
 			Plastic: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Hexagon: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
+			UIGridLayout: UIGridLayout,
 			Concrete: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
+			Tile2: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIPadding: UIPadding,
 		},
 		UISizeConstraint: UISizeConstraint,
 		AccentColorPicker: Frame & {

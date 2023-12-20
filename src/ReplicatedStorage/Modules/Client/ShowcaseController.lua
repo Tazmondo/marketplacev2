@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local AddItemUI = require(ReplicatedStorage.Modules.Client.UI.AddItemUI)
+local ItemViewUI = require(ReplicatedStorage.Modules.Client.UI.ItemViewUI)
 local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
 local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
@@ -210,7 +211,7 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 				prompt.ObjectText = "Stand"
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					print("Todo: view item")
+					ItemViewUI:Display(stand.assetId)
 				end)
 			end
 		end
