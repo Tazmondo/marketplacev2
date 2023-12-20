@@ -70,9 +70,9 @@ function SetupLayout(id: LayoutId, thumbId: number)
 	})
 end
 
-SetupLayout("Shop 1", 15666375140)
-SetupLayout("Shop 2", 15666387406)
-SetupLayout("Shop 3", 15688247991)
+SetupLayout("Shop 1", 15688473519)
+SetupLayout("Shop 2", 15688473638)
+SetupLayout("Shop 3", 15688473772)
 
 function Layouts:GetDefaultLayoutId(): LayoutId
 	return "Shop 1"
