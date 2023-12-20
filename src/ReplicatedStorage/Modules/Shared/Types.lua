@@ -34,7 +34,7 @@ export type NetworkShowcase = {
 	texture: string,
 	GUID: string,
 
-	-- This would be a table with basepart keys but instance keys can't be sent across network boundaries
+	-- This would be a table with vector3 keys but instance keys can't be sent across network boundaries
 	stands: { Stand },
 	mode: ShowcaseMode,
 }
