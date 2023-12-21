@@ -1,3 +1,4 @@
+--!nolint LocalShadow
 local Layouts = require(script.Parent.Layouts)
 export type Item = {
 	creator: string,
@@ -47,4 +48,14 @@ export type LaunchData = {
 	GUID: string,
 }
 
-return {}
+export type FeedType = "Editor" | "Popular" | "Random"
+function GuardFeed(value: unknown): FeedType
+	local value: any = value
+
+	assert(value == "Editor" or value == "Random" or value == "Popular")
+	return value
+end
+
+return {
+	GuardFeed = GuardFeed,
+}

@@ -4,6 +4,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local RandomFeed = require(script.Parent.RandomFeed)
 local DataService = require(ServerStorage.Modules.DataService)
 local ShowcaseService = require(ServerStorage.Modules.ShowcaseService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
@@ -17,6 +18,7 @@ local Future = require(ReplicatedStorage.Packages.Future)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
+local SwitchFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.SwitchFeedEvent):Server()
 local MoveFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.MoveFeedEvent):Server()
 local UpdateFeedEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateFeedEvent):Server()
 
@@ -29,7 +31,10 @@ function GuardJoinData(data: unknown): Types.LaunchData
 	}
 end
 
-type FeedData = { Types.Showcase }
+type FeedData = {
+	showcases: { Types.Showcase },
+	type: Types.FeedType,
+}
 
 -- Only used if no other feeds can be fetched
 local DefaultShowcase: Types.Showcase = {
@@ -50,9 +55,9 @@ local feedData: { [Player]: FeedData } = {}
 local cachedEditorPicks: { Types.Showcase }? = nil
 
 function GetEditorsPicks()
-	return Future.new(function()
+	return Future.new(function(): { Types.Showcase }?
 		if cachedEditorPicks then
-			return cachedEditorPicks :: { Types.Showcase }?
+			return cachedEditorPicks
 		end
 
 		local editorId = 2294598404
@@ -113,18 +118,24 @@ function PlayerAdded(player: Player)
 	end
 
 	local targetedShowcase = if launchData then GetShowcase(launchData.ownerId, launchData.GUID):Await() else nil
+	local showcases = {}
 
 	if targetedShowcase then
-		feedData[player] = { targetedShowcase }
+		showcases = { targetedShowcase }
 	else
 		local editorPicks = GetEditorsPicks():Await()
 
 		if editorPicks then
-			feedData[player] = editorPicks
+			showcases = editorPicks
 		else
-			feedData[player] = { TableUtil.Copy(DefaultShowcase, true) }
+			showcases = { TableUtil.Copy(DefaultShowcase, true) }
 		end
 	end
+
+	feedData[player] = {
+		showcases = showcases,
+		type = "Editor",
+	}
 
 	UpdateFeedEvent:Fire(player, feedData[player])
 
@@ -156,6 +167,32 @@ function HandleMoveFeed(player: Player, newIndex: number)
 	ShowcaseService:EnterPlayerShowcase(player, place)
 end
 
+function HandleSwitchFeed(player: Player, type: Types.FeedType)
+	local data = feedData[player]
+	if data.type == type then
+		return
+	end
+
+	local feed
+	if type == "Editor" then
+		feed = GetEditorsPicks():Await()
+	elseif type == "Random" then
+		feed = RandomFeed.GetFeed(10):Await()
+	elseif type == "Popular" then
+		feed = { TableUtil.Copy(DefaultShowcase, true) }
+	end
+
+	if not feed or #feed <= 0 then
+		return
+	end
+
+	data.showcases = feed
+	data.type = type
+
+	local firstShowcase = ShowcaseService:GetShowcase(feed[1], "View"):Await()
+	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
+end
+
 function FeedService:Initialize()
 	Players.CharacterAutoLoads = false
 
@@ -167,6 +204,9 @@ function FeedService:Initialize()
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 
 	MoveFeedEvent:On(HandleMoveFeed)
+	SwitchFeedEvent:On(function(player, type)
+		HandleSwitchFeed(player, type :: Types.FeedType)
+	end)
 end
 
 FeedService:Initialize()
