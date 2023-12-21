@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
+local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 local Red = require(ReplicatedStorage.Packages.Red)
 
@@ -21,7 +22,7 @@ export type UpdateSettings = {
 
 export type UpdateLayout = {
 	type: "UpdateLayout",
-	layoutId: Layouts.LayoutId,
+	layoutId: LayoutData.LayoutId,
 }
 
 export type Update = UpdateStand | UpdateSettings | UpdateLayout

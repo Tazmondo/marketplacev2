@@ -1,6 +1,9 @@
 local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Config = require(script.Parent.Config)
-local Layouts = require(script.Parent.Layouts)
+
 local Material = require(script.Parent.Material)
 local Types = require(script.Parent.Types)
 local Data = {}
@@ -156,8 +159,8 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		then Color3.fromHex(showcase.accentColor)
 		else Config.DefaultAccentColor
 
-	local layoutId: Layouts.LayoutId = if Layouts:LayoutIdExists(showcase.layoutId)
-		then showcase.layoutId :: Layouts.LayoutId
+	local layoutId: LayoutData.LayoutId = if Layouts:LayoutIdExists(showcase.layoutId)
+		then showcase.layoutId :: LayoutData.LayoutId
 		else Layouts:GetDefaultLayoutId()
 
 	local texture: string = if Material:TextureExists(showcase.texture) then showcase.texture else Material:GetDefault()

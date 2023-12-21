@@ -1,12 +1,11 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
-local Config = require(script.Parent.Config)
-local Util = require(script.Parent.Util)
-
-export type LayoutId = "Shop 1" | "Shop 2" | "Shop 3" | "Shop 4"
+local LayoutData = require(script.Parent.LayoutData)
 
 export type Layout = {
-	id: LayoutId,
+	id: LayoutData.LayoutId,
 	displayThumbId: number,
 	modelTemplate: Model,
 	getValidStandPositions: () -> { [Vector3]: boolean },
@@ -14,7 +13,7 @@ export type Layout = {
 
 local LayoutFolder = ReplicatedStorage.Assets.Layouts :: Folder
 
-local savedLayouts: { [LayoutId]: Layout } = {}
+local savedLayouts: { [LayoutData.LayoutId]: Layout } = {}
 
 local Layouts = {}
 
@@ -41,15 +40,15 @@ function GenerateValidPositionFunction(model: Model): () -> { [Vector3]: boolean
 end
 
 function Layouts:LayoutIdExists(id: string)
-	return savedLayouts[id :: LayoutId] ~= nil
+	return savedLayouts[id :: LayoutData.LayoutId] ~= nil
 end
 
-function Layouts:GuardLayoutId(id: unknown): LayoutId
-	assert(typeof(id) == "string" and savedLayouts[id :: LayoutId] ~= nil)
-	return id :: LayoutId
+function Layouts:GuardLayoutId(id: unknown): LayoutData.LayoutId
+	assert(typeof(id) == "string" and savedLayouts[id :: LayoutData.LayoutId] ~= nil)
+	return id :: LayoutData.LayoutId
 end
 
-function Layouts:GetLayout(id: LayoutId)
+function Layouts:GetLayout(id: LayoutData.LayoutId)
 	return savedLayouts[id]
 end
 
@@ -58,7 +57,7 @@ function Layouts:GetLayouts()
 end
 
 -- Cause writing the table out every time is a pain
-function SetupLayout(id: LayoutId, thumbId: number)
+function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 	local model = LayoutFolder:FindFirstChild(id)
 	assert(model and model:IsA("Model"), `Could not find model layout with id: {id}`)
 
@@ -79,13 +78,12 @@ function SetupLayout(id: LayoutId, thumbId: number)
 	})
 end
 
-SetupLayout("Shop 1", 15688473519)
-SetupLayout("Shop 2", 15688473638)
-SetupLayout("Shop 3", 15688473772)
-SetupLayout("Shop 4", 15693431898)
-
-function Layouts:GetDefaultLayoutId(): LayoutId
+function Layouts:GetDefaultLayoutId(): LayoutData.LayoutId
 	return "Shop 1"
+end
+
+for layout: LayoutData.LayoutId, thumbnail in LayoutData.layoutData do
+	SetupLayout(layout, thumbnail)
 end
 
 return Layouts

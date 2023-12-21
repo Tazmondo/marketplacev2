@@ -7,7 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ShowcaseNavigationUI = require(script.Parent.ShowcaseNavigationUI)
 local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
-local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts)
+local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Base64 = require(ReplicatedStorage.Packages.Base64)
 local UILoader = require(script.Parent.UILoader)
@@ -205,7 +206,7 @@ function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
 	UpdateLayoutSelection(showcase.layoutId)
 end
 
-function SwitchLayout(id: Layouts.LayoutId)
+function SwitchLayout(id: LayoutData.LayoutId)
 	UpdateLayoutSelection(id)
 	UpdateShowcaseEvent:Fire({
 		type = "UpdateLayout",

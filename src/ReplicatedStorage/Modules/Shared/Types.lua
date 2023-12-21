@@ -1,5 +1,6 @@
 --!nolint LocalShadow
-local Layouts = require(script.Parent.Layouts)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 export type Item = {
 	creator: string,
 	name: string,
@@ -14,7 +15,7 @@ export type Stand = {
 
 export type Showcase = {
 	owner: number, -- UserId
-	layoutId: Layouts.LayoutId,
+	layoutId: LayoutData.LayoutId,
 	name: string,
 	thumbId: number,
 	logoId: number?,
@@ -29,7 +30,7 @@ export type ShowcaseMode = "View" | "Edit"
 
 export type NetworkShowcase = {
 	owner: number,
-	layoutId: Layouts.LayoutId,
+	layoutId: LayoutData.LayoutId,
 	name: string,
 	thumbId: number,
 	logoId: number?,
