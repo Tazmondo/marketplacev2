@@ -14,6 +14,11 @@ local usedShowcases: { [string]: true? } = {}
 local cachedRandomFeed: { Types.Showcase }? = nil
 local random = Random.new()
 
+function IsShowcaseValid(showcase: Data.Showcase): boolean
+	-- We don't want empty showcases clogging up the feed
+	return #showcase.stands >= 8
+end
+
 function GenerateFeedSegment()
 	return Future.new(function()
 		local feed = {}
@@ -34,7 +39,7 @@ function GenerateFeedSegment()
 
 			local filteredShowcases = {}
 			for i, showcase in data.showcases do
-				if not usedShowcases[showcase.GUID] then
+				if not usedShowcases[showcase.GUID] and IsShowcaseValid(showcase) then
 					table.insert(filteredShowcases, showcase)
 				end
 			end
