@@ -14,7 +14,7 @@ local ReplicateDataEvent = require(ReplicatedStorage.Events.Data.ReplicateDataEv
 
 local STOREPREFIX = "PlayerData8"
 local PLAYERPREFIX = "Player_"
-local CACHETIMEOUT = 60 * 60
+local CACHETIMEOUT = 60 * 5
 
 local ProfileStore = assert(
 	ProfileService.GetProfileStore(STOREPREFIX, Data.dataTemplate),
@@ -60,7 +60,10 @@ function PlayerRemoving(player: Player)
 	local profile = profiles[player]
 	if profile ~= nil then
 		-- Might not need to deep copy here, but doing it just to be safe.
-		cachedShowcases[player.UserId] = { cachedTime = tick(), data = TableUtil.Copy(profile.Data, true) }
+		cachedShowcases[player.UserId] = {
+			cachedTime = tick(),
+			data = TableUtil.Copy(profile.Data, true),
+		}
 		profile:Release()
 	end
 end

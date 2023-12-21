@@ -11,7 +11,7 @@ local PLAYERLISTKEY = "BasicPlayerList"
 
 -- Actual limit is something like 333333, but just to be safe doing less.
 -- Also need to contend with the experience wide 25MB/min read and 4MB/min write limit.
-local MAXPLAYERS = 100000
+local MAXPLAYERS = 330000
 
 -- Store as lists because they take up less space in datastore, and allow for random indexing, but convert to maps for O(1) look-up times
 -- Comes at a cost to server memory and some processing time but overall it saves more time as the indexing saves a lot of iterations.
@@ -30,7 +30,6 @@ local tempData: Data = {
 	length = 0,
 }
 local random = Random.new()
-local invalidPlayers: { number } = {}
 
 function GetSavedData()
 	return Future.new(function()
@@ -50,28 +49,69 @@ function GetSavedData()
 	end)
 end
 
--- This is optional because it is a valid case for there to be no players in the datastore.
-function RandomPlayerService:GetPlayer()
-	return Future.new(function()
+--- This is optional because it is a valid case for there to be no players in the datastore.
+function RandomPlayerService:GetPlayer(ignoreSet: { [number]: true? }?)
+	return Future.new(function(): number?
+		-- # should work since the keys are numerical but i don't want to risk it
+		local ignoreLength = 0
+		if ignoreSet then
+			for _, _ in ignoreSet do
+				ignoreLength += 1
+			end
+		end
+
 		local data = GetSavedData():Await()
+
 		local totalLimit = data.length + tempData.length
 
-		local randomIndex = random:NextInteger(1, totalLimit)
+		if ignoreLength >= totalLimit then
+			return nil
+		end
+
+		local filteredData
+		local filteredTempData
+
+		if ignoreSet then
+			filteredData = {}
+			filteredTempData = {}
+
+			for i, id in data.list do
+				if not ignoreSet[id] then
+					table.insert(filteredData, id)
+				end
+			end
+
+			for i, id in tempData.list do
+				if not ignoreSet[id] then
+					table.insert(filteredTempData, id)
+				end
+			end
+		else
+			filteredData = data.list
+			filteredTempData = tempData.list
+		end
+
+		local totalFilteredLimit = #filteredData + #filteredTempData
+		if totalFilteredLimit == 0 then
+			return nil
+		end
+
+		local randomIndex = random:NextInteger(1, totalFilteredLimit)
 
 		local player
 
 		if randomIndex <= data.length then
 			-- Index falls in the range of the saved data
 
-			player = data.list[randomIndex]
+			player = filteredData[randomIndex]
 		else
 			-- Index falls in range of the temporary data
 
 			local correctedIndex = randomIndex - data.length
-			player = tempData.list[correctedIndex]
+			player = filteredTempData[correctedIndex]
 		end
 
-		return player or nil -- so it's inferred as number
+		return player
 	end)
 end
 
@@ -112,17 +152,8 @@ function GameClosing()
 	end)
 end
 
-function RandomPlayerService:Initialize()
-	game:BindToClose(GameClosing)
-
-	Players.PlayerAdded:Connect(function(player)
-		RandomPlayerService:AddPlayer(player.UserId)
-	end)
-	for i, player in Players:GetPlayers() do
-		RandomPlayerService:AddPlayer(player.UserId)
-	end
-
-	task.spawn(function()
+function LoadData()
+	return Future.new(function()
 		local savedList = PlayerStore:GetAsync(PLAYERLISTKEY) or {}
 		local savedMap: { [number]: true } = {}
 		local length = #savedList
@@ -140,6 +171,19 @@ function RandomPlayerService:Initialize()
 		print(`Loaded random player list. Length: {length}`)
 		print(RandomPlayerService:GetPlayer():Await())
 	end)
+end
+
+function RandomPlayerService:Initialize()
+	game:BindToClose(GameClosing)
+
+	Players.PlayerAdded:Connect(function(player)
+		RandomPlayerService:AddPlayer(player.UserId)
+	end)
+	for i, player in Players:GetPlayers() do
+		RandomPlayerService:AddPlayer(player.UserId)
+	end
+
+	LoadData()
 end
 
 RandomPlayerService:Initialize()
