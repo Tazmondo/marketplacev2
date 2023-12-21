@@ -26,7 +26,7 @@ local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.
 local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Server()
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Server()
 
-type Showcase = {
+type ActiveShowcase = {
 	stands: { Types.Stand },
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
@@ -45,9 +45,9 @@ type Showcase = {
 	thumbId: number,
 }
 
-local placeTable: { Showcase } = {}
+local placeTable: { ActiveShowcase } = {}
 
-local playerShowcases: { [Player]: Showcase } = {}
+local playerShowcases: { [Player]: ActiveShowcase } = {}
 
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
@@ -121,7 +121,7 @@ function ReplicateAsset(assetId: number)
 	end)
 end
 
-function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
+function ToNetworkShowcase(showcase: ActiveShowcase): Types.NetworkShowcase
 	return {
 		stands = showcase.stands,
 		layoutId = showcase.layout.id,
@@ -137,7 +137,7 @@ function ToNetworkShowcase(showcase: Showcase): Types.NetworkShowcase
 	}
 end
 
-function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: Showcase)
+function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: ActiveShowcase)
 	showcase.playersPresent[player] = nil
 
 	if next(showcase.playersPresent) == nil then
@@ -153,7 +153,7 @@ function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: Showcase)
 	UpdateVisiblePlayersEvent:FireList(visiblePlayers, visiblePlayers)
 end
 
-function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
+function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: ActiveShowcase)
 	local oldPlace = playerShowcases[player]
 	if oldPlace then
 		ShowcaseService:ExitPlayerShowcase(player, oldPlace)
@@ -171,7 +171,7 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: Showcase)
 	UpdateVisiblePlayersEvent:FireList(visiblePlayers, visiblePlayers)
 end
 
-function SaveShowcase(showcase: Showcase)
+function SaveShowcase(showcase: ActiveShowcase)
 	local owner = Players:GetPlayerByUserId(showcase.owner)
 	if not owner then
 		warn("Tried to save showcase for player not in-game")
@@ -273,7 +273,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 		-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
 		local stands = PopulateLayoutStands(showcase.stands, layout.getValidStandPositions())
 
-		local place: Showcase = {
+		local place: ActiveShowcase = {
 			stands = stands,
 			layout = layout,
 			owner = showcase.owner,
@@ -295,7 +295,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 	end)
 end
 
-function ShowcaseService:UnloadPlace(place: Showcase)
+function ShowcaseService:UnloadPlace(place: ActiveShowcase)
 	if next(place.playersPresent) ~= nil then
 		warn("Unloaded a place while players were still inside it!")
 	end
