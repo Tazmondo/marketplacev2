@@ -157,6 +157,13 @@ function HandleMoveFeed(player: Player, newIndex: number)
 		return
 	end
 
+	if playerFeedData.type == "Random" and #playerFeedData.showcases - newIndex <= 3 then
+		RandomFeed.GetFeed(#playerFeedData.showcases + 10):After(function(showcases)
+			playerFeedData.showcases = showcases
+			UpdateFeedEvent:Fire(player, playerFeedData)
+		end)
+	end
+
 	local place = ShowcaseService:GetShowcase(showcase, "View")
 	ShowcaseService:EnterPlayerShowcase(player, place)
 end

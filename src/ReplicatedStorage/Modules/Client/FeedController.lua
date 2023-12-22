@@ -30,7 +30,7 @@ function HandleUpdateFeed(feed: Types.FeedData)
 	local newIndex = 1
 
 	-- Preserve the index so it still matches up with the current showcase if the feed has changed in some way
-	if currentFeed and currentIndex then
+	if currentFeed and currentIndex and currentFeed.type == feed.type then
 		local difference = #feed.showcases - #currentFeed.showcases
 		if
 			difference >= 0
