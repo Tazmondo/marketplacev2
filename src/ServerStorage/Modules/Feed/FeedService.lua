@@ -31,11 +31,6 @@ function GuardJoinData(data: unknown): Types.LaunchData
 	}
 end
 
-type FeedData = {
-	showcases: { Types.Showcase },
-	type: Types.FeedType,
-}
-
 -- Only used if no other feeds can be fetched
 local DefaultShowcase: Types.Showcase = {
 	name = "Untitled Shop",
@@ -50,7 +45,7 @@ local DefaultShowcase: Types.Showcase = {
 }
 TableUtil.Lock(DefaultShowcase)
 
-local feedData: { [Player]: FeedData } = {}
+local feedData: { [Player]: Types.FeedData } = {}
 
 local cachedEditorPicks: { Types.Showcase }? = nil
 
@@ -139,10 +134,9 @@ function PlayerAdded(player: Player)
 
 	UpdateFeedEvent:Fire(player, feedData[player])
 
-	local showcase = feedData[player][1]
+	local showcase = showcases[1]
 
-	-- Yields
-	local place = ShowcaseService:GetShowcase(showcase, "View"):Await()
+	local place = ShowcaseService:GetShowcase(showcase, "View")
 
 	player:LoadCharacter()
 	ShowcaseService:EnterPlayerShowcase(player, place)
@@ -158,12 +152,12 @@ function HandleMoveFeed(player: Player, newIndex: number)
 		return
 	end
 
-	local showcase = playerFeedData[newIndex]
+	local showcase = playerFeedData.showcases[newIndex]
 	if not showcase then
 		return
 	end
 
-	local place = ShowcaseService:GetShowcase(showcase, "View"):Await()
+	local place = ShowcaseService:GetShowcase(showcase, "View")
 	ShowcaseService:EnterPlayerShowcase(player, place)
 end
 
@@ -189,7 +183,9 @@ function HandleSwitchFeed(player: Player, type: Types.FeedType)
 	data.showcases = feed
 	data.type = type
 
-	local firstShowcase = ShowcaseService:GetShowcase(feed[1], "View"):Await()
+	UpdateFeedEvent:Fire(player, feedData[player])
+
+	local firstShowcase = ShowcaseService:GetShowcase(feed[1], "View")
 	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
 end
 

@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 
+local Types = require(script.Parent.Types)
 local UITypes = require(ReplicatedStorage.Modules.Client.UI.UITypes)
 
 local colorPickers = (StarterGui:FindFirstChild("Main") :: UITypes.Main).ControllerEdit
@@ -46,6 +47,8 @@ local Config = {
 	DefaultAccentColor = Color3.fromRGB(215, 197, 154),
 
 	DefaultShopThumbnail = 15664989981,
+
+	DefaultFeed = "Editor" :: Types.FeedType,
 }
 
 assert(PrimaryColors[Config.DefaultPrimaryColor:ToHex()], "Default primary color was not a valid color")

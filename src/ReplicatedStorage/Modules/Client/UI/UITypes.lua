@@ -1,7 +1,42 @@
 export type Nav = ScreenGui & {
-	Category: TextButton & {
-		UIListLayout: UIListLayout,
-		ShopName: TextLabel,
+	Feed: Frame & {
+		Frame: Frame & {
+			Editor: ImageButton & {
+				UIPadding: UIPadding,
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+				Feed: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+			Popular: ImageButton & {
+				UIPadding: UIPadding,
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+				Feed: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+			UIListLayout: UIListLayout,
+			UICorner: UICorner,
+			Random: ImageButton & {
+				UIPadding: UIPadding,
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+				Feed: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+			UIPadding: UIPadding,
+		},
+		Current: ImageButton & {
+			UIPadding: UIPadding,
+			UICorner: UICorner,
+			Expand: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			Feed: TextLabel,
+			UIListLayout: UIListLayout,
+		},
 	},
 	Nav: Frame & {
 		UIListLayout: UIListLayout,
@@ -9,10 +44,13 @@ export type Nav = ScreenGui & {
 			UIListLayout: UIListLayout,
 			ImageButton: ImageButton & {
 				UICorner: UICorner,
+				UIStroke: UIStroke,
 			},
 		},
-		Player: ImageButton & {
+		UISizeConstraint: UISizeConstraint,
+		Invite: ImageButton & {
 			UICorner: UICorner,
+			UIStroke: UIStroke,
 			UIListLayout: UIListLayout,
 			ImageButton: ImageLabel & {
 				UICorner: UICorner,
@@ -22,6 +60,200 @@ export type Nav = ScreenGui & {
 }
 
 export type Main = ScreenGui & {
+	Welcome: Frame & {
+		UICorner: UICorner,
+		Frame: Frame & {
+			TextLabel: TextLabel,
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Content: Frame & {
+				UIPadding: UIPadding,
+				UIListLayout: UIListLayout,
+			},
+			Actions: Frame & {
+				UIListLayout: UIListLayout,
+				UISizeConstraint: UISizeConstraint,
+				PrimaryButton: TextButton & {
+					UIListLayout: UIListLayout,
+					TextLabel: TextLabel,
+					UICorner: UICorner,
+				},
+			},
+		},
+		UIPadding: UIPadding,
+		UISizeConstraint: UISizeConstraint,
+	},
+	Showcase: Frame & {
+		UIPadding: UIPadding,
+		List: ScrollingFrame & {
+			UIListLayout: UIListLayout,
+			Row: Frame & {
+				UIListLayout: UIListLayout,
+				UIPadding: UIPadding,
+				Thumb: ImageLabel & {
+					UICorner: UICorner,
+					UIStroke: UIStroke,
+					Added: ImageLabel & {
+						UICorner: UICorner,
+						UIStroke: UIStroke,
+					},
+				},
+				Details: Frame & {
+					NameLabel: TextLabel,
+					Serial: TextLabel,
+					UIListLayout: UIListLayout,
+				},
+				UICorner: UICorner,
+				UISizeConstraint: UISizeConstraint,
+				Price: Frame & {
+					Price: Frame & {
+						UIListLayout: UIListLayout,
+						Price: TextLabel,
+						ImageLabel: ImageLabel,
+					},
+					Select: TextButton & {
+						UICorner: UICorner,
+					},
+					UIListLayout: UIListLayout,
+				},
+			},
+		},
+		UICorner: UICorner,
+		Title: Frame & {
+			UIPadding: UIPadding,
+			Close: Frame & {
+				UIListLayout: UIListLayout,
+				ImageButton: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+			UIListLayout: UIListLayout,
+			UISizeConstraint: UISizeConstraint,
+			Title: Frame & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		UIListLayout: UIListLayout,
+	},
+	CreateShop: Frame & {
+		UICorner: UICorner,
+		Frame: Frame & {
+			TextLabel: TextLabel,
+			Actions: Frame & {
+				UIListLayout: UIListLayout,
+				TertiaryButton: TextButton & {
+					UIListLayout: UIListLayout,
+					TextLabel: TextLabel,
+					UICorner: UICorner,
+				},
+				UISizeConstraint: UISizeConstraint,
+				PrimaryButton: TextButton & {
+					UIListLayout: UIListLayout,
+					TextLabel: TextLabel,
+					UICorner: UICorner,
+				},
+			},
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Content: Frame & {
+				UIListLayout: UIListLayout,
+				UIPadding: UIPadding,
+			},
+			ImageButton: ImageLabel,
+		},
+		UIPadding: UIPadding,
+		UISizeConstraint: UISizeConstraint,
+	},
+	AddItemID: Frame & {
+		UICorner: UICorner,
+		Frame: Frame & {
+			TextLabel: TextLabel,
+			UIPadding: UIPadding,
+			UIListLayout: UIListLayout,
+			TextBox: TextBox & {
+				UICorner: UICorner,
+			},
+			Actions: Frame & {
+				UIListLayout: UIListLayout,
+				Add: TextButton & {
+					UICorner: UICorner,
+					TextLabel: TextLabel,
+					UIListLayout: UIListLayout,
+				},
+			},
+			ImageButton: ImageLabel & {
+				UICorner: UICorner,
+			},
+		},
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Close: Frame & {
+				UIListLayout: UIListLayout,
+				ImageButton: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+	},
+	ShopSettings: Frame & {
+		UIPadding: UIPadding,
+		UICorner: UICorner,
+		Frame: Frame & {
+			Thumbnail: Frame & {
+				UICorner: UICorner,
+				TextBox: TextBox & {
+					UICorner: UICorner,
+					UIPadding: UIPadding,
+				},
+				TextLabel: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+			UIPadding: UIPadding,
+			ShopThumbnail: ImageLabel & {
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+			},
+			UIListLayout: UIListLayout,
+			Logo: Frame & {
+				UICorner: UICorner,
+				TextBox: TextBox & {
+					UICorner: UICorner,
+					UIPadding: UIPadding,
+				},
+				TextLabel: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+			Actions: Frame & {
+				UIListLayout: UIListLayout,
+				Save: TextButton & {
+					UICorner: UICorner,
+					TextLabel: TextLabel,
+					UIListLayout: UIListLayout,
+				},
+			},
+			ShopName: Frame & {
+				UICorner: UICorner,
+				["Shop Name"]: TextLabel,
+				TextBox: TextBox & {
+					UICorner: UICorner,
+					UIPadding: UIPadding,
+				},
+				UIListLayout: UIListLayout,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			Close: ImageButton & {
+				UICorner: UICorner,
+				UIPadding: UIPadding,
+			},
+		},
+	},
 	Profile: Frame & {
 		Total: Frame & {
 			UIPadding: UIPadding,
@@ -164,39 +396,6 @@ export type Main = ScreenGui & {
 		UISizeConstraint: UISizeConstraint,
 		UICorner: UICorner,
 	},
-	AddItemID: Frame & {
-		UIPadding: UIPadding,
-		UICorner: UICorner,
-		Frame: Frame & {
-			TextLabel: TextLabel,
-			TextBox: TextBox & {
-				UICorner: UICorner,
-			},
-			UIListLayout: UIListLayout,
-			UIPadding: UIPadding,
-			Actions: Frame & {
-				UIListLayout: UIListLayout,
-				Add: TextButton & {
-					UICorner: UICorner,
-					TextLabel: TextLabel,
-					UIListLayout: UIListLayout,
-				},
-			},
-			ImageButton: ImageLabel & {
-				UICorner: UICorner,
-			},
-		},
-		UISizeConstraint: UISizeConstraint,
-		Title: Frame & {
-			UIListLayout: UIListLayout,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-		},
-	},
 	Item: Frame & {
 		UICorner: UICorner,
 		UISizeConstraint: UISizeConstraint,
@@ -249,60 +448,6 @@ export type Main = ScreenGui & {
 				},
 			},
 		},
-	},
-	Showcase: Frame & {
-		UIPadding: UIPadding,
-		List: ScrollingFrame & {
-			UIListLayout: UIListLayout,
-			Row: Frame & {
-				UIListLayout: UIListLayout,
-				UIPadding: UIPadding,
-				Thumb: ImageLabel & {
-					UICorner: UICorner,
-					UIStroke: UIStroke,
-					Added: ImageLabel & {
-						UICorner: UICorner,
-						UIStroke: UIStroke,
-					},
-				},
-				Details: Frame & {
-					NameLabel: TextLabel,
-					Serial: TextLabel,
-					UIListLayout: UIListLayout,
-				},
-				UICorner: UICorner,
-				UISizeConstraint: UISizeConstraint,
-				Price: Frame & {
-					Price: Frame & {
-						UIListLayout: UIListLayout,
-						Price: TextLabel,
-						ImageLabel: ImageLabel,
-					},
-					Select: TextButton & {
-						UICorner: UICorner,
-					},
-					UIListLayout: UIListLayout,
-				},
-			},
-		},
-		UICorner: UICorner,
-		Title: Frame & {
-			UIPadding: UIPadding,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UIListLayout: UIListLayout,
-			UISizeConstraint: UISizeConstraint,
-			Title: Frame & {
-				UIListLayout: UIListLayout,
-				TextLabel: TextLabel,
-			},
-		},
-		UISizeConstraint: UISizeConstraint,
-		UIListLayout: UIListLayout,
 	},
 	ControllerEdit: Frame & {
 		TexturePicker: Frame & {
@@ -494,34 +639,22 @@ export type Main = ScreenGui & {
 			},
 		},
 	},
-	CreateShop: Frame & {
+	Search: Frame & {
 		UICorner: UICorner,
 		Frame: Frame & {
-			TextLabel: TextLabel,
-			UIPadding: UIPadding,
 			UIListLayout: UIListLayout,
-			Content: Frame & {
-				UIPadding: UIPadding,
-				UIListLayout: UIListLayout,
-			},
 			Actions: Frame & {
 				UIListLayout: UIListLayout,
-				TertiaryButton: TextButton & {
-					UIListLayout: UIListLayout,
-					TextLabel: TextLabel,
+				Save: TextButton & {
 					UICorner: UICorner,
-				},
-				UISizeConstraint: UISizeConstraint,
-				PrimaryButton: TextButton & {
-					UIListLayout: UIListLayout,
 					TextLabel: TextLabel,
-					UICorner: UICorner,
+					UIListLayout: UIListLayout,
 				},
 			},
-			ImageButton: ImageLabel,
+			UIPadding: UIPadding,
 		},
-		UIPadding: UIPadding,
 		UISizeConstraint: UISizeConstraint,
+		UIPadding: UIPadding,
 	},
 	ControllerNav: Frame & {
 		UIListLayout: UIListLayout,
@@ -558,60 +691,26 @@ export type Main = ScreenGui & {
 			UIPadding: UIPadding,
 		},
 	},
-	ShopSettings: Frame & {
-		UIPadding: UIPadding,
+	Explore: Frame & {
 		UICorner: UICorner,
-		Frame: Frame & {
-			Thumbnail: Frame & {
-				UICorner: UICorner,
-				TextBox: TextBox & {
+		ScrollingFrame: ScrollingFrame & {
+			Row: ImageButton & {
+				Thumb: ImageLabel & {
 					UICorner: UICorner,
-					UIPadding: UIPadding,
 				},
-				TextLabel: TextLabel,
-				UIListLayout: UIListLayout,
-			},
-			UIPadding: UIPadding,
-			ShopThumbnail: ImageLabel & {
 				UICorner: UICorner,
 				UIStroke: UIStroke,
-			},
-			UIListLayout: UIListLayout,
-			Logo: Frame & {
-				UICorner: UICorner,
-				TextBox: TextBox & {
-					UICorner: UICorner,
-					UIPadding: UIPadding,
-				},
-				TextLabel: TextLabel,
-				UIListLayout: UIListLayout,
-			},
-			Actions: Frame & {
-				UIListLayout: UIListLayout,
-				Save: TextButton & {
-					UICorner: UICorner,
-					TextLabel: TextLabel,
+				Details: Frame & {
+					NameLabel: TextLabel,
+					Price: TextLabel,
 					UIListLayout: UIListLayout,
 				},
-			},
-			ShopName: Frame & {
-				UICorner: UICorner,
-				["Shop Name"]: TextLabel,
-				TextBox: TextBox & {
-					UICorner: UICorner,
-					UIPadding: UIPadding,
-				},
 				UIListLayout: UIListLayout,
 			},
+			UIGridLayout: UIGridLayout,
 		},
+		UIPadding: UIPadding,
 		UISizeConstraint: UISizeConstraint,
-		Title: Frame & {
-			UIListLayout: UIListLayout,
-			Close: ImageButton & {
-				UICorner: UICorner,
-				UIPadding: UIPadding,
-			},
-		},
 	},
 }
 

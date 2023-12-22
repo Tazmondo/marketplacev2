@@ -57,6 +57,11 @@ function GuardFeed(value: unknown): FeedType
 	return value
 end
 
+export type FeedData = {
+	showcases: { Showcase },
+	type: FeedType,
+}
+
 return {
 	GuardFeed = GuardFeed,
 }

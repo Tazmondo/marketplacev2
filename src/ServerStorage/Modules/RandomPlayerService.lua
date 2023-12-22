@@ -169,7 +169,6 @@ function LoadData()
 		}
 
 		print(`Loaded random player list. Length: {length}`)
-		print(RandomPlayerService:GetPlayer():Await())
 	end)
 end
 

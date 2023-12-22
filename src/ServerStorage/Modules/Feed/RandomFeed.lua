@@ -26,6 +26,7 @@ end
 
 function GenerateFeedSegment()
 	return Future.new(function()
+		print("Generating feed segment...")
 		-- If this is being called too much then wait
 		rateLimit()
 
@@ -87,13 +88,14 @@ function RandomFeed.GetFeed(desiredLength: number?)
 
 		while #cachedFeed <= desiredLength do
 			local newFeed = GenerateFeedSegment():Await()
-			if #newFeed == 0 then
-				-- No more showcases can be fetched.
-				return cachedFeed
-			end
 
 			for i, showcase in newFeed do
 				table.insert(cachedFeed, showcase)
+			end
+
+			if #newFeed < FEEDSEGMENTLENGTH then
+				-- No more showcases can be fetched.
+				return cachedFeed
 			end
 		end
 
@@ -105,8 +107,9 @@ function RandomFeed.GetFeed(desiredLength: number?)
 	return future
 end
 
+-- Pre-load some random showcases
 task.spawn(function()
-	print(RandomFeed.GetFeed():Await())
+	print("Pre-loaded random showcases: ", RandomFeed.GetFeed(10):Await())
 end)
 
 return RandomFeed

@@ -155,7 +155,9 @@ end
 
 function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: ActiveShowcase)
 	local oldPlace = playerShowcases[player]
-	if oldPlace then
+
+	-- Need to check GUIDs are different otherwise it will try and delete the old place.
+	if oldPlace and oldPlace.GUID ~= showcase.GUID then
 		ShowcaseService:ExitPlayerShowcase(player, oldPlace)
 	end
 
@@ -258,41 +260,39 @@ function PopulateLayoutStands(savedStands: { Types.Stand }, standPositions: { [V
 end
 
 function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.ShowcaseMode)
-	return Future.new(function()
-		-- Check for already existing showcase with the same GUID, but only for viewing. Showcases in edit mode should
-		-- Be kept entirely separate because the mode is stored within the showcase data itself, and not on a per-player basis.
-		for i, place in placeTable do
-			if place.GUID == showcase.GUID and mode == "View" and place.mode == "View" then
-				return place
-			end
+	-- Check for already existing showcase with the same GUID, but only for viewing. Showcases in edit mode should
+	-- Be kept entirely separate because the mode is stored within the showcase data itself, and not on a per-player basis.
+	for i, place in placeTable do
+		if place.GUID == showcase.GUID and mode == "View" and place.mode == "View" then
+			return place
 		end
+	end
 
-		local layout = Layouts:GetLayout(showcase.layoutId)
+	local layout = Layouts:GetLayout(showcase.layoutId)
 
-		-- Every physical part should have a registered stand
-		-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
-		local stands = PopulateLayoutStands(showcase.stands, layout.getValidStandPositions())
+	-- Every physical part should have a registered stand
+	-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
+	local stands = PopulateLayoutStands(showcase.stands, layout.getValidStandPositions())
 
-		local place: ActiveShowcase = {
-			stands = stands,
-			layout = layout,
-			owner = showcase.owner,
-			playersPresent = {},
-			mode = mode,
-			GUID = showcase.GUID,
-			name = showcase.name,
-			primaryColor = showcase.primaryColor,
-			accentColor = showcase.accentColor,
-			texture = showcase.texture,
-			lastUpdate = os.clock(),
-			thumbId = showcase.thumbId,
-			logoId = showcase.logoId,
-		}
+	local place: ActiveShowcase = {
+		stands = stands,
+		layout = layout,
+		owner = showcase.owner,
+		playersPresent = {},
+		mode = mode,
+		GUID = showcase.GUID,
+		name = showcase.name,
+		primaryColor = showcase.primaryColor,
+		accentColor = showcase.accentColor,
+		texture = showcase.texture,
+		lastUpdate = os.clock(),
+		thumbId = showcase.thumbId,
+		logoId = showcase.logoId,
+	}
 
-		table.insert(placeTable, place)
+	table.insert(placeTable, place)
 
-		return place
-	end)
+	return place
 end
 
 function ShowcaseService:UnloadPlace(place: ActiveShowcase)
@@ -304,7 +304,7 @@ function ShowcaseService:UnloadPlace(place: ActiveShowcase)
 	if index then
 		table.remove(placeTable, index)
 	else
-		warn(debug.traceback("Tried to unload a place with the wrong index! Should never occur."))
+		warn(debug.traceback("Tried to unload a place without it existing in the place table! Should never occur."))
 	end
 end
 
@@ -354,7 +354,7 @@ function HandleEditShowcase(player: Player, GUID: string)
 		return
 	end
 
-	local place = ShowcaseService:GetShowcase(chosenShowcase, "Edit"):Await()
+	local place = ShowcaseService:GetShowcase(chosenShowcase, "Edit")
 	ShowcaseService:EnterPlayerShowcase(player, place)
 end
 

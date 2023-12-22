@@ -23,11 +23,11 @@ local ProfileStore = assert(
 
 type CachedProfile = {
 	cachedTime: number,
-	data: Data.Data?,
+	data: Future.Future<Data.Data?>,
 }
 
 local profiles: { [Player]: ProfileService.Profile<Data.Data> } = {}
-local cachedShowcases: { [number]: CachedProfile } = {}
+local cachedShowcases: { [number]: CachedProfile? } = {}
 
 function GetKey(userId: number)
 	return PLAYERPREFIX .. userId
@@ -69,23 +69,25 @@ function PlayerRemoving(player: Player)
 end
 
 function FetchOfflineData(userId: number)
-	return Future.new(function()
+	print("Fetching offline data for", userId)
+
+	local dataFuture = Future.new(function(userId): Data.Data?
 		local profile = ProfileStore:ViewProfileAsync(GetKey(userId))
 		if profile then
 			Data.Migrate(profile.Data)
-
-			cachedShowcases[userId] = {
-				cachedTime = tick(),
-				data = profile.Data,
-			}
-		else
-			cachedShowcases[userId] = {
-				cachedTime = tick(),
-				data = nil,
-			}
+			print("Fetched offline data for", userId)
+			return profile.Data
 		end
-		return profile
-	end)
+
+		return nil
+	end, userId)
+
+	cachedShowcases[userId] = {
+		cachedTime = tick(),
+		data = dataFuture,
+	}
+
+	return dataFuture
 end
 
 function DataService:ReadOfflineData(userId: number, bypassCache: boolean?)
@@ -99,15 +101,11 @@ function DataService:ReadOfflineData(userId: number, bypassCache: boolean?)
 
 		local cache = cachedShowcases[userId]
 		if cache and tick() - cache.cachedTime <= CACHETIMEOUT and not bypassCache then
-			return cache.data
+			return cache.data:Await()
 		end
 
-		local profile = FetchOfflineData(userId):Await()
-		if profile then
-			return profile.Data
-		else
-			return nil :: Data.Data?
-		end
+		local data = FetchOfflineData(userId):Await()
+		return data
 	end)
 end
 
