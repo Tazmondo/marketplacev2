@@ -15,6 +15,12 @@ local gui = UILoader:GetNavigation()
 local nav = gui.Nav
 local feedUI = gui.Feed
 
+local feedNames: { [Types.FeedType]: string } = {
+	["Editor"] = "Editor's Picks",
+	["Popular"] = "Most Popular",
+	["Random"] = "Random",
+}
+
 function ProfileClicked()
 	ProfileUI:Toggle()
 end
@@ -33,7 +39,7 @@ function RegisterFeedButton(button: ImageButton)
 end
 
 function HandleFeedUpdated(feed: Types.FeedData, index: number)
-	feedUI.Current.Feed.Text = feed.type
+	feedUI.Current.Feed.Text = feedNames[feed.type]
 end
 
 function NavigationUI:Initialize()
