@@ -2,6 +2,7 @@ local RandomFeed = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local DataService = require(ServerStorage.Modules.DataService)
 local RandomPlayerService = require(ServerStorage.Modules.RandomPlayerService)
@@ -21,7 +22,7 @@ local rateLimit = Util.CreateRateDelay(FEEDRATELIMIT)
 
 function IsShowcaseValid(showcase: Data.Showcase): boolean
 	-- We don't want empty showcases clogging up the feed
-	return #showcase.stands >= 8
+	return #showcase.stands >= Config.MinimumStandsForRandom
 end
 
 function GenerateFeedSegment()
