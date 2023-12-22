@@ -9,7 +9,9 @@ local layoutData: { [LayoutId]: number } = {
 	["Shop 3"] = 15688473772,
 	["Shop 4"] = 15693431898,
 }
+
 TableUtil.Lock(layoutData)
+
 return {
 	layoutData = layoutData,
 }
