@@ -165,6 +165,7 @@ function Update()
 		primaryColor = gui.Wrapper.CurrentPrimaryColor.BackgroundColor3,
 		accentColor = gui.Wrapper.CurrentAccentColor.BackgroundColor3,
 		thumbId = activeShowcase.thumbId,
+		logoId = activeShowcase.logoId,
 		texture = selectedTexture,
 	})
 end
