@@ -58,6 +58,8 @@ end
 
 function PlayerRemoving(player: Player)
 	local profile = profiles[player]
+	profile.Data.firstTime = false
+
 	if profile ~= nil then
 		-- Might not need to deep copy here, but doing it just to be safe.
 		cachedShowcases[player.UserId] = {

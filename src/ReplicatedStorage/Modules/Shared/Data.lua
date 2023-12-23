@@ -51,11 +51,13 @@ local showcaseTemplate: Showcase = {
 export type Data = {
 	showcases: { Showcase },
 	version: number,
+	firstTime: boolean,
 }
 
 local dataTemplate: Data = {
 	showcases = {},
-	version = 6,
+	version = 7,
+	firstTime = true,
 }
 Data.dataTemplate = dataTemplate
 
