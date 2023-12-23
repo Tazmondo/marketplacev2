@@ -18,7 +18,7 @@ local cachedFeed: { Types.Showcase } = {}
 local random = Random.new()
 
 local feedFuture: Future.Future<{ Types.Showcase }>? = nil
-local rateLimit = Util.CreateRateDelay(FEEDRATELIMIT)
+local rateLimit = Util.CreateRateYield(FEEDRATELIMIT)
 
 function IsShowcaseValid(showcase: Data.Showcase): boolean
 	-- We don't want empty showcases clogging up the feed
