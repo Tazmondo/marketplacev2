@@ -5,18 +5,55 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Future = require(ReplicatedStorage.Packages.Future)
 local Types = require(script.Parent.Types)
 
-type ProductInfo = {
+type AssetProductInfo = {
 	Name: string,
-	Creator: { Name: string? },
+	Description: string?,
 	PriceInRobux: number?,
+	Created: string,
+	Updated: string,
+	IsForSale: boolean,
+	Sales: number?,
+	ProductId: number,
+	Creator: {
+		CreatorType: "User" | "Group" | nil,
+		CreatorTargetId: number,
+		Name: string?,
+	},
 	CollectiblesItemDetails: {
 		CollectibleLowestResalePrice: number?,
 		TotalQuantity: number?,
 	}?,
+	TargetId: number,
+	ProductType: "User Product",
+	AssetId: number,
+	IsNew: boolean,
+	IsLimited: boolean,
+	IsLimitedUnique: boolean,
+	IsPublicDomain: boolean,
 	Remaining: number?,
+	ContentRatingTypeId: number,
+	MinimumMembershipLevel: number,
 }
 
 local cachedItems: { [number]: Types.Item } = {}
+
+local validAssets: { [string]: true? } = {
+	Hat = true,
+	HairAccessory = true,
+	FaceAccessory = true,
+	NeckAccessory = true,
+	ShoulderAccessory = true,
+	FrontAccessory = true,
+	BackAccessory = true,
+	WaistAccessory = true,
+	TShirtAccessory = true,
+	ShirtAccessory = true,
+	PantsAccessory = true,
+	JacketAccessory = true,
+	SweaterAccessory = true,
+	ShortsAccessory = true,
+	DressSkirtAccessory = true,
+}
 
 function DataFetch.GetItemDetails(assetId: number)
 	return Future.new(function(assetId)
@@ -25,7 +62,7 @@ function DataFetch.GetItemDetails(assetId: number)
 		end
 
 		local success, details = pcall(function()
-			return MarketplaceService:GetProductInfo(assetId) :: ProductInfo
+			return MarketplaceService:GetProductInfo(assetId) :: AssetProductInfo
 		end)
 
 		if not success then
@@ -50,6 +87,14 @@ function DataFetch.GetItemDetails(assetId: number)
 
 		return item
 	end, assetId)
+end
+
+function DataFetch.IsAssetTypeValid(assetType: string)
+	return validAssets[assetType] == true
+end
+
+function DataFetch.IsAssetTypeIdValid(assetType: number)
+	return validAssets[Enum.AssetType:GetEnumItems()[assetType].Name] == true
 end
 
 return DataFetch

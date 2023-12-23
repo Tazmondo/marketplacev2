@@ -167,37 +167,120 @@ export type Main = ScreenGui & {
 		UISizeConstraint: UISizeConstraint,
 	},
 	AddItemID: Frame & {
-		UICorner: UICorner,
-		Frame: Frame & {
-			TextLabel: TextLabel,
-			UIPadding: UIPadding,
-			UIListLayout: UIListLayout,
-			TextBox: TextBox & {
-				UICorner: UICorner,
-			},
-			Actions: Frame & {
+		Title: Frame & {
+			Search: Frame & {
 				UIListLayout: UIListLayout,
-				Add: TextButton & {
+				ImageButton: ImageButton & {
 					UICorner: UICorner,
-					TextLabel: TextLabel,
-					UIListLayout: UIListLayout,
 				},
 			},
-			ImageButton: ImageLabel & {
-				UICorner: UICorner,
-			},
-		},
-		Title: Frame & {
-			UIListLayout: UIListLayout,
-			UIPadding: UIPadding,
 			Close: Frame & {
 				UIListLayout: UIListLayout,
 				ImageButton: ImageButton & {
 					UICorner: UICorner,
 				},
 			},
+			UIListLayout: UIListLayout,
+			TextLabel: TextLabel,
+			UIPadding: UIPadding,
+		},
+		UICorner: UICorner,
+		SearchWrapper: Frame & {
+			UICorner: UICorner,
+			Search: Frame & {
+				UICorner: UICorner,
+				Search: Frame & {
+					Top: Frame & {
+						UICorner: UICorner,
+						ItemName: TextBox & {
+							UIPadding: UIPadding,
+							Toggle: TextButton & {
+								UICorner: UICorner,
+								TextLabel: TextLabel,
+								UIListLayout: UIListLayout,
+							},
+							UIStroke: UIStroke,
+							UIListLayout: UIListLayout,
+							UICorner: UICorner,
+						},
+						Creator: TextBox & {
+							UIPadding: UIPadding,
+							Toggle: TextButton & {
+								UICorner: UICorner,
+								TextLabel: TextLabel,
+								UIListLayout: UIListLayout,
+							},
+							UIStroke: UIStroke,
+							UIListLayout: UIListLayout,
+							UICorner: UICorner,
+						},
+						UIListLayout: UIListLayout,
+					},
+					UIPadding: UIPadding,
+					Bottom: Frame & {
+						OffSale: TextButton & {
+							UICorner: UICorner,
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						Filter: TextButton & {
+							UICorner: UICorner,
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						Max: TextBox & {
+							UICorner: UICorner,
+							UIStroke: UIStroke,
+							UIPadding: UIPadding,
+						},
+						Min: TextBox & {
+							UICorner: UICorner,
+							UIStroke: UIStroke,
+							UIPadding: UIPadding,
+						},
+						UICorner: UICorner,
+					},
+					UIListLayout: UIListLayout,
+					Actions: Frame & {
+						Search: TextButton & {
+							UICorner: UICorner,
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+					},
+				},
+				UISizeConstraint: UISizeConstraint,
+				UIPadding: UIPadding,
+			},
 		},
 		UISizeConstraint: UISizeConstraint,
+		SearchResults: Frame & {
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Grid: ScrollingFrame & {
+				Row: ImageButton & {
+					UIPadding: UIPadding,
+					Thumb: ImageLabel & {
+						UICorner: UICorner,
+						UIStroke: UIStroke,
+					},
+					Details: Frame & {
+						NameLabel: TextLabel,
+						Frame: Frame & {
+							UIListLayout: UIListLayout,
+							Price: TextLabel,
+							ImageLabel: ImageLabel,
+						},
+						UIListLayout: UIListLayout,
+					},
+					UIListLayout: UIListLayout,
+					UICorner: UICorner,
+				},
+				UIGridLayout: UIGridLayout,
+			},
+		},
 	},
 	ShopSettings: Frame & {
 		UIPadding: UIPadding,
@@ -536,9 +619,24 @@ export type Main = ScreenGui & {
 			UIPadding: UIPadding,
 		},
 		PrimaryColorPicker: Frame & {
+			Rose: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			BabyYellow: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			UIPadding: UIPadding,
-			UICorner: UICorner,
+			Mint: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			Purple: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			DarkRed: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -546,11 +644,28 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Pink: ImageButton & {
+			Brown: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Orange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
 			Blue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UICorner: UICorner,
+			LightGray: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pink: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Midnight: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -563,7 +678,7 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Brown: ImageButton & {
+			Cloud: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -571,7 +686,7 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Orange: ImageButton & {
+			LightBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -594,9 +709,24 @@ export type Main = ScreenGui & {
 		},
 		UISizeConstraint: UISizeConstraint,
 		AccentColorPicker: Frame & {
+			Rose: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			BabyYellow: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			UIPadding: UIPadding,
-			UICorner: UICorner,
+			Mint: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			Purple: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			DarkRed: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -604,11 +734,28 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Pink: ImageButton & {
+			Brown: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Orange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
 			Blue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UICorner: UICorner,
+			LightGray: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pink: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			LightBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -621,7 +768,7 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Brown: ImageButton & {
+			Cloud: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -629,7 +776,7 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Orange: ImageButton & {
+			Midnight: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -638,23 +785,6 @@ export type Main = ScreenGui & {
 				SelectedOutline: UIStroke,
 			},
 		},
-	},
-	Search: Frame & {
-		UICorner: UICorner,
-		Frame: Frame & {
-			UIListLayout: UIListLayout,
-			Actions: Frame & {
-				UIListLayout: UIListLayout,
-				Save: TextButton & {
-					UICorner: UICorner,
-					TextLabel: TextLabel,
-					UIListLayout: UIListLayout,
-				},
-			},
-			UIPadding: UIPadding,
-		},
-		UISizeConstraint: UISizeConstraint,
-		UIPadding: UIPadding,
 	},
 	ControllerNav: Frame & {
 		UIListLayout: UIListLayout,
