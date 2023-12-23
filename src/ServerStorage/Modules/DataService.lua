@@ -58,9 +58,10 @@ end
 
 function PlayerRemoving(player: Player)
 	local profile = profiles[player]
-	profile.Data.firstTime = false
 
 	if profile ~= nil then
+		profile.Data.firstTime = false
+
 		-- Might not need to deep copy here, but doing it just to be safe.
 		cachedShowcases[player.UserId] = {
 			cachedTime = tick(),
@@ -71,13 +72,10 @@ function PlayerRemoving(player: Player)
 end
 
 function FetchOfflineData(userId: number)
-	print("Fetching offline data for", userId)
-
 	local dataFuture = Future.new(function(userId): Data.Data?
 		local profile = ProfileStore:ViewProfileAsync(GetKey(userId))
 		if profile then
 			Data.Migrate(profile.Data)
-			print("Fetched offline data for", userId)
 			return profile.Data
 		end
 

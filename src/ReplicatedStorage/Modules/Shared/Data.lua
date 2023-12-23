@@ -78,7 +78,6 @@ function Data.Migrate(data: Data)
 		-- Data shape hasn't updated, no need to reconcile
 		return
 	end
-	print(`Migrating data from {data.version} to {dataTemplate.version}`)
 
 	for k, v in pairs(dataTemplate) do
 		if not data[k] then
