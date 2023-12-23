@@ -37,23 +37,27 @@ type AssetProductInfo = {
 
 local cachedItems: { [number]: Types.Item } = {}
 
-local validAssets: { [string]: true? } = {
-	Hat = true,
-	HairAccessory = true,
-	FaceAccessory = true,
-	NeckAccessory = true,
-	ShoulderAccessory = true,
-	FrontAccessory = true,
-	BackAccessory = true,
-	WaistAccessory = true,
-	TShirtAccessory = true,
-	ShirtAccessory = true,
-	PantsAccessory = true,
-	JacketAccessory = true,
-	SweaterAccessory = true,
-	ShortsAccessory = true,
-	DressSkirtAccessory = true,
+local validAssets: { [Enum.AvatarAssetType]: true? } = {
+	[Enum.AvatarAssetType.Hat] = true,
+	[Enum.AvatarAssetType.HairAccessory] = true,
+	[Enum.AvatarAssetType.FaceAccessory] = true,
+	[Enum.AvatarAssetType.NeckAccessory] = true,
+	[Enum.AvatarAssetType.ShoulderAccessory] = true,
+	[Enum.AvatarAssetType.FrontAccessory] = true,
+	[Enum.AvatarAssetType.BackAccessory] = true,
+	[Enum.AvatarAssetType.WaistAccessory] = true,
+	[Enum.AvatarAssetType.TShirtAccessory] = true,
+	[Enum.AvatarAssetType.ShirtAccessory] = true,
+	[Enum.AvatarAssetType.PantsAccessory] = true,
+	[Enum.AvatarAssetType.JacketAccessory] = true,
+	[Enum.AvatarAssetType.SweaterAccessory] = true,
+	[Enum.AvatarAssetType.ShortsAccessory] = true,
+	[Enum.AvatarAssetType.DressSkirtAccessory] = true,
 }
+local validAssetNames: { [string]: true? } = {}
+for validAsset, _ in validAssets do
+	validAssetNames[validAsset.Name] = true
+end
 
 function DataFetch.GetItemDetails(assetId: number)
 	return Future.new(function(assetId)
@@ -90,11 +94,19 @@ function DataFetch.GetItemDetails(assetId: number)
 end
 
 function DataFetch.IsAssetTypeValid(assetType: string)
-	return validAssets[assetType] == true
+	return validAssetNames[assetType] == true
 end
 
 function DataFetch.IsAssetTypeIdValid(assetType: number)
-	return validAssets[Enum.AssetType:GetEnumItems()[assetType].Name] == true
+	return validAssetNames[Enum.AvatarAssetType:GetEnumItems()[assetType].Name] == true
+end
+
+function DataFetch.GetValidAssetArray()
+	local array = {}
+	for asset, _ in validAssets do
+		table.insert(array, asset)
+	end
+	return array
 end
 
 return DataFetch

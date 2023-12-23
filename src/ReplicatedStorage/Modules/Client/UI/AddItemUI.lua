@@ -3,18 +3,15 @@ local AddItemUI = {}
 local AvatarEditorService = game:GetService("AvatarEditorService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local UILoader = require(script.Parent.UILoader)
 
-type SearchResult = {
-	Id: number,
-	Name: string,
-	Price: number?,
-	CreatorType: "User" | "Group",
-	AssetType: string?,
-}
+local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
+
+local MAXPAGES = 4
+local MAXITEMS = 60
 
 local gui = UILoader:GetMain().AddItemID
 local searchFrame = gui.SearchWrapper.Search.Search
@@ -23,12 +20,11 @@ local currentPosition: Vector3? = nil
 
 type SearchMode = "Name" | "Id"
 local searchModes: { SearchMode } = { "Name", "Id" }
-type CreatorMode = "All" | "User" | "Group"
-local creatorModes: { CreatorMode } = { "All", "User", "Group" }
+local creatorModes: { Types.CreatorMode } = { "All", "User", "Group" }
 
 -- State that can't be represented easily with just the UI
 local extraState = {
-	includeOffsale = false,
+	includeOffSale = false,
 	sort = Enum.CatalogSortType.Relevance,
 	searchMode = 1,
 	creatorMode = 1,
@@ -89,11 +85,11 @@ function CycleCreator()
 	searchFrame.Top.Creator.Toggle.TextLabel.Text = creatorModes[newIndex]
 end
 
-function ToggleIncludeOffsale()
-	extraState.includeOffsale = not extraState.includeOffsale
+function ToggleincludeOffSale()
+	extraState.includeOffSale = not extraState.includeOffSale
 
-	local newColour = if extraState.includeOffsale then Color3.fromRGB(0, 120, 244) else Color3.fromRGB(49, 49, 49)
-	local newTextColor = if extraState.includeOffsale
+	local newColour = if extraState.includeOffSale then Color3.fromRGB(0, 120, 244) else Color3.fromRGB(49, 49, 49)
+	local newTextColor = if extraState.includeOffSale
 		then Color3.fromRGB(255, 255, 255)
 		else Color3.fromRGB(178, 178, 178)
 
@@ -101,7 +97,7 @@ function ToggleIncludeOffsale()
 	searchFrame.Bottom.OffSale.TextLabel.TextColor3 = newTextColor
 end
 
-function PopulateResults(results: { SearchResult })
+function PopulateResults(results: { Types.SearchResult })
 	local resultsFrame = gui.SearchResults.Grid
 	for i, child in resultsFrame:GetChildren() do
 		if child:IsA("ImageButton") and child:GetAttribute("Temporary") then
@@ -155,33 +151,48 @@ function Search()
 		return
 	end
 
-	-- Need to cast to any as luau lsp wasnt up to date with the latest api, giving incorrect type errors
-	-- https://create.roblox.com/docs/reference/engine/datatypes/CatalogSearchParams
-	local params: any = CatalogSearchParams.new()
+	local searchText = searchFrame.Top.ItemName.Text
+	local creatorText = searchFrame.Top.Creator.Text
+	local minPrice = tonumber(searchFrame.Bottom.Min.Text)
+	local maxPrice = tonumber(searchFrame.Bottom.Max.Text)
+	local creatorMode = creatorModes[extraState.creatorMode]
 
-	params.SearchKeyword = searchFrame.Top.ItemName.Text
-	params.CreatorName = searchFrame.Top.Creator.Text
+	local paramsInstance: any = CatalogSearchParams.new()
 
-	local min = tonumber(searchFrame.Bottom.Min.Text)
-	local max = tonumber(searchFrame.Bottom.Max.Text)
-	if min then
-		params.MinPrice = min
+	if searchText ~= "" then
+		paramsInstance.SearchKeyword = searchText
 	end
-	if max then
-		params.MaxPrice = max
+	if creatorText ~= "" then
+		paramsInstance.CreatorName = creatorText
 	end
-	params.IncludeOffSale = extraState.includeOffsale
-	params.SortType = extraState.sort
+	if minPrice then
+		paramsInstance.MinPrice = minPrice
+	end
+	if maxPrice then
+		paramsInstance.MaxPrice = maxPrice
+	end
+
+	paramsInstance.SortType = extraState.sort
+	paramsInstance.IncludeOffSale = extraState.includeOffSale
+	paramsInstance.AssetTypes = DataFetch.GetValidAssetArray()
+
+	gui.SearchWrapper.Visible = false
 
 	task.spawn(function()
-		-- Yields
-		local pages = AvatarEditorService:SearchCatalog(params)
+		local success, pages = pcall(function()
+			return AvatarEditorService:SearchCatalog(paramsInstance)
+		end)
+
+		if not success then
+			PopulateResults({})
+			return
+		end
 
 		local filteredItems = {}
-		local creatorMode = creatorModes[extraState.creatorMode]
+		local currentPage = 1
 
-		while #filteredItems < 250 do
-			local items = pages:GetCurrentPage() :: { SearchResult }
+		while true do
+			local items = pages:GetCurrentPage() :: { Types.SearchResult }
 			for i, item in items do
 				if creatorMode ~= "All" and creatorMode ~= item.CreatorType then
 					continue
@@ -192,15 +203,15 @@ function Search()
 				end
 			end
 
-			if pages.IsFinished then
+			if pages.IsFinished or currentPage == MAXPAGES or #filteredItems >= MAXITEMS then
 				break
 			end
+
 			pages:AdvanceToNextPageAsync()
+			currentPage += 1
 		end
 
 		PopulateResults(filteredItems)
-
-		gui.SearchWrapper.Visible = false
 	end)
 end
 
@@ -222,7 +233,7 @@ function AddItemUI:Initialize()
 
 	searchFrame.Actions.Search.Activated:Connect(Search)
 	searchFrame.Bottom.Filter.Activated:Connect(CycleSort)
-	searchFrame.Bottom.OffSale.Activated:Connect(ToggleIncludeOffsale)
+	searchFrame.Bottom.OffSale.Activated:Connect(ToggleincludeOffSale)
 	searchFrame.Top.ItemName.Toggle.Activated:Connect(CycleSearch)
 	searchFrame.Top.Creator.Toggle.Activated:Connect(CycleCreator)
 

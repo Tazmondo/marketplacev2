@@ -1,6 +1,7 @@
 --!nolint LocalShadow
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
+local Guard = require(ReplicatedStorage.Packages.Guard)
 export type Item = {
 	creator: string,
 	name: string,
@@ -62,6 +63,42 @@ export type FeedData = {
 	type: FeedType,
 }
 
+export type CreatorMode = "All" | "User" | "Group"
+
+export type SearchParams = {
+	SearchKeyword: string?,
+	CreatorName: string?,
+	MinPrice: number?,
+	MaxPrice: number?,
+	IncludeOffSale: boolean?,
+	SortType: number?, -- Enum.CatalogSortType
+	CreatorMode: CreatorMode,
+}
+function GuardSearchParams(value: unknown): SearchParams
+	local data: any = value
+	assert(data.CreatorMode == "All" or data.CreatorMode == "User" or data.CreatorMode == "Group")
+	assert(typeof(data.SortType) == "number" and Enum.CatalogSortType:GetEnumItems()[data.SortType])
+
+	return {
+		SearchKeyword = Guard.Optional(Guard.String)(data.SearchKeyword),
+		CreatorName = Guard.Optional(Guard.String)(data.CreatorName),
+		MinPrice = Guard.Optional(Guard.Number)(data.MinPrice),
+		MaxPrice = Guard.Optional(Guard.Number)(data.MaxPrice),
+		IncludeOffSale = Guard.Optional(Guard.Boolean)(data.IncludeOffSale),
+		SortType = data.SortType,
+		CreatorMode = data.CreatorMode,
+	}
+end
+
+export type SearchResult = {
+	Id: number,
+	Name: string,
+	Price: number?,
+	CreatorType: "User" | "Group",
+	AssetType: string?,
+}
+
 return {
 	GuardFeed = GuardFeed,
+	GuardSearchParams = GuardSearchParams,
 }
