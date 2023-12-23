@@ -93,7 +93,12 @@ function ToggleIncludeOffsale()
 	extraState.includeOffsale = not extraState.includeOffsale
 
 	local newColour = if extraState.includeOffsale then Color3.fromRGB(0, 120, 244) else Color3.fromRGB(49, 49, 49)
+	local newTextColor = if extraState.includeOffsale
+		then Color3.fromRGB(255, 255, 255)
+		else Color3.fromRGB(178, 178, 178)
+
 	searchFrame.Bottom.OffSale.BackgroundColor3 = newColour
+	searchFrame.Bottom.OffSale.TextLabel.TextColor3 = newTextColor
 end
 
 function PopulateResults(results: { SearchResult })
@@ -129,6 +134,14 @@ function PopulateResults(results: { SearchResult })
 
 		newRow.Parent = template.Parent
 	end
+end
+
+function RenderOutline(textBox: TextBox & {
+	UIStroke: UIStroke,
+})
+	textBox:GetPropertyChangedSignal("Text"):Connect(function()
+		textBox.UIStroke.Enabled = textBox.Text ~= ""
+	end)
 end
 
 function Search()
@@ -167,7 +180,7 @@ function Search()
 		local filteredItems = {}
 		local creatorMode = creatorModes[extraState.creatorMode]
 
-		while #filteredItems < 30 do
+		while #filteredItems < 250 do
 			local items = pages:GetCurrentPage() :: { SearchResult }
 			for i, item in items do
 				if creatorMode ~= "All" and creatorMode ~= item.CreatorType then
@@ -212,6 +225,14 @@ function AddItemUI:Initialize()
 	searchFrame.Bottom.OffSale.Activated:Connect(ToggleIncludeOffsale)
 	searchFrame.Top.ItemName.Toggle.Activated:Connect(CycleSearch)
 	searchFrame.Top.Creator.Toggle.Activated:Connect(CycleCreator)
+
+	RenderOutline(searchFrame.Top.ItemName)
+
+	RenderOutline(searchFrame.Top.Creator)
+
+	RenderOutline(searchFrame.Bottom.Min)
+
+	RenderOutline(searchFrame.Bottom.Max)
 
 	searchFrame.Bottom.Filter.TextLabel.Text = sortNames[extraState.sort] or extraState.sort.Name
 	searchFrame.Top.ItemName.Toggle.TextLabel.Text = searchModes[extraState.searchMode]
