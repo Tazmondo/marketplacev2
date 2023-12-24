@@ -81,6 +81,15 @@ function ReplicateAsset(assetId: number)
 				return
 			end
 
+			-- Rotation offset of the model from the player
+			-- This allows us to set the pivot so the orientation when CFraming is the same as if it was attached to a player
+			-- I.e. the front of the model faces forwards.
+			-- Need to parent to workspace too otherwise it doesn't return the correct value
+			-- Parenting to the camera means they won't get replicated to the client unnecessarily too.
+			playerModel.Parent = workspace.CurrentCamera
+			local pivot = playerModel:GetPivot():ToObjectSpace(meshPart.CFrame).Rotation:Inverse()
+			meshPart.PivotOffset = pivot
+
 			local model = Instance.new("Model")
 			meshPart.Parent = model
 			model.PrimaryPart = meshPart
@@ -94,8 +103,6 @@ function ReplicateAsset(assetId: number)
 			-- Scale meshpart so it fits within a 1x1x1 cube
 			local scale = 1 / maxSize
 
-			-- Accessories sometimes have sideways pivots (not sure why)
-			meshPart.PivotOffset = CFrame.new()
 			local wrapLayer = meshPart:FindFirstChildOfClass("WrapLayer")
 			if wrapLayer then
 				wrapLayer:Destroy()
