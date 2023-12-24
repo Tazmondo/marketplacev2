@@ -113,23 +113,27 @@ function PlayerAdded(player: Player)
 	end
 
 	local targetedShowcase = if launchData then GetShowcase(launchData.ownerId, launchData.GUID):Await() else nil
-	local showcases = {}
+	local showcases
 
 	if targetedShowcase then
 		showcases = { targetedShowcase }
 	else
-		local editorPicks = GetEditorsPicks():Await()
+		if Config.DefaultFeed == "Editor" then
+			local editorPicks = GetEditorsPicks():Await()
 
-		if editorPicks then
-			showcases = editorPicks
-		else
-			showcases = { TableUtil.Copy(DefaultShowcase, true) }
+			if editorPicks then
+				showcases = editorPicks
+			else
+				showcases = { TableUtil.Copy(DefaultShowcase, true) }
+			end
+		elseif Config.DefaultFeed == "Random" then
+			showcases = RandomFeed.GetFeed(10):Await()
 		end
 	end
 
 	feedData[player] = {
 		showcases = showcases,
-		type = "Editor",
+		type = Config.DefaultFeed,
 	}
 
 	UpdateFeedEvent:Fire(player, feedData[player])

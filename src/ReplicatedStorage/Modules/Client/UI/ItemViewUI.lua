@@ -4,19 +4,16 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
-local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local UILoader = require(script.Parent.UILoader)
 
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
 local gui = UILoader:GetMain().Item
 local currentAssetId: number? = nil
-local currentItem: Types.Item? = nil
 
 function ItemViewUI:Hide()
 	gui.Visible = false
 	currentAssetId = nil
-	currentItem = nil
 end
 
 function Buy()
@@ -42,7 +39,6 @@ function ItemViewUI:Display(assetId: number)
 		if not item or currentAssetId ~= assetId then
 			return
 		end
-		currentItem = item
 
 		content.Details.Names.ItemName.Text = item.name
 		content.Details.Names.Creator.Text = item.creator

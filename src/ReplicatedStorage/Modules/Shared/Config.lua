@@ -47,10 +47,10 @@ local Config = {
 	DefaultAccentColor = Color3.fromRGB(215, 197, 154),
 	DefaultShopThumbnail = 15664989981,
 
-	DefaultFeed = "Editor" :: Types.FeedType,
+	DefaultFeed = "Random" :: Types.FeedType,
 
 	-- Number of stands for a showcase to show up on feeds
-	MinimumStandsForRandom = 1,
+	MinimumStandsForRandom = 4,
 }
 
 assert(PrimaryColors[Config.DefaultPrimaryColor:ToHex()], "Default primary color was not a valid color")
