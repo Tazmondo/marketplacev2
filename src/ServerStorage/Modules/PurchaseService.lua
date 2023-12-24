@@ -9,7 +9,7 @@ local ShowcaseService = require(script.Parent.ShowcaseService)
 
 local gainsStore = MemoryStoreService:GetSortedMap("Rewards")
 
-local EXPIRATION = 60 * 60 * 24 * 14 -- 2 weeks
+local EXPIRATION = 60 * 60 * 24 * 21 -- 3 weeks
 
 function HandlePurchase(player: Player, assetId: number, purchased: boolean)
 	if not purchased then
