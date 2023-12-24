@@ -65,7 +65,9 @@ function PlayerRemoving(player: Player)
 		-- Might not need to deep copy here, but doing it just to be safe.
 		cachedShowcases[player.UserId] = {
 			cachedTime = tick(),
-			data = TableUtil.Copy(profile.Data, true),
+			data = Future.new(function(): Data.Data?
+				return TableUtil.Copy(profile.Data, true)
+			end),
 		}
 		profile:Release()
 	end
