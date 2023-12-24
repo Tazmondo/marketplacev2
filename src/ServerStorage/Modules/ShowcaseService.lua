@@ -47,7 +47,7 @@ type ActiveShowcase = {
 
 local placeTable: { ActiveShowcase } = {}
 
-local playerShowcases: { [Player]: ActiveShowcase } = {}
+local playerShowcases: { [Player]: ActiveShowcase? } = {}
 
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
@@ -178,6 +178,11 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: ActiveSho
 		table.insert(visiblePlayers, player)
 	end
 	UpdateVisiblePlayersEvent:FireList(visiblePlayers, visiblePlayers)
+end
+
+function ShowcaseService:GetShowcaseOfPlayer(player: Player): ActiveShowcase?
+	local showcase = playerShowcases[player]
+	return showcase
 end
 
 function SaveShowcase(showcase: ActiveShowcase)

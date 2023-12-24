@@ -51,6 +51,10 @@ local Config = {
 
 	-- Number of stands for a showcase to show up on feeds
 	MinimumStandsForRandom = 4,
+
+	-- The total cut of our 40% commission that owners will receive.
+	-- E.g. 0.75 = 30% of the item
+	OwnerCut = 0.75,
 }
 
 assert(PrimaryColors[Config.DefaultPrimaryColor:ToHex()], "Default primary color was not a valid color")
