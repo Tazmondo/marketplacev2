@@ -1,5 +1,10 @@
 local Util = {}
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Future = require(ReplicatedStorage.Packages.Future)
+local Signal = require(ReplicatedStorage.Packages.Signal)
+
 function Util.NumberWithCommas(number: number)
 	local numString = tostring(number)
 	local newString = ""
@@ -116,4 +121,41 @@ function Util.GlobalRateLimit(count: number, interval: number)
 	end
 end
 
+function Util.CreateYieldDebounce<T..., U...>(func: (T...) -> U...): (T...) -> U...
+	local debounce = false
+	local completed = Signal()
+
+	return function(...)
+		while debounce do
+			completed:Wait()
+		end
+		debounce = true
+
+		-- Use pcall here so one error doesn't permanently break the debounce
+		local success, result = pcall(function(...)
+			return table.pack(func(...)) :: any -- Type pack tables can't be properly typed right now.
+		end, ...)
+
+		debounce = false
+
+		-- Defer here so we return before continuing subsequent calls
+		task.defer(function()
+			completed:Fire()
+		end)
+
+		-- We don't want errors to be silenced
+		if not success then
+			error(result)
+		end
+
+		-- Convert back into a tuple
+		return table.unpack(result)
+	end
+end
+
+function Util.ToFuture<T..., U...>(func: (T...) -> U...): (T...) -> Future.Future<U...>
+	return function(...)
+		return Future.new(func, ...)
+	end
+end
 return Util

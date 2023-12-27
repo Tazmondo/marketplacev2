@@ -2,115 +2,99 @@ local RandomFeed = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
-local Config = require(ReplicatedStorage.Modules.Shared.Config)
+
+local RandomValid = require(script.Parent.RandomValid)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local DataService = require(ServerStorage.Modules.DataService.DataService)
 local RandomPlayerService = require(ServerStorage.Modules.RandomPlayerService)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 
-local FEEDSEGMENTLENGTH = 10
-local FEEDRATELIMIT = 5
+-- Doesn't seem to be necessary? Will increase if datastore read rate limits are being hit.
+local FEEDRATELIMIT = 0
 
 local usedShowcases: { [string]: true? } = {}
-local cachedFeed: { Types.Showcase } = {}
-local random = Random.new()
 
-local feedFuture: Future.Future<{ Types.Showcase }>? = nil
+-- Players that cannot contribute any more showcases to the feed
+local exhaustedPlayers: { [number]: true? } = {}
+local cachedFeed: { Types.Showcase } = {}
+
+local random = Random.new()
 local rateLimit = Util.CreateRateYield(FEEDRATELIMIT)
 
-function IsShowcaseValid(showcase: Data.Showcase): boolean
-	-- We don't want empty showcases clogging up the feed
-	return #showcase.stands >= Config.MinimumStandsForRandom
-end
+RandomFeed.Extended = Signal()
 
-function GenerateFeedSegment()
-	return Future.new(function()
-		print("Generating feed segment...")
-		-- If this is being called too much then wait
-		rateLimit()
+local function _GetNextShowcase(): Types.Showcase?
+	rateLimit()
+	print(`Fetching next showcase. Length: {#cachedFeed}`)
 
-		local feed = {}
-		local ignoreSet = {}
+	local nextPlayer = RandomPlayerService:GetPlayer(exhaustedPlayers):Await()
+	if not nextPlayer then
+		-- No random players to fill up feed with
+		return nil
+	end
 
-		while #feed < FEEDSEGMENTLENGTH do
-			local nextPlayer = RandomPlayerService:GetPlayer(ignoreSet):Await()
-			if not nextPlayer then
-				-- No random players to fill up feed with
-				break
-			end
+	local data = DataService:ReadOfflineData(nextPlayer):Await()
+	if not data then
+		exhaustedPlayers[nextPlayer] = true
+		return _GetNextShowcase()
+	end
 
-			local data = DataService:ReadOfflineData(nextPlayer):Await()
-			if not data then
-				ignoreSet[nextPlayer] = true
-				continue
-			end
-
-			local filteredShowcases = {}
-			for i, showcase in data.showcases do
-				if not usedShowcases[showcase.GUID] and IsShowcaseValid(showcase) then
-					table.insert(filteredShowcases, showcase)
-				end
-			end
-
-			if #filteredShowcases == 0 then
-				ignoreSet[nextPlayer] = true
-				continue
-			end
-
-			local index = random:NextInteger(1, #filteredShowcases)
-			local showcase = filteredShowcases[index]
-			usedShowcases[showcase.GUID] = true
-
-			table.insert(feed, Data.FromDataShowcase(showcase, nextPlayer))
+	local filteredShowcases = {}
+	for i, showcase in data.showcases do
+		if not usedShowcases[showcase.GUID] and RandomValid.IsValid(showcase) then
+			table.insert(filteredShowcases, showcase)
 		end
+	end
 
-		return feed
-	end)
+	if #filteredShowcases <= 1 then
+		exhaustedPlayers[nextPlayer] = true
+		if #filteredShowcases == 0 then
+			return _GetNextShowcase()
+		end
+	end
+
+	local index = random:NextInteger(1, #filteredShowcases)
+	local showcase = filteredShowcases[index]
+	usedShowcases[showcase.GUID] = true
+
+	local processedShowcase = Data.FromDataShowcase(showcase, nextPlayer)
+
+	table.insert(cachedFeed, processedShowcase)
+	RandomFeed.Extended:Fire(cachedFeed)
+
+	return processedShowcase
 end
+
+local DebounceGetNextShowcase = Util.ToFuture(Util.CreateYieldDebounce(_GetNextShowcase))
 
 --- Attempts to get a random feed of up to the desired length.
 --- May return less than the desired length if there aren't enough valid feeds.
 --- Also ensures there is only one feed fetch operation ongoing at a time
 
 function RandomFeed.GetFeed(desiredLength: number?)
-	local future = Future.new(function()
+	return Future.new(function()
 		if not desiredLength or desiredLength <= #cachedFeed then
 			return cachedFeed
 		end
 
-		if feedFuture then
-			local lastFeed = feedFuture:Await()
-			if #lastFeed >= desiredLength then
-				return lastFeed
-			end
-		end
-
 		while #cachedFeed <= desiredLength do
-			local newFeed = GenerateFeedSegment():Await()
-
-			for i, showcase in newFeed do
-				table.insert(cachedFeed, showcase)
-			end
-
-			if #newFeed < FEEDSEGMENTLENGTH then
-				-- No more showcases can be fetched.
+			local nextShowcase = DebounceGetNextShowcase():Await()
+			if not nextShowcase then
+				-- No more showcases to generate
 				return cachedFeed
 			end
 		end
 
 		return cachedFeed
 	end)
-
-	feedFuture = future
-
-	return future
 end
 
 -- Pre-load some random showcases
 task.spawn(function()
-	print("Pre-loaded random showcases: ", RandomFeed.GetFeed(10):Await())
+	print("Pre-loaded random showcases: ", RandomFeed.GetFeed(20):Await())
 end)
 
 return RandomFeed

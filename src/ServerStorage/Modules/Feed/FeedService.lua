@@ -161,11 +161,10 @@ function HandleMoveFeed(player: Player, newIndex: number)
 		return
 	end
 
-	if playerFeedData.type == "Random" and #playerFeedData.showcases - newIndex <= 3 then
-		RandomFeed.GetFeed(#playerFeedData.showcases + 10):After(function(showcases)
-			playerFeedData.showcases = showcases
-			UpdateFeedEvent:Fire(player, playerFeedData)
-		end)
+	if playerFeedData.type == "Random" then
+		-- Always try and load 10 showcases ahead
+		-- Don't need to use the returned value because it's already handled in the signal connection
+		RandomFeed.GetFeed(newIndex + 10)
 	end
 
 	local place = ShowcaseService:GetShowcase(showcase, "View")
@@ -182,7 +181,7 @@ function HandleSwitchFeed(player: Player, type: Types.FeedType)
 	if type == "Editor" then
 		feed = GetEditorsPicks():Await()
 	elseif type == "Random" then
-		feed = RandomFeed.GetFeed(10):Await()
+		feed = RandomFeed.GetFeed(3):Await()
 	elseif type == "Popular" then
 		feed = { TableUtil.Copy(DefaultShowcase, true) }
 	end
@@ -200,6 +199,15 @@ function HandleSwitchFeed(player: Player, type: Types.FeedType)
 	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
 end
 
+function HandleRandomFeedUpdated(feed: { Types.Showcase })
+	for player, data in feedData do
+		if data.type == "Random" then
+			data.showcases = feed
+			UpdateFeedEvent:Fire(player, data)
+		end
+	end
+end
+
 function FeedService:Initialize()
 	Players.CharacterAutoLoads = false
 
@@ -214,6 +222,8 @@ function FeedService:Initialize()
 	SwitchFeedEvent:On(function(player, type)
 		HandleSwitchFeed(player, type :: Types.FeedType)
 	end)
+
+	RandomFeed.Extended:Connect(HandleRandomFeedUpdated)
 end
 
 FeedService:Initialize()
