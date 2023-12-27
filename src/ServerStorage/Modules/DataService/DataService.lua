@@ -5,15 +5,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Future = require(ReplicatedStorage.Packages.Future)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 local Spawn = require(ReplicatedStorage.Packages.Spawn)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local ProfileService = require(script.Parent.ProfileService)
 
 local ReplicateDataEvent = require(ReplicatedStorage.Events.Data.ReplicateDataEvent):Server()
 
+DataService.PlayerRemoving = Signal()
+
 local STOREPREFIX = "PlayerData8"
 local PLAYERPREFIX = "Player_"
-local CACHETIMEOUT = 60 * 5
+local CACHETIMEOUT = 60 * 15
 
 local ProfileStore = assert(
 	ProfileService.GetProfileStore(STOREPREFIX, Data.dataTemplate),
@@ -57,6 +60,7 @@ end
 
 function PlayerRemoving(player: Player)
 	local profile = profiles[player]
+	DataService.PlayerRemoving:Fire(player, if profile then profile.Data :: Data.Data else nil)
 
 	if profile ~= nil then
 		profile.Data.firstTime = false

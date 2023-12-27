@@ -4,6 +4,11 @@ local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService("ServerStorage")
+
+local Data = require(ReplicatedStorage.Modules.Shared.Data)
+local DataService = require(ServerStorage.Modules.DataService.DataService)
+local RandomValid = require(ServerStorage.Modules.Feed.RandomValid)
 local Future = require(ReplicatedStorage.Packages.Future)
 
 local STOREKEY = "FullPlayerList"
@@ -128,6 +133,20 @@ function RandomPlayerService:AddPlayer(userId: number)
 end
 
 function GameClosing()
+	if #Players:GetPlayers() > 0 then
+		-- This ideally should never show up in the error log
+		warn("Bindtoclose called before all players left")
+	end
+
+	-- Make sure all players have left before saving.
+	-- Might not be necessary but doesn't hurt to make sure.
+	for i, player in Players:GetPlayers() do
+		player:Kick("Shutting Down")
+	end
+	while #Players:GetPlayers() > 0 do
+		task.wait()
+	end
+
 	-- No need to run this relatively expensive operation when working in studio
 	if RunService:IsStudio() then
 		return
@@ -172,15 +191,30 @@ function LoadData()
 	end)
 end
 
-function RandomPlayerService:Initialize()
-	game:BindToClose(GameClosing)
-
-	Players.PlayerAdded:Connect(function(player)
-		RandomPlayerService:AddPlayer(player.UserId)
-	end)
-	for i, player in Players:GetPlayers() do
+function PlayerAdded(player: Player)
+	local data = DataService:ReadData(player):Await()
+	if data and RandomValid.AnyValid(data.showcases) then
 		RandomPlayerService:AddPlayer(player.UserId)
 	end
+end
+
+function PlayerRemoving(player: Player, data: Data.Data?)
+	if data and RandomValid.AnyValid(data.showcases) then
+		RandomPlayerService:AddPlayer(player.UserId)
+	end
+end
+
+function RandomPlayerService:Initialize()
+	game:BindToClose(function()
+		-- Deferring just in case, i want this function to definitely run last.
+		task.defer(GameClosing)
+	end)
+
+	Players.PlayerAdded:Connect(PlayerAdded)
+	for i, player in Players:GetPlayers() do
+		PlayerAdded(player)
+	end
+	DataService.PlayerRemoving:Connect(PlayerRemoving)
 
 	LoadData()
 end
