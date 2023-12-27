@@ -2,13 +2,12 @@ local DataService = {}
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
 
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Spawn = require(ReplicatedStorage.Packages.Spawn)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
-local ProfileService = require(ServerStorage.ServerPackages.ProfileService)
+local ProfileService = require(script.Parent.ProfileService)
 
 local ReplicateDataEvent = require(ReplicatedStorage.Events.Data.ReplicateDataEvent):Server()
 

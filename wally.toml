@@ -18,4 +18,3 @@ Bin = "red-blox/bin@1.0.0"
 Spawn = "red-blox/spawn@1.0.0"
 
 [server-dependencies]
-ProfileService = "tazmondo/profileservice@1.0.6"

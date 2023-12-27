@@ -6,7 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 
-local DataService = require(script.Parent.DataService)
+local DataService = require(script.Parent.DataService.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
