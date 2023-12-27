@@ -464,6 +464,7 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 	elseif update.type == "UpdateLayout" then
 		local newLayout = Layouts:GetLayout(update.layoutId)
 		showcase.layout = newLayout
+		showcase.stands = PopulateLayoutStands(showcase.stands, newLayout.getValidStandPositions())
 	end
 
 	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
