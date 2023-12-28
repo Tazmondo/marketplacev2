@@ -42,6 +42,13 @@ local function _GetNextShowcase(): Types.Showcase?
 		return _GetNextShowcase()
 	end
 
+	-- Remove invalid players so they don't clutter up the random feed
+	if not RandomValid.AnyValid(data.showcases) then
+		exhaustedPlayers[nextPlayer] = true
+		RandomPlayerService:RemovePlayer(nextPlayer)
+		return _GetNextShowcase()
+	end
+
 	local filteredShowcases = {}
 	for i, showcase in data.showcases do
 		if not usedShowcases[showcase.GUID] and RandomValid.IsValid(showcase) then

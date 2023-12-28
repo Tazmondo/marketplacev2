@@ -84,6 +84,7 @@ function FetchOfflineData(userId: number)
 			return profile.Data
 		end
 
+		warn("Could not fetch offline profile")
 		return nil
 	end, userId)
 

@@ -3,13 +3,13 @@ local RandomPlayerService = {}
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local DataService = require(ServerStorage.Modules.DataService.DataService)
 local RandomValid = require(ServerStorage.Modules.Feed.RandomValid)
 local Future = require(ReplicatedStorage.Packages.Future)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local STOREKEY = "FullPlayerList"
 local PLAYERLISTKEY = "BasicPlayerList"
@@ -34,6 +34,8 @@ local tempData: Data = {
 	map = {},
 	length = 0,
 }
+local pendingRemoval: { [number]: true? } = {}
+
 local random = Random.new()
 
 function GetSavedData()
@@ -132,6 +134,10 @@ function RandomPlayerService:AddPlayer(userId: number)
 	tempData.length += 1
 end
 
+function RandomPlayerService:RemovePlayer(userId: number)
+	pendingRemoval[userId] = true
+end
+
 function GameClosing()
 	if #Players:GetPlayers() > 0 then
 		-- This ideally should never show up in the error log
@@ -148,9 +154,9 @@ function GameClosing()
 	end
 
 	-- No need to run this relatively expensive operation when working in studio
-	if RunService:IsStudio() then
-		return
-	end
+	-- if RunService:IsStudio() then
+	-- 	return
+	-- end
 
 	PlayerStore:UpdateAsync(PLAYERLISTKEY, function(list: { number } | nil)
 		list = list or {}
@@ -158,7 +164,12 @@ function GameClosing()
 
 		local map = {}
 		for i, userId in list do
-			map[userId] = true
+			if pendingRemoval[userId] then
+				TableUtil.SwapRemove(list, i)
+				map[list[i]] = true -- Since the swapped value won't get iterated over we add it here.
+			else
+				map[userId] = true
+			end
 		end
 
 		for i, userId in tempData.list do
