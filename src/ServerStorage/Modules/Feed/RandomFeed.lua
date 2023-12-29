@@ -28,7 +28,6 @@ RandomFeed.Extended = Signal()
 
 local function _GetNextShowcase(): Types.Showcase?
 	rateLimit()
-	print(`Fetching next showcase. Length: {#cachedFeed}`)
 
 	local nextPlayer = RandomPlayerService:GetPlayer(exhaustedPlayers):Await()
 	if not nextPlayer then

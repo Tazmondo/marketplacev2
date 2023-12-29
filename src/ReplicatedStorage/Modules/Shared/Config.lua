@@ -47,7 +47,7 @@ local Config = {
 	DefaultAccentColor = Color3.fromRGB(215, 197, 154),
 	DefaultShopThumbnail = 15664989981,
 
-	DefaultFeed = "Editor" :: Types.FeedType,
+	DefaultFeed = "Random" :: Types.FeedType,
 
 	-- Number of stands for a showcase to show up on feeds
 	MinimumStandsForRandom = 12,
