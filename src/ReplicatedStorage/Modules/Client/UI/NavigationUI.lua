@@ -30,6 +30,11 @@ function ExpandFeedClicked()
 end
 
 function RegisterFeedButton(button: ImageButton)
+	-- temporary
+	if button.Name == "Search" then
+		return
+	end
+
 	local feedName: Types.FeedType = Types.GuardFeed(button.Name)
 
 	button.Activated:Connect(function()
