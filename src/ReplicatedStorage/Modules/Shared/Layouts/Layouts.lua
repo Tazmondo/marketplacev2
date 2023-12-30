@@ -9,6 +9,7 @@ export type Layout = {
 	displayThumbId: number,
 	modelTemplate: Model,
 	getValidStandPositions: () -> { [Vector3]: boolean },
+	getNumberOfStands: () -> number,
 }
 
 local LayoutFolder = ReplicatedStorage.Assets.Layouts :: Folder
@@ -36,6 +37,24 @@ function GenerateValidPositionFunction(model: Model): () -> { [Vector3]: boolean
 		end
 
 		return validPositions
+	end
+end
+
+-- Only run once per layout and only when needed
+function GenerateNumberOfStandsFunction(generatePositions: () -> { [Vector3]: boolean })
+	local positionAmount
+
+	return function()
+		if positionAmount then
+			return positionAmount
+		end
+
+		positionAmount = 0
+		for position, _ in generatePositions() do
+			positionAmount += 1
+		end
+
+		return positionAmount
 	end
 end
 
@@ -70,11 +89,15 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 	local image = gui:FindFirstChildOfClass("ImageLabel")
 	assert(image, `ShopLogo did not have an imagelabel in {id}`)
 
+	local validPositionFunction = GenerateValidPositionFunction(model)
+	local standAmountFunction = GenerateNumberOfStandsFunction(validPositionFunction)
+
 	savedLayouts[id] = TableUtil.Lock({
 		id = id,
 		displayThumbId = thumbId,
 		modelTemplate = model,
 		getValidStandPositions = GenerateValidPositionFunction(model),
+		getNumberOfStands = standAmountFunction,
 	})
 end
 
