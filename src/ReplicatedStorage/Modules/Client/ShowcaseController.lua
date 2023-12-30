@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local CartController = require(script.Parent.CartController)
 local AddItemUI = require(ReplicatedStorage.Modules.Client.UI.AddItemUI)
 local ItemViewUI = require(ReplicatedStorage.Modules.Client.UI.ItemViewUI)
 local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
@@ -210,11 +211,12 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 		else
 			SetDisplayVisibility(part, false)
 			if stand and stand.assetId then
-				prompt.ActionText = "View Item"
-				prompt.ObjectText = "Stand"
+				prompt.ActionText = ""
+				prompt.ObjectText = ""
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					ItemViewUI:Display(stand.assetId)
+					-- ItemViewUI:Display(stand.assetId)
+					CartController:AddToCart(stand.assetId)
 				end)
 			end
 		end
