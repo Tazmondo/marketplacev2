@@ -50,10 +50,10 @@ end
 function NavigationUI:Initialize()
 	feedUI.Frame.Visible = false
 
-	nav.Me.ImageButton.Image = Thumbs.GetHeadShot(Players.LocalPlayer.UserId)
+	nav.Profile.ImageButton.Image = Thumbs.GetHeadShot(Players.LocalPlayer.UserId)
 
 	FeedController.Updated:Connect(HandleFeedUpdated)
-	nav.Me.ImageButton.Activated:Connect(ProfileClicked)
+	nav.Profile.ImageButton.Activated:Connect(ProfileClicked)
 	feedUI.Current.Expand.Activated:Connect(ExpandFeedClicked)
 	feedUI.Current.Activated:Connect(ExpandFeedClicked)
 

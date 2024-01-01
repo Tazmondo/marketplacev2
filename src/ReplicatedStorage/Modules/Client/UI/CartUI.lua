@@ -11,7 +11,7 @@ local Signal = require(ReplicatedStorage.Packages.Signal)
 
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
-local mainUI = UILoader:GetMain().Cart
+local mainUI = UILoader:GetMain().Avatar
 
 CartUI.Deleted = Signal()
 
@@ -24,13 +24,13 @@ function HandleBuyItem(id: number)
 end
 
 function CartUI:RenderItems(itemIds: { number })
-	for i, child in mainUI.Content.List:GetChildren() do
+	for i, child in mainUI.Content.Wearing:GetChildren() do
 		if child:IsA("Frame") and child:GetAttribute("Temporary") then
 			child:Destroy()
 		end
 	end
 
-	local template = mainUI.Content.List.Row
+	local template = mainUI.Content.Wearing.Row
 	template.Visible = false
 
 	for i, id in itemIds do
