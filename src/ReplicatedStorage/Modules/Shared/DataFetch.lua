@@ -54,6 +54,7 @@ local validAssets: { [Enum.AvatarAssetType]: true? } = {
 	[Enum.AvatarAssetType.ShortsAccessory] = true,
 	[Enum.AvatarAssetType.DressSkirtAccessory] = true,
 }
+
 local validAssetNames: { [string]: true? } = {}
 for validAsset, _ in validAssets do
 	validAssetNames[validAsset.Name] = true
@@ -73,6 +74,8 @@ function DataFetch.GetItemDetails(assetId: number)
 			warn("Could not fetch item details", details)
 			return nil
 		end
+
+		print(details)
 
 		local price = if details.Remaining
 				and details.Remaining == 0

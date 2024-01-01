@@ -98,7 +98,21 @@ export type SearchResult = {
 	AssetType: string?,
 }
 
+export type HumanoidDescriptionAccessory = typeof(Instance.new("HumanoidDescription"):GetAccessories(true)[1])
+function GuardHumanoidDescriptionAccessory(accessory: unknown): HumanoidDescriptionAccessory
+	local data: any = accessory
+
+	return {
+		AccessoryType = data.AccessoryType,
+		AssetId = Guard.Number(data.AssetId),
+		IsLayered = Guard.Boolean(data.IsLayered),
+		Order = Guard.Optional(Guard.Number)(data.Order),
+		Puffiness = Guard.Optional(Guard.Number)(data.Puffiness),
+	}
+end
+
 return {
 	GuardFeed = GuardFeed,
 	GuardSearchParams = GuardSearchParams,
+	GuardHumanoidDescriptionAccessory = GuardHumanoidDescriptionAccessory,
 }
