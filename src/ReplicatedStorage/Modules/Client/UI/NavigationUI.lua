@@ -3,6 +3,7 @@ local NavigationUI = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local CartUI = require(script.Parent.CartUI)
 local FeedController = require(ReplicatedStorage.Modules.Client.FeedController)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
@@ -23,6 +24,10 @@ local feedNames: { [Types.FeedType]: string } = {
 
 function ProfileClicked()
 	ProfileUI:Toggle()
+end
+
+function AvatarClicked()
+	CartUI:Toggle()
 end
 
 function ExpandFeedClicked()
@@ -54,6 +59,7 @@ function NavigationUI:Initialize()
 
 	FeedController.Updated:Connect(HandleFeedUpdated)
 	nav.Profile.ImageButton.Activated:Connect(ProfileClicked)
+	nav.Avatar.ImageButton.Activated:Connect(AvatarClicked)
 	feedUI.Current.Expand.Activated:Connect(ExpandFeedClicked)
 	feedUI.Current.Activated:Connect(ExpandFeedClicked)
 
