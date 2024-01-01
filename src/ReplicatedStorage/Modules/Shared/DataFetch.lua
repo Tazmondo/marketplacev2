@@ -60,19 +60,28 @@ for validAsset, _ in validAssets do
 	validAssetNames[validAsset.Name] = true
 end
 
-function DataFetch.GetItemDetails(assetId: number)
+function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 	return Future.new(function(assetId)
 		if cachedItems[assetId] then
 			return cachedItems[assetId] :: Types.Item?
 		end
 
-		local success, details = pcall(function()
+		local getInfoSuccess, details = pcall(function()
 			return MarketplaceService:GetProductInfo(assetId) :: AssetProductInfo
 		end)
 
-		if not success then
+		if not getInfoSuccess then
 			warn("Could not fetch item details", details)
 			return nil
+		end
+
+		local ownedSuccess, owned
+		if ownership then
+			ownedSuccess, owned = pcall(function()
+				return MarketplaceService:PlayerOwnsAsset(ownership, assetId)
+			end)
+		else
+			ownedSuccess, owned = false, false
 		end
 
 		local price = if details.Remaining
@@ -86,6 +95,7 @@ function DataFetch.GetItemDetails(assetId: number)
 			name = details.Name,
 			creator = details.Creator.Name or "Roblox",
 			price = price,
+			owned = if ownership then ownedSuccess and owned else nil,
 		}
 
 		cachedItems[assetId] = item

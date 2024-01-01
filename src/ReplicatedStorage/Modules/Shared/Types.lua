@@ -7,6 +7,7 @@ export type Item = {
 	name: string,
 	assetId: number,
 	price: number?,
+	owned: boolean?,
 }
 
 export type Stand = {
