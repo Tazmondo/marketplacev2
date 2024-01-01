@@ -75,8 +75,6 @@ function DataFetch.GetItemDetails(assetId: number)
 			return nil
 		end
 
-		print(details)
-
 		local price = if details.Remaining
 				and details.Remaining == 0
 				and details.CollectiblesItemDetails

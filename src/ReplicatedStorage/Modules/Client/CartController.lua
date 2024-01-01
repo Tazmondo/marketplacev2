@@ -6,68 +6,24 @@ local CartUI = require(ReplicatedStorage.Modules.Client.UI.CartUI)
 
 local DescriptionEvent = require(ReplicatedStorage.Events.DescriptionEvent):Client()
 
-type AccessoriesTable = { [Enum.AccessoryType]: { typeof(Instance.new("HumanoidDescription"):GetAccessories(true)[1]) } }
-
-local function GetEmptyAccessoryTable()
-	local newTable: AccessoriesTable = {}
-	for i, accessoryEnum in Enum.AccessoryType:GetEnumItems() :: { Enum.AccessoryType } do
-		newTable[accessoryEnum] = {}
-	end
-	return newTable
-end
-
-local description: HumanoidDescription? = nil
-
 local cartItems: { number } = {}
-local cartAccessories = GetEmptyAccessoryTable()
-
-function DescriptionAsAccessoryTable(description: HumanoidDescription)
-	local newTable = GetEmptyAccessoryTable()
-
-	local accessories = description:GetAccessories(true)
-	for i, accessory in accessories do
-		local accessoryTable = newTable[accessory.AccessoryType]
-		table.insert(accessoryTable, accessory)
-	end
-
-	return newTable
-end
 
 function UpdateCharacter()
 	local character = Players.LocalPlayer.Character
-	if not character or not description then
+	if not character then
 		return
 	end
 
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then
-		return
-	end
-
-	local defaultAccessories = DescriptionAsAccessoryTable(description)
-
-	local finalAccessories = {}
-
-	-- If any accessories of a specific type have been added to the cart, only equip those ones
-	-- Otherwise, just add the user's own accessories of that type.
-	for i, accessoryType in Enum.AccessoryType:GetEnumItems() :: { Enum.AccessoryType } do
-		local selectedAccessories = cartAccessories[accessoryType]
-		if #selectedAccessories == 0 then
-			for i, accessory in defaultAccessories[accessoryType] do
-				table.insert(finalAccessories, accessory)
-			end
-		else
-			for i, accessory in selectedAccessories do
-				table.insert(finalAccessories, accessory)
-			end
-		end
-	end
-
-	DescriptionEvent:Fire(finalAccessories)
+	DescriptionEvent:Fire(cartItems)
 end
 
 function UpdateUI()
 	CartUI:RenderItems(cartItems)
+end
+
+function Update()
+	UpdateUI()
+	UpdateCharacter()
 end
 
 function CartController:RemoveFromCart(id: number)
@@ -76,8 +32,7 @@ function CartController:RemoveFromCart(id: number)
 		table.remove(cartItems, index)
 	end
 
-	UpdateUI()
-	UpdateCharacter()
+	Update()
 end
 
 function CartController:AddToCart(id: number)
@@ -85,8 +40,7 @@ function CartController:AddToCart(id: number)
 		table.insert(cartItems, id)
 	end
 
-	UpdateUI()
-	UpdateCharacter()
+	Update()
 end
 
 function HandleCharacterAdded(char: Model)
@@ -94,8 +48,14 @@ function HandleCharacterAdded(char: Model)
 	local character = player.Character or player.CharacterAdded:Wait()
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 
-	description = humanoid:GetAppliedDescription()
-	assert(description)
+	cartItems = {}
+
+	local description = humanoid:GetAppliedDescription()
+	for i, accessory in description:GetAccessories(true) do
+		table.insert(cartItems, accessory.AssetId)
+	end
+
+	Update()
 end
 
 function CartController:Initialize()
