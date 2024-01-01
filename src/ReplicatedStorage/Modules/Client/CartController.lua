@@ -66,7 +66,8 @@ function HandleCharacterAdded(char: Model)
 		table.insert(cartItems, accessory.AssetId)
 	end
 
-	UpdateCharacter()
+	Update()
+	CartUI:Hide()
 end
 
 function CartController:Initialize()

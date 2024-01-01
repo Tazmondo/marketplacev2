@@ -25,6 +25,9 @@ assert(accessoryReplication, "Accessory replication folder did not exist.")
 local renderedAccessoryFolder = Instance.new("Folder", workspace)
 renderedAccessoryFolder.Name = "Rendered Accessories"
 
+local assetsFolder = assert(ReplicatedStorage:FindFirstChild("Assets")) :: Folder
+local highlightTemplate = assert(assetsFolder:FindFirstChild("ItemHighlight")) :: Highlight
+
 type RenderedStand = {
 	standPart: BasePart,
 	roundedPosition: Vector3,
@@ -187,6 +190,22 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 
 					-- Set this here, so that the placeholder is still there until the model has loaded
 					SetDisplayVisibility(part, false)
+					local meshPart = model:FindFirstChildOfClass("MeshPart")
+					if not meshPart then
+						warn(`Model inserted without meshpart: {stand.assetId}`)
+						return
+					end
+
+					prompt.PromptShown:Connect(function()
+						highlightTemplate:Clone().Parent = meshPart
+					end)
+
+					prompt.PromptHidden:Connect(function()
+						local highlight = meshPart:FindFirstChild(highlightTemplate.Name)
+						if highlight then
+							highlight:Destroy()
+						end
+					end)
 				end
 			end)
 		end
