@@ -50,6 +50,7 @@ function CartUI:RenderItems(itemIds: { number })
 
 		newRow.Visible = true
 		newRow:SetAttribute("Temporary", true)
+		newRow.LayoutOrder = #itemIds - i -- so most recent additions are at the top
 		newRow.Parent = template.Parent
 
 		DataFetch.GetItemDetails(id):After(function(details)
