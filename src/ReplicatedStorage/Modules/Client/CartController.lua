@@ -43,6 +43,17 @@ function CartController:AddToCart(id: number)
 	Update()
 end
 
+function CartController:ToggleInCart(id: number)
+	local found = table.find(cartItems, id)
+	if not found then
+		table.insert(cartItems, id)
+	else
+		table.remove(cartItems, found)
+	end
+
+	Update()
+end
+
 function HandleCharacterAdded(char: Model)
 	local player = Players.LocalPlayer
 	local character = player.Character or player.CharacterAdded:Wait()

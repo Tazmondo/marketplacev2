@@ -216,7 +216,7 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
 					-- ItemViewUI:Display(stand.assetId)
-					CartController:AddToCart(stand.assetId)
+					CartController:ToggleInCart(stand.assetId)
 				end)
 			end
 		end
