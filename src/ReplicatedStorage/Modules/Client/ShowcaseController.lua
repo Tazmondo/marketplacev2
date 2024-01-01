@@ -154,6 +154,7 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.RequiresLineOfSight = false
+		prompt.UIOffset = Config.StandProximityOffset
 
 		local _, rotY, _ = part.CFrame:ToEulerAnglesYXZ()
 

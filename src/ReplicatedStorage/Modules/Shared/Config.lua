@@ -34,6 +34,8 @@ local Config = {
 	StandBobSpeed = 0.2,
 	DefaultScale = 2.5,
 
+	StandProximityOffset = Vector2.new(50, 0),
+
 	-- Won't allow you to create new places if you exceed this number
 	MaxPlaces = 30,
 
