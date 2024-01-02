@@ -88,6 +88,7 @@ function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 				and details.Remaining == 0
 				and details.CollectiblesItemDetails
 			then details.CollectiblesItemDetails.CollectibleLowestResalePrice
+			elseif details.IsPublicDomain then 0 -- Item is free
 			else details.PriceInRobux
 
 		local item: Types.Item = {

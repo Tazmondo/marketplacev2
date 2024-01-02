@@ -815,6 +815,27 @@ export type Main = ScreenGui & {
 			},
 		},
 	},
+	Confirm: Frame & {
+		Title: TextLabel,
+		UIPadding: UIPadding,
+		UICorner: UICorner,
+		UIListLayout: UIListLayout,
+		Actions: Frame & {
+			UIListLayout: UIListLayout,
+			SecondaryButton: TextButton & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+				UICorner: UICorner,
+			},
+			PrimaryButton: TextButton & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+				UICorner: UICorner,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Body: TextLabel,
+	},
 	Outfits: Frame & {
 		UICorner: UICorner,
 		Content: Frame & {

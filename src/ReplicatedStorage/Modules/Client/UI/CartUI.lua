@@ -5,6 +5,7 @@ local CartUI = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local ConfirmUI = require(script.Parent.ConfirmUI)
 local UILoader = require(script.Parent.UILoader)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
@@ -110,7 +111,10 @@ function CartUI:Initialize()
 		CartUI:Hide()
 	end)
 	mainUI.Content.Title.Refresh.ImageButton.Activated:Connect(function()
-		CartUI.Reset:Fire()
+		local result = ConfirmUI:Confirm(ConfirmUI.Confirmations.ResetAvatar):Await()
+		if result then
+			CartUI.Reset:Fire()
+		end
 	end)
 end
 
