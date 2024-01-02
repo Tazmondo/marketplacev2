@@ -29,8 +29,8 @@ dependencies = []
 
 [[package]]
 name = "red-blox/red"
-version = "2.1.1"
-dependencies = [["Future", "red-blox/future@1.0.1"], ["Guard", "red-blox/guard@1.0.1"], ["Spawn", "red-blox/spawn@1.0.0"]]
+version = "2.3.0"
+dependencies = [["Future", "red-blox/future@1.0.1"], ["Guard", "red-blox/guard@1.0.1"], ["Signal", "red-blox/signal@2.0.2"], ["Spawn", "red-blox/spawn@1.0.0"]]
 
 [[package]]
 name = "red-blox/signal"
@@ -53,11 +53,6 @@ version = "1.2.1"
 dependencies = []
 
 [[package]]
-name = "tazmondo/profileservice"
-version = "1.0.6"
-dependencies = []
-
-[[package]]
-name = "tazmondo/rumble-rojo"
+name = "tazmondo/marketplacev2"
 version = "0.1.0"
-dependencies = [["Base64", "reselim/base64@2.0.3"], ["Bin", "red-blox/bin@1.0.0"], ["Cmdr", "evaera/cmdr@1.12.0"], ["Future", "red-blox/future@1.0.1"], ["Guard", "red-blox/guard@1.0.1"], ["Iris", "michael-48/iris@2.1.4"], ["Red", "red-blox/red@2.1.1"], ["Signal", "red-blox/signal@2.0.2"], ["Spawn", "red-blox/spawn@1.0.0"], ["TableUtil", "sleitnick/table-util@1.2.1"], ["ProfileService", "tazmondo/profileservice@1.0.6"]]
+dependencies = [["Base64", "reselim/base64@2.0.3"], ["Bin", "red-blox/bin@1.0.0"], ["Cmdr", "evaera/cmdr@1.12.0"], ["Future", "red-blox/future@1.0.1"], ["Guard", "red-blox/guard@1.0.1"], ["Iris", "michael-48/iris@2.1.4"], ["Red", "red-blox/red@2.3.0"], ["Signal", "red-blox/signal@2.0.2"], ["Spawn", "red-blox/spawn@1.0.0"], ["TableUtil", "sleitnick/table-util@1.2.1"]]
