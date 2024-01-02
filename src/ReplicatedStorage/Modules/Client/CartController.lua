@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CartUI = require(ReplicatedStorage.Modules.Client.UI.CartUI)
+local Future = require(ReplicatedStorage.Packages.Future)
 
 local DescriptionEvent = require(ReplicatedStorage.Events.DescriptionEvent):Client()
 
@@ -54,6 +55,25 @@ function CartController:ToggleInCart(id: number)
 	Update()
 end
 
+function HandleReset()
+	return Future.new(function()
+		local success, description =
+			pcall(Players.GetHumanoidDescriptionFromUserId, Players, Players.LocalPlayer.UserId)
+		if not success then
+			warn(description)
+			return
+		end
+
+		local items = {}
+		for i, accessory in description:GetAccessories(true) do
+			table.insert(items, accessory.AssetId)
+		end
+
+		cartItems = items
+		Update()
+	end)
+end
+
 function HandleCharacterAdded(char: Model)
 	local player = Players.LocalPlayer
 	local character = player.Character or player.CharacterAdded:Wait()
@@ -74,6 +94,7 @@ function CartController:Initialize()
 	CartUI.Deleted:Connect(function(id: number)
 		CartController:RemoveFromCart(id)
 	end)
+	CartUI.Reset:Connect(HandleReset)
 
 	local player = Players.LocalPlayer
 	if player.Character then

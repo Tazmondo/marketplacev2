@@ -16,6 +16,7 @@ local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired
 local mainUI = UILoader:GetMain().Avatar
 
 CartUI.Deleted = Signal()
+CartUI.Reset = Signal()
 
 function HandleRemoveItem(id: number)
 	CartUI.Deleted:Fire(id)
@@ -107,6 +108,9 @@ function CartUI:Initialize()
 
 	mainUI.Content.Title.Close.ImageButton.Activated:Connect(function()
 		CartUI:Hide()
+	end)
+	mainUI.Content.Title.Refresh.ImageButton.Activated:Connect(function()
+		CartUI.Reset:Fire()
 	end)
 end
 
