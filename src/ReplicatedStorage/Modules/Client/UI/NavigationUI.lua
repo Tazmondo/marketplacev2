@@ -55,7 +55,7 @@ end
 function NavigationUI:Initialize()
 	feedUI.Frame.Visible = false
 
-	nav.Profile.ImageButton.Image = Thumbs.GetHeadShot(Players.LocalPlayer.UserId)
+	nav.Profile.Frame.ImageLabel.Image = Thumbs.GetHeadShot(Players.LocalPlayer.UserId)
 
 	FeedController.Updated:Connect(HandleFeedUpdated)
 	nav.Profile.ImageButton.Activated:Connect(ProfileClicked)
