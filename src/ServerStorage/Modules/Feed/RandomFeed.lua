@@ -5,7 +5,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local RandomValid = require(script.Parent.RandomValid)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
-local DataService = require(ServerStorage.Modules.DataService.DataService)
+local DataService = require(ServerStorage.Modules.Data.DataService)
 local RandomPlayerService = require(ServerStorage.Modules.RandomPlayerService)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)

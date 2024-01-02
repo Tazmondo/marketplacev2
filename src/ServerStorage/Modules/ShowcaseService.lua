@@ -6,7 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 
-local DataService = require(script.Parent.DataService.DataService)
+local DataService = require(script.Parent.Data.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
@@ -432,10 +432,10 @@ function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.U
 			-- Yields
 			local success, result = pcall(function()
 				return TextService:FilterStringAsync(
-					update.name,
-					player.UserId,
-					Enum.TextFilterContext.PublicChat
-				) :: TextFilterResult
+						update.name,
+						player.UserId,
+						Enum.TextFilterContext.PublicChat
+					) :: TextFilterResult
 			end)
 
 			if not success then
