@@ -3,14 +3,13 @@ local NavigationUI = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local FeedEvents = require(ReplicatedStorage.Events.FeedEvents)
 local CartUI = require(script.Parent.CartUI)
 local FeedController = require(ReplicatedStorage.Modules.Client.FeedController)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local ProfileUI = require(script.Parent.ProfileUI)
 local UILoader = require(script.Parent.UILoader)
-
-local SwitchFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.SwitchFeedEvent):Client()
 
 local gui = UILoader:GetNavigation()
 local nav = gui.Nav
@@ -44,7 +43,7 @@ function RegisterFeedButton(button: ImageButton)
 
 	button.Activated:Connect(function()
 		feedUI.Frame.Visible = false
-		SwitchFeedEvent:Fire(feedName)
+		FeedEvents.Switch:FireServer(feedName)
 	end)
 end
 

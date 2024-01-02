@@ -62,6 +62,7 @@ end
 export type FeedData = {
 	showcases: { Showcase },
 	type: FeedType,
+	viewedUser: number?, -- When nil, user is on a feed. When set, user is viewing
 }
 
 export type CreatorMode = "All" | "User" | "Group"

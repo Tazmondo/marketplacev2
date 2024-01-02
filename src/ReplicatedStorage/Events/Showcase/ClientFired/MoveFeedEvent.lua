@@ -1,6 +1,0 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Guard = require(ReplicatedStorage.Packages.Guard)
-local Red = require(ReplicatedStorage.Packages.Red)
-return Red.Event("Feed_MoveFeed", function(index)
-	return Guard.Number(index)
-end)

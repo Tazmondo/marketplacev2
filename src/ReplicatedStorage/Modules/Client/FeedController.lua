@@ -2,11 +2,9 @@ local FeedController = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local FeedEvents = require(ReplicatedStorage.Events.FeedEvents)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Signal = require(ReplicatedStorage.Packages.Signal)
-
-local MoveFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.MoveFeedEvent):Client()
-local UpdateFeedEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateFeedEvent):Client()
 
 FeedController.Updated = Signal()
 
@@ -21,7 +19,7 @@ function FeedController:BumpIndex(bumpAmount: number)
 	local newIndex = math.clamp(currentIndex + bumpAmount, 0, #currentFeed.showcases)
 	currentIndex = newIndex
 
-	MoveFeedEvent:Fire(newIndex)
+	FeedEvents.Move:FireServer(newIndex)
 
 	FeedController.Updated:Fire(currentFeed, newIndex)
 end
@@ -49,7 +47,7 @@ function HandleUpdateFeed(feed: Types.FeedData)
 end
 
 function FeedController:Initialize()
-	UpdateFeedEvent:On(HandleUpdateFeed)
+	FeedEvents.Update:SetClientListener(HandleUpdateFeed)
 end
 
 FeedController:Initialize()

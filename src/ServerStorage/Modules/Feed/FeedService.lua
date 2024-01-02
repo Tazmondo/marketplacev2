@@ -4,6 +4,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local FeedEvents = require(ReplicatedStorage.Events.FeedEvents)
 local RandomFeed = require(script.Parent.RandomFeed)
 local DataService = require(ServerStorage.Modules.Data.DataService)
 local ShowcaseService = require(ServerStorage.Modules.ShowcaseService)
@@ -17,10 +18,6 @@ local Base64 = require(ReplicatedStorage.Packages.Base64)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
-
-local SwitchFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.SwitchFeedEvent):Server()
-local MoveFeedEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.MoveFeedEvent):Server()
-local UpdateFeedEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateFeedEvent):Server()
 
 function GuardJoinData(data: unknown): Types.LaunchData
 	local value: any = data
@@ -136,7 +133,7 @@ function PlayerAdded(player: Player)
 		type = Config.DefaultFeed,
 	}
 
-	UpdateFeedEvent:Fire(player, feedData[player])
+	FeedEvents.Update:FireClient(player, feedData[player])
 
 	local showcase = showcases[1]
 
@@ -173,6 +170,8 @@ end
 
 function HandleSwitchFeed(player: Player, type: Types.FeedType)
 	local data = feedData[player]
+	data.showcases = {}
+
 	if data.type == type then
 		return
 	end
@@ -193,7 +192,7 @@ function HandleSwitchFeed(player: Player, type: Types.FeedType)
 	data.showcases = feed
 	data.type = type
 
-	UpdateFeedEvent:Fire(player, feedData[player])
+	FeedEvents.Update:FireClient(player, feedData[player])
 
 	local firstShowcase = ShowcaseService:GetShowcase(feed[1], "View")
 	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
@@ -203,7 +202,7 @@ function HandleRandomFeedUpdated(feed: { Types.Showcase })
 	for player, data in feedData do
 		if data.type == "Random" then
 			data.showcases = feed
-			UpdateFeedEvent:Fire(player, data)
+			FeedEvents.Update:FireClient(player, data)
 		end
 	end
 end
@@ -218,8 +217,8 @@ function FeedService:Initialize()
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 
-	MoveFeedEvent:On(HandleMoveFeed)
-	SwitchFeedEvent:On(function(player, type)
+	FeedEvents.Move:SetServerListener(HandleMoveFeed)
+	FeedEvents.Switch:SetServerListener(function(player, type)
 		HandleSwitchFeed(player, type :: Types.FeedType)
 	end)
 
