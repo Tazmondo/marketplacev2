@@ -2,6 +2,7 @@
 -- Honestly this might be a security concern? I think it's a Roblox issue though if someone can exploit by just wearing accessories
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local DescriptionEvent = require(ReplicatedStorage.Events.DescriptionEvent):Server()
 
 function HandleUpdateAccessories(player: Player, accessories: { number })
@@ -20,23 +21,25 @@ function HandleUpdateAccessories(player: Player, accessories: { number })
 	local description = humanoid:GetAppliedDescription()
 
 	local existingAccessories = description:GetAccessories(true)
-	local accessorySet = {}
+	local existingAccessorySet: { [number]: Types.HumanoidDescriptionAccessory } = {}
 	for i, accessory in existingAccessories do
-		accessorySet[accessory.AssetId] = accessory
+		existingAccessorySet[accessory.AssetId] = accessory
 	end
 
 	local newAccessories = {}
 
 	for i, id in accessories do
-		local accessoryType = Enum.AccessoryType.Face
-		if accessorySet[id] then
-			accessoryType = accessorySet[id].AccessoryType
+		local existingAccessory = existingAccessorySet[id]
+
+		if existingAccessory then
+			table.insert(newAccessories, existingAccessory)
+		else
+			table.insert(newAccessories, {
+				AssetId = id,
+				AccessoryType = Enum.AccessoryType.Face,
+				IsLayered = false,
+			})
 		end
-		table.insert(newAccessories, {
-			AssetId = id,
-			AccessoryType = accessoryType,
-			IsLayered = false,
-		})
 	end
 
 	description:SetAccessories(newAccessories, true)
