@@ -86,6 +86,7 @@ function Util.CreateRateYield(interval: number)
 	return rateDelay
 end
 
+-- A regular rate limit, returning a boolean for whether a request is allowed or not.
 function Util.RateLimit<T>(count: number, interval: number)
 	assert(count > 0 and interval > 0, "Count and interval must be >0 for rate limits.")
 	local limits: { [T]: number? } = {}
@@ -121,6 +122,7 @@ function Util.GlobalRateLimit(count: number, interval: number)
 	end
 end
 
+-- Forces a yielding function to only be running once at any given time.
 function Util.CreateYieldDebounce<T..., U...>(func: (T...) -> U...): (T...) -> U...
 	local debounce = false
 	local completed = Signal()

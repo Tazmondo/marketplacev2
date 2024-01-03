@@ -15,4 +15,10 @@ return {
 	Update = Red.SharedEvent("Feed_UpdateFeed", function(feed)
 		return feed :: Types.FeedData
 	end),
+
+	User = Red.Function("Feed_UserFeed", function(userId)
+		return Guard.Number(userId)
+	end, function(success)
+		return Guard.Boolean(success)
+	end),
 }

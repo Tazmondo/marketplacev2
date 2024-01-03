@@ -13,25 +13,24 @@ export type Nav = ScreenGui & {
 		},
 		Search: ImageButton & {
 			UICorner: UICorner,
+			Toggle: TextButton & {
+				UICorner: UICorner,
+				TextLabel: TextLabel,
+				UIListLayout: UIListLayout,
+			},
 			Creator: TextBox & {
 				UICorner: UICorner,
-				Toggle: TextButton & {
-					UICorner: UICorner,
-					TextLabel: TextLabel,
-					UIListLayout: UIListLayout,
-				},
 				UIPadding: UIPadding,
-				UIListLayout: UIListLayout,
 			},
 			UIListLayout: UIListLayout,
 		},
 		ActionButton: Frame & {
-			Frame: Frame & {
+			UICorner: UICorner,
+			UIListLayout: UIListLayout,
+			ImageButton: ImageButton & {
+				SearchIcon: ImageLabel,
 				UIListLayout: UIListLayout,
 				CloseIcon: ImageLabel,
-				SearchIcon: ImageLabel,
-			},
-			ImageButton: ImageButton & {
 				UICorner: UICorner,
 			},
 		},
@@ -42,7 +41,7 @@ export type Nav = ScreenGui & {
 				Feed: TextLabel,
 				UICorner: UICorner,
 			},
-			Search: ImageButton & {
+			Popular: ImageButton & {
 				UIListLayout: UIListLayout,
 				UIPadding: UIPadding,
 				Feed: TextLabel,
@@ -70,7 +69,9 @@ export type Nav = ScreenGui & {
 				UIListLayout: UIListLayout,
 				UICorner: UICorner,
 				Body: TextLabel,
-				ImageLabel: ImageLabel,
+				ImageLabel: ImageLabel & {
+					UICorner: UICorner,
+				},
 			},
 		},
 		Invite: ImageButton & {

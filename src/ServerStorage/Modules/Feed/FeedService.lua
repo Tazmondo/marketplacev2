@@ -42,7 +42,7 @@ local DefaultShowcase: Types.Showcase = {
 }
 TableUtil.Lock(DefaultShowcase)
 
-local feedData: { [Player]: Types.FeedData } = {}
+local feedData: { [Player]: Types.FeedData? } = {}
 
 local cachedEditorPicks: { Types.Showcase }? = nil
 
@@ -124,16 +124,18 @@ function PlayerAdded(player: Player)
 				showcases = { TableUtil.Copy(DefaultShowcase, true) }
 			end
 		elseif Config.DefaultFeed == "Random" then
-			showcases = RandomFeed.GetFeed(10):Await()
+			showcases = RandomFeed.GetFeed(1):Await()
 		end
 	end
 
-	feedData[player] = {
+	local data = {
 		showcases = showcases,
 		type = Config.DefaultFeed,
 	}
 
-	FeedEvents.Update:FireClient(player, feedData[player])
+	feedData[player] = data
+
+	FeedEvents.Update:FireClient(player, data)
 
 	local showcase = showcases[1]
 
@@ -170,9 +172,13 @@ end
 
 function HandleSwitchFeed(player: Player, type: Types.FeedType)
 	local data = feedData[player]
+	if not data then
+		return
+	end
+
 	data.showcases = {}
 
-	if data.type == type then
+	if data.type == type and not data.viewedUser then
 		return
 	end
 
@@ -191,15 +197,54 @@ function HandleSwitchFeed(player: Player, type: Types.FeedType)
 
 	data.showcases = feed
 	data.type = type
+	data.viewedUser = nil
 
-	FeedEvents.Update:FireClient(player, feedData[player])
+	FeedEvents.Update:FireClient(player, data)
 
 	local firstShowcase = ShowcaseService:GetShowcase(feed[1], "View")
 	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
 end
 
+local userSearchRateLimit = Util.RateLimit(1, 6)
+function HandleUserFeed(player: Player, userId: number)
+	if not userSearchRateLimit(player) then
+		return false
+	end
+
+	local feed = feedData[player]
+	if not feed then
+		return false
+	end
+
+	local targetData = DataService:ReadOfflineData(userId):Await()
+	if not targetData then
+		return false
+	end
+
+	local showcases = {}
+	for i, showcase in targetData.showcases do
+		table.insert(showcases, Data.FromDataShowcase(showcase, userId))
+	end
+
+	if #showcases == 0 then
+		return false
+	end
+
+	feed.viewedUser = userId
+	feed.showcases = showcases
+
+	FeedEvents.Update:FireClient(player, feed)
+
+	local firstShowcase = ShowcaseService:GetShowcase(feed.showcases[1], "View")
+	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
+
+	return true
+end
+
 function HandleRandomFeedUpdated(feed: { Types.Showcase })
 	for player, data in feedData do
+		assert(data)
+
 		if data.type == "Random" then
 			data.showcases = feed
 			FeedEvents.Update:FireClient(player, data)
@@ -221,6 +266,7 @@ function FeedService:Initialize()
 	FeedEvents.Switch:SetServerListener(function(player, type)
 		HandleSwitchFeed(player, type :: Types.FeedType)
 	end)
+	FeedEvents.User:SetCallback(HandleUserFeed)
 
 	RandomFeed.Extended:Connect(HandleRandomFeedUpdated)
 end
