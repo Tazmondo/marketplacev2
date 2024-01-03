@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local FeedEvents = require(ReplicatedStorage.Events.FeedEvents)
+local Device = require(ReplicatedStorage.Modules.Client.Device)
 local CartUI = require(script.Parent.CartUI)
 local FeedController = require(ReplicatedStorage.Modules.Client.FeedController)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
@@ -54,9 +55,15 @@ end
 local function ToggleSearchVisibility(force: boolean?)
 	local visible = if force ~= nil then force else not feedUI.Search.Visible
 	feedUI.Search.Visible = visible
+	feedUI.Current.Visible = not visible
+
 	if visible then
 		feedUI.Search.Creator.Text = ""
-		feedUI.Search.Creator:CaptureFocus()
+
+		-- Capturing focus on mobile seems to hide the placeholder text, which is undesirable
+		if Device() == "PC" then
+			feedUI.Search.Creator:CaptureFocus()
+		end
 	end
 
 	feedUI.ActionButton.ImageButton.SearchIcon.Visible = not visible
