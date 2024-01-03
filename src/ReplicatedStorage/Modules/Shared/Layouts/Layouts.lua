@@ -80,6 +80,8 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 	local model = LayoutFolder:FindFirstChild(id)
 	assert(model and model:IsA("Model"), `Could not find model layout with id: {id}`)
 
+	assert(model.PrimaryPart, `Layout {id} did not have PrimaryPart set to a pivot.`)
+
 	local logo = model:FindFirstChild("ShopLogo")
 	assert(logo and logo:IsA("BasePart"), `ShopLogo not found in {id}`)
 
