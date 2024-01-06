@@ -28,9 +28,13 @@ export type Nav = ScreenGui & {
 			UICorner: UICorner,
 			UIListLayout: UIListLayout,
 			ImageButton: ImageButton & {
-				SearchIcon: ImageLabel,
+				SearchIcon: ImageLabel & {
+					UICorner: UICorner,
+				},
 				UIListLayout: UIListLayout,
-				CloseIcon: ImageLabel,
+				CloseIcon: ImageLabel & {
+					UICorner: UICorner,
+				},
 				UICorner: UICorner,
 			},
 		},
@@ -65,13 +69,22 @@ export type Nav = ScreenGui & {
 				UICorner: UICorner,
 			},
 			Frame: Frame & {
-				UIPadding: UIPadding,
 				UIListLayout: UIListLayout,
 				UICorner: UICorner,
 				Body: TextLabel,
 				ImageLabel: ImageLabel & {
 					UICorner: UICorner,
 				},
+			},
+		},
+		Catalog: Frame & {
+			Frame: Frame & {
+				UIListLayout: UIListLayout,
+				Body: TextLabel,
+				ImageLabel: ImageLabel,
+			},
+			ImageButton: ImageButton & {
+				UICorner: UICorner,
 			},
 		},
 		Invite: ImageButton & {
@@ -83,15 +96,6 @@ export type Nav = ScreenGui & {
 			},
 		},
 		UIListLayout: UIListLayout,
-		Outfits: Frame & {
-			Frame: Frame & {
-				UIListLayout: UIListLayout,
-				ImageLabel: ImageLabel,
-			},
-			ImageButton: ImageButton & {
-				UICorner: UICorner,
-			},
-		},
 		UISizeConstraint: UISizeConstraint,
 		Avatar: Frame & {
 			Frame: Frame & {
@@ -929,6 +933,432 @@ export type Main = ScreenGui & {
 			UIGridLayout: UIGridLayout,
 		},
 		UIListLayout: UIListLayout,
+	},
+}
+
+export type Catalog = ScreenGui & {
+	Catalog: Frame & {
+		UICorner: UICorner,
+		SearchWrapper: Frame & {
+			UICorner: UICorner,
+			Search: Frame & {
+				UICorner: UICorner,
+				UISizeConstraint: UISizeConstraint,
+				UIPadding: UIPadding,
+				Search: Frame & {
+					Top: Frame & {
+						UICorner: UICorner,
+						Creator: TextBox & {
+							UIPadding: UIPadding,
+							Toggle: TextButton & {
+								UICorner: UICorner,
+								TextLabel: TextLabel,
+								UIListLayout: UIListLayout,
+							},
+							UIStroke: UIStroke,
+							UIListLayout: UIListLayout,
+							UICorner: UICorner,
+						},
+						UIListLayout: UIListLayout,
+					},
+					UIPadding: UIPadding,
+					Bottom: Frame & {
+						OffSale: TextButton & {
+							UICorner: UICorner,
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						Filter: TextButton & {
+							UICorner: UICorner,
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						Max: TextBox & {
+							UICorner: UICorner,
+							UIStroke: UIStroke,
+							UIPadding: UIPadding,
+						},
+						Min: TextBox & {
+							UICorner: UICorner,
+							UIStroke: UIStroke,
+							UIPadding: UIPadding,
+						},
+						UICorner: UICorner,
+					},
+					UIListLayout: UIListLayout,
+					Actions: Frame & {
+						Search: TextButton & {
+							UICorner: UICorner,
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+					},
+				},
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Content: Frame & {
+			Categories: Frame & {
+				List: ScrollingFrame & {
+					Waist: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								["11642500660"]: ImageLabel,
+								UIListLayout: UIListLayout,
+							},
+						},
+						UICorner: UICorner,
+					},
+					["T-Shirts"]: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								["9194177791"]: ImageLabel,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Head: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								["14999863098"]: ImageLabel,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Neck: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								["4489579014"]: ImageLabel,
+								UIListLayout: UIListLayout,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Face: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								["376527500"]: ImageLabel,
+								UIListLayout: UIListLayout,
+							},
+						},
+						UICorner: UICorner,
+					},
+					["Dresses & Skirts"]: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								["11403156197"]: ImageLabel,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Back: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								["5029119350"]: ImageLabel,
+								UIListLayout: UIListLayout,
+							},
+						},
+						UIStroke: UIStroke,
+						UIListLayout: UIListLayout,
+						UICorner: UICorner,
+					},
+					Shorts: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								["9341907174"]: ImageLabel,
+								UIListLayout: UIListLayout,
+							},
+						},
+						UICorner: UICorner,
+					},
+					UIGridLayout: UIGridLayout,
+					Front: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								["7218084514"]: ImageLabel,
+								UIListLayout: UIListLayout,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Shirts: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								["15523685884"]: ImageLabel,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Pants: ImageButton & {
+						Title: Frame & {
+							UIListLayout: UIListLayout,
+							TextLabel: TextLabel,
+						},
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								["9042824209"]: ImageLabel,
+							},
+						},
+						UIStroke: UIStroke,
+						UICorner: UICorner,
+						UIListLayout: UIListLayout,
+					},
+					Jackets: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								["9042824209"]: ImageLabel,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Sweaters: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								["9448569757"]: ImageLabel,
+							},
+						},
+						UICorner: UICorner,
+					},
+					Hair: ImageButton & {
+						Title: Frame & {
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								["376527500"]: ImageLabel,
+								UIListLayout: UIListLayout,
+							},
+						},
+						UICorner: UICorner,
+					},
+				},
+			},
+			Tabs: Frame & {
+				UIListLayout: UIListLayout,
+				Frame: Frame & {
+					Accessories: TextButton & {
+						UICorner: UICorner,
+						UIListLayout: UIListLayout,
+						TextLabel: TextLabel,
+						ItemImage: ImageLabel & {
+							UICorner: UICorner,
+						},
+					},
+					Clothing: TextButton & {
+						UICorner: UICorner,
+						UIListLayout: UIListLayout,
+						TextLabel: TextLabel,
+						ItemImage: ImageLabel & {
+							UICorner: UICorner,
+						},
+					},
+					UICorner: UICorner,
+					UIListLayout: UIListLayout,
+					Animation: TextButton & {
+						UICorner: UICorner,
+						UIListLayout: UIListLayout,
+						ItemImage: ImageLabel & {
+							UICorner: UICorner,
+						},
+					},
+					Body: TextButton & {
+						UICorner: UICorner,
+						UIListLayout: UIListLayout,
+						ItemImage: ImageLabel & {
+							UICorner: UICorner,
+						},
+					},
+				},
+				UISizeConstraint: UISizeConstraint,
+			},
+			UIPadding: UIPadding,
+			UIListLayout: UIListLayout,
+			SearchResults: Frame & {
+				UIListLayout: UIListLayout,
+				ListWrapper: Frame & {
+					UIPadding: UIPadding,
+					List: ScrollingFrame & {
+						ItemWrapper: ImageButton & {
+							ImageFrame: Frame & {
+								UICorner: UICorner,
+								Frame: Frame & {
+									UIListLayout: UIListLayout,
+									ItemImage: ImageLabel & {
+										UICorner: UICorner,
+									},
+								},
+								Buy: TextButton & {
+									TextLabel: TextLabel,
+									UIPadding: UIPadding,
+									UIListLayout: UIListLayout,
+									UIStroke: UIStroke,
+									UICorner: UICorner,
+									ImageLabel: ImageLabel,
+								},
+							},
+							UIStroke: UIStroke,
+							UICorner: UICorner,
+							UIListLayout: UIListLayout,
+						},
+						UIGridLayout: UIGridLayout,
+					},
+				},
+			},
+			Actions: Frame & {
+				UIListLayout: UIListLayout,
+				Frame: Frame & {
+					UICorner: UICorner,
+					Search: TextBox & {
+						UIPadding: UIPadding,
+						UIListLayout: UIListLayout,
+					},
+					Close: TextButton & {
+						UIListLayout: UIListLayout,
+						UICorner: UICorner,
+						UIPadding: UIPadding,
+						ImageLabel: ImageLabel,
+					},
+				},
+				UISizeConstraint: UISizeConstraint,
+				Close: TextButton & {
+					UIListLayout: UIListLayout,
+					UICorner: UICorner,
+					UIPadding: UIPadding,
+					ImageLabel: ImageLabel,
+				},
+			},
+			Results: Frame & {
+				UIListLayout: UIListLayout,
+				ListWrapper: Frame & {
+					Actions: Frame & {
+						UIListLayout: UIListLayout,
+						Close: TextButton & {
+							TextLabel: TextLabel,
+							UICorner: UICorner,
+							UIPadding: UIPadding,
+							UIListLayout: UIListLayout,
+							ImageLabel: ImageLabel,
+						},
+						UISizeConstraint: UISizeConstraint,
+						Filter: TextButton & {
+							UIListLayout: UIListLayout,
+							UICorner: UICorner,
+							ImageLabel: ImageLabel,
+						},
+					},
+					UIPadding: UIPadding,
+					List: ScrollingFrame & {
+						ItemWrapper: ImageButton & {
+							UICorner: UICorner,
+							UIStroke: UIStroke,
+							ImageFrame: Frame & {
+								UICorner: UICorner,
+								Frame: Frame & {
+									UIListLayout: UIListLayout,
+									ItemImage: ImageLabel & {
+										UICorner: UICorner,
+									},
+								},
+								Limited: Frame & {
+									LimitedUGC: ImageButton,
+								},
+							},
+							Buy: TextButton & {
+								TextLabel: TextLabel,
+								UIPadding: UIPadding,
+								UIListLayout: UIListLayout,
+								UIStroke: UIStroke,
+								UICorner: UICorner,
+								ImageLabel: ImageLabel,
+							},
+						},
+						UIGridLayout: UIGridLayout,
+					},
+				},
+			},
+		},
 	},
 }
 

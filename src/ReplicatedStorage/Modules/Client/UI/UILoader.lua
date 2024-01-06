@@ -23,12 +23,18 @@ local main = GetUI("Main") :: UITypes.Main
 
 local nav = GetUI("Nav") :: UITypes.Nav
 
+local outfit = GetUI("Catalog") :: UITypes.Catalog
+
 function UILoader:GetMain(): UITypes.Main
 	return main
 end
 
 function UILoader:GetNavigation(): UITypes.Nav
 	return nav
+end
+
+function UILoader:GetCatalog(): UITypes.Catalog
+	return outfit
 end
 
 function UILoader:Initialize()

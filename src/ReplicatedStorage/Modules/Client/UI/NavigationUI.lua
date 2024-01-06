@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FeedEvents = require(ReplicatedStorage.Events.FeedEvents)
 local Device = require(ReplicatedStorage.Modules.Client.Device)
 local CartUI = require(script.Parent.CartUI)
+local CatalogUI = require(script.Parent.CatalogUI)
 local FeedController = require(ReplicatedStorage.Modules.Client.FeedController)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
@@ -28,6 +29,10 @@ end
 
 function AvatarClicked()
 	CartUI:Toggle()
+end
+
+local function CatalogClicked()
+	CatalogUI:ToggleDisplay()
 end
 
 function ExpandFeedClicked()
@@ -105,6 +110,7 @@ function NavigationUI:Initialize()
 
 	nav.Profile.ImageButton.Activated:Connect(ProfileClicked)
 	nav.Avatar.ImageButton.Activated:Connect(AvatarClicked)
+	nav.Catalog.ImageButton.Activated:Connect(CatalogClicked)
 
 	feedUI.Current.Expand.Activated:Connect(ExpandFeedClicked)
 	feedUI.Current.Activated:Connect(ExpandFeedClicked)

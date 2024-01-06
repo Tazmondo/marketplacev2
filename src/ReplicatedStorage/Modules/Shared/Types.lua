@@ -92,14 +92,6 @@ function GuardSearchParams(value: unknown): SearchParams
 	}
 end
 
-export type SearchResult = {
-	Id: number,
-	Name: string,
-	Price: number?,
-	CreatorType: "User" | "Group",
-	AssetType: string?,
-}
-
 export type HumanoidDescriptionAccessory = typeof(Instance.new("HumanoidDescription"):GetAccessories(true)[1])
 function GuardHumanoidDescriptionAccessory(accessory: unknown): HumanoidDescriptionAccessory
 	local data: any = accessory
