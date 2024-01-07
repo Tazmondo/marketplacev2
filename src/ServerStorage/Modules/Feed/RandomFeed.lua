@@ -100,7 +100,7 @@ end
 
 -- Pre-load some random showcases
 task.spawn(function()
-	print("Pre-loaded random showcases: ", RandomFeed.GetFeed(20):Await())
+	print("Pre-loaded random showcases: ", RandomFeed.GetFeed(3):Await())
 end)
 
 return RandomFeed
