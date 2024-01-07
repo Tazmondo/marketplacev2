@@ -2,7 +2,6 @@ local CartController = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local CartUI = require(ReplicatedStorage.Modules.Client.UI.CartUI)
 local Future = require(ReplicatedStorage.Packages.Future)
 
 local DescriptionEvent = require(ReplicatedStorage.Events.DescriptionEvent):Client()
@@ -18,22 +17,13 @@ function UpdateCharacter()
 	DescriptionEvent:Fire(cartItems)
 end
 
-function UpdateUI()
-	CartUI:RenderItems(cartItems)
-end
-
-function Update()
-	UpdateUI()
-	UpdateCharacter()
-end
-
 function CartController:RemoveFromCart(id: number)
 	local index = table.find(cartItems, id)
 	if index then
 		table.remove(cartItems, index)
 	end
 
-	Update()
+	UpdateCharacter()
 end
 
 function CartController:AddToCart(id: number)
@@ -41,7 +31,7 @@ function CartController:AddToCart(id: number)
 		table.insert(cartItems, id)
 	end
 
-	Update()
+	UpdateCharacter()
 end
 
 function CartController:ToggleInCart(id: number)
@@ -52,7 +42,11 @@ function CartController:ToggleInCart(id: number)
 		table.remove(cartItems, found)
 	end
 
-	Update()
+	UpdateCharacter()
+end
+
+function CartController:GetCart()
+	return table.clone(cartItems)
 end
 
 function HandleReset()
@@ -70,31 +64,19 @@ function HandleReset()
 		end
 
 		cartItems = items
-		Update()
+		UpdateCharacter()
 	end)
 end
 
 function HandleCharacterAdded(char: Model)
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
-
-	cartItems = {}
-
-	local description = humanoid:GetAppliedDescription()
-	for i, accessory in description:GetAccessories(true) do
-		table.insert(cartItems, accessory.AssetId)
-	end
-
-	Update()
-	CartUI:Hide()
+	UpdateCharacter()
+	-- CartUI:Hide()
 end
 
 function CartController:Initialize()
-	CartUI.Deleted:Connect(function(id: number)
-		CartController:RemoveFromCart(id)
-	end)
-	CartUI.Reset:Connect(HandleReset)
+	-- CartUI.Deleted:Connect(function(id: number)
+	-- 	CartController:RemoveFromCart(id)
+	-- end)
 
 	local player = Players.LocalPlayer
 	if player.Character then

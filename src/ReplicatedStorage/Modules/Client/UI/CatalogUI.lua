@@ -1,0 +1,191 @@
+local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
+local UILoader = require(script.Parent.UILoader)
+local CatalogUI = {}
+
+type DisplayMode = "Marketplace" | "Outfit"
+
+type ClothingCategory = "Dresses & Skirts" | "Jackets" | "Shirts" | "Shorts" | "Pants" | "Sweaters" | "T-Shirts"
+type AccessoryCategory = "Back" | "Face" | "Front" | "Head" | "Hair" | "Neck" | "Waist" | "Shoulder"
+type SearchResult = {
+	Id: number,
+	Name: string,
+	Price: number?,
+	CreatorType: "User" | "Group",
+	AssetType: string?,
+}
+
+type Category = "Clothing" | "Accessories"
+
+local accessoryCategories: { [AccessoryCategory]: Enum.AvatarAssetType } = {
+	Back = Enum.AvatarAssetType.BackAccessory,
+	Face = Enum.AvatarAssetType.FaceAccessory,
+	Front = Enum.AvatarAssetType.FrontAccessory,
+	Head = Enum.AvatarAssetType.Hat,
+	Hair = Enum.AvatarAssetType.HairAccessory,
+	Neck = Enum.AvatarAssetType.NeckAccessory,
+	Waist = Enum.AvatarAssetType.WaistAccessory,
+	Shoulder = Enum.AvatarAssetType.ShoulderAccessory,
+}
+
+local clothingCategories: { [ClothingCategory]: Enum.AvatarAssetType } = {
+	["Dresses & Skirts"] = Enum.AvatarAssetType.DressSkirtAccessory,
+	Jackets = Enum.AvatarAssetType.JacketAccessory,
+	Shirts = Enum.AvatarAssetType.ShirtAccessory,
+	Shorts = Enum.AvatarAssetType.ShortsAccessory,
+	Pants = Enum.AvatarAssetType.PantsAccessory,
+	Sweaters = Enum.AvatarAssetType.SweaterAccessory,
+	["T-Shirts"] = Enum.AvatarAssetType.TShirtAccessory,
+}
+
+local currentMode: DisplayMode = "Marketplace"
+local currentCategory: Category = "Accessories"
+local currentSubcategory: ClothingCategory | AccessoryCategory = "Head"
+
+local gui = UILoader:GetCatalog().Catalog
+
+local function GetAccessoryTableForCategory(
+	category: Category
+): { [ClothingCategory | AccessoryCategory]: Enum.AvatarAssetType }
+	if category == "Clothing" then
+		return clothingCategories
+	elseif category == "Accessories" then
+		return accessoryCategories
+	else
+		error(`Invalid category provided! {category}`)
+	end
+end
+
+local function RenderSubcategories()
+	local list = gui.RightPane.Marketplace.Categories.Frame.List
+	for i, child in list:GetChildren() do
+		if child:GetAttribute("Temporary") then
+			child:Destroy()
+		end
+	end
+
+	local template = list.Template
+	template.Visible = false
+	local subCategories = GetAccessoryTableForCategory(currentCategory)
+
+	for subCategory, _ in subCategories do
+		local header = template:Clone()
+		header.Visible = true
+		header.Name = subCategory
+		header.TextLabel.Text = subCategory
+
+		local textColor = if subCategory == currentSubcategory
+			then Color3.fromRGB(10, 132, 255)
+			else Color3.fromRGB(162, 162, 162)
+
+		header.TextLabel.TextColor3 = textColor
+
+		header.Activated:Connect(function()
+			local middle = list.AbsolutePosition.X + (list.AbsoluteSize.X / 2)
+			local currentPosition = header.AbsolutePosition.X + (header.AbsoluteSize.X / 2)
+			local delta = currentPosition - middle
+			local newPosition = list.CanvasPosition + Vector2.new(delta, 0)
+
+			TweenService:Create(
+				list,
+				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ CanvasPosition = newPosition }
+			):Play()
+
+			currentSubcategory = subCategory :: any
+			RenderSubcategories()
+		end)
+		header:SetAttribute("Temporary", true)
+
+		header.Parent = template.Parent
+	end
+end
+
+local function RenderCategories()
+	local tabs = gui.RightPane.Marketplace.Tabs.Categories.List
+
+	type Header = typeof(tabs.Accessories)
+
+	local function RenderHeader(header: Header)
+		if header.Name == currentCategory then
+			header.BackgroundTransparency = 0
+			header.ItemImage.ImageTransparency = 0
+			header.TextLabel.TextTransparency = 0
+		else
+			header.BackgroundTransparency = 1
+			header.ItemImage.ImageTransparency = 0.8
+			header.TextLabel.TextTransparency = 0.8
+		end
+	end
+
+	RenderHeader(tabs.Accessories)
+	RenderHeader(tabs.Clothing)
+end
+
+local function SwitchCategory(newCategory: Category)
+	if newCategory == currentCategory then
+		return
+	end
+
+	if newCategory == "Accessories" then
+		currentCategory = "Accessories"
+		currentSubcategory = "Head"
+	elseif newCategory == "Clothing" then
+		currentCategory = "Clothing"
+		currentSubcategory = "T-Shirts"
+	else
+		error(`Invalid category passed: {newCategory}`)
+	end
+
+	RenderCategories()
+	RenderSubcategories()
+end
+
+function CatalogUI:Hide()
+	-- Toggles visibility off
+	CatalogUI:Display(currentMode)
+end
+
+function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
+	if mode == currentMode then
+		local visible = not gui.Visible
+		gui.Visible = visible
+	else
+		-- Switching modes, so make sure it is visible.
+		gui.Visible = true
+	end
+
+	StarterGui:SetCore("TopbarEnabled", not gui.Visible)
+
+	if not gui.Visible then
+		return
+	end
+
+	gui.LeftPane.Visible = not (previewDisabled or false)
+	gui.RightPane.Close.Visible = not gui.LeftPane.Visible -- only show rightpane close if leftpane is not open
+end
+
+function CatalogUI:Initialize()
+	CatalogUI:Hide()
+
+	local categoryHeaders = gui.RightPane.Marketplace.Tabs.Categories.List
+
+	for i, header in categoryHeaders:GetChildren() do
+		if header:IsA("TextButton") then
+			header.Activated:Connect(function()
+				SwitchCategory(header.Name :: Category)
+			end)
+		end
+	end
+
+	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
+	gui.LeftPane.Close.Activated:Connect(CatalogUI.Hide)
+
+	-- Do initial render
+	RenderCategories()
+	RenderSubcategories()
+end
+
+CatalogUI:Initialize()
+
+return CatalogUI

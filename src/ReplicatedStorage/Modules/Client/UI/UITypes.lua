@@ -940,28 +940,13 @@ export type Catalog = ScreenGui & {
 	Catalog: Frame & {
 		UIListLayout: UIListLayout,
 		LeftPane: Frame & {
-			Switcher: Frame & {
+			Close: TextButton & {
 				UIListLayout: UIListLayout,
-				Frame: Frame & {
-					UICorner: UICorner,
-					List: Frame & {
-						UIListLayout: UIListLayout,
-						Marketplace: TextButton & {
-							UIListLayout: UIListLayout,
-							TextLabel: TextLabel & {
-								UITextSizeConstraint: UITextSizeConstraint,
-							},
-						},
-						UIPadding: UIPadding,
-						Inventory: TextButton & {
-							UIListLayout: UIListLayout,
-							TextLabel: TextLabel & {
-								UITextSizeConstraint: UITextSizeConstraint,
-							},
-						},
-					},
-				},
+				UICorner: UICorner,
 				UISizeConstraint: UISizeConstraint,
+				Close: ImageLabel & {
+					UICorner: UICorner,
+				},
 			},
 			Preview: Frame & {
 				UIListLayout: UIListLayout,
@@ -1172,15 +1157,17 @@ export type Catalog = ScreenGui & {
 					UIListLayout: UIListLayout,
 					UISizeConstraint: UISizeConstraint,
 					Switcher: Frame & {
-						UICorner: UICorner,
-						UIListLayout: UIListLayout,
-						Clothing: TextButton & {
+						Inventory: TextButton & {
 							UIListLayout: UIListLayout,
-							TextLabel: TextLabel & {
-								UITextSizeConstraint: UITextSizeConstraint,
-							},
 							UICorner: UICorner,
 						},
+						Marketplace: TextButton & {
+							UIListLayout: UIListLayout,
+							UICorner: UICorner,
+						},
+						UIPadding: UIPadding,
+						UICorner: UICorner,
+						UIListLayout: UIListLayout,
 					},
 				},
 				UIListLayout: UIListLayout,
@@ -1224,6 +1211,15 @@ export type Catalog = ScreenGui & {
 							UIGridLayout: UIGridLayout,
 						},
 					},
+				},
+			},
+			Divider: Frame,
+			Close: TextButton & {
+				UIListLayout: UIListLayout,
+				UICorner: UICorner,
+				UISizeConstraint: UISizeConstraint,
+				Close: ImageLabel & {
+					UICorner: UICorner,
 				},
 			},
 			Outfit: Frame & {
@@ -1339,7 +1335,6 @@ export type Catalog = ScreenGui & {
 					},
 				},
 			},
-			Divider: Frame,
 		},
 	},
 }
