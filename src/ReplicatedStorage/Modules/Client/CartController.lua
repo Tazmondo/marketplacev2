@@ -2,9 +2,8 @@ local CartController = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local Future = require(ReplicatedStorage.Packages.Future)
-
-local DescriptionEvent = require(ReplicatedStorage.Events.DescriptionEvent):Client()
 
 local cartItems: { number } = {}
 
@@ -14,7 +13,7 @@ function UpdateCharacter()
 		return
 	end
 
-	DescriptionEvent:Fire(cartItems)
+	AvatarEvents.ApplyDescription:FireServer(cartItems)
 end
 
 function CartController:RemoveFromCart(id: number)
@@ -68,9 +67,17 @@ function HandleReset()
 	end)
 end
 
-function HandleCharacterAdded(char: Model)
-	UpdateCharacter()
-	-- CartUI:Hide()
+local function InitialCharacterLoad(char: Model)
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+
+	cartItems = {}
+
+	local description = humanoid:GetAppliedDescription()
+	for i, accessory in description:GetAccessories(true) do
+		table.insert(cartItems, accessory.AssetId)
+	end
 end
 
 function CartController:Initialize()
@@ -79,11 +86,12 @@ function CartController:Initialize()
 	-- end)
 
 	local player = Players.LocalPlayer
-	if player.Character then
-		HandleCharacterAdded(player.Character)
-	end
 
-	player.CharacterAdded:Connect(HandleCharacterAdded)
+	task.spawn(function()
+		InitialCharacterLoad(player.Character or player.CharacterAdded:Wait())
+
+		player.CharacterAdded:Connect(UpdateCharacter)
+	end)
 end
 
 CartController:Initialize()

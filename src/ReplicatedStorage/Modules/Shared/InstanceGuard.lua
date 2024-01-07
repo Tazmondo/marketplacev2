@@ -5,4 +5,9 @@ function InstanceGuard.BasePart(part: unknown)
 	return part
 end
 
+function InstanceGuard.Model(model: unknown)
+	assert(typeof(model) == "Instance" and model:IsA("Model"))
+	return model
+end
+
 return InstanceGuard

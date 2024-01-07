@@ -40,7 +40,7 @@ local clothingCategories: { [ClothingCategory]: Enum.AvatarAssetType } = {
 
 local currentMode: DisplayMode = "Marketplace"
 local currentCategory: Category = "Accessories"
-local currentSubcategory: ClothingCategory | AccessoryCategory = "Head"
+local currentSubcategory: ClothingCategory | AccessoryCategory = "Waist"
 
 local gui = UILoader:GetCatalog().Catalog
 
@@ -129,10 +129,10 @@ local function SwitchCategory(newCategory: Category)
 
 	if newCategory == "Accessories" then
 		currentCategory = "Accessories"
-		currentSubcategory = "Head"
+		currentSubcategory = "Waist"
 	elseif newCategory == "Clothing" then
 		currentCategory = "Clothing"
-		currentSubcategory = "T-Shirts"
+		currentSubcategory = "Shorts"
 	else
 		error(`Invalid category passed: {newCategory}`)
 	end
