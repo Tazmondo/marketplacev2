@@ -73,37 +73,41 @@ local function RenderSubcategories()
 	template.Visible = false
 	local subCategories = GetAccessoryTableForCategory(currentCategory)
 
+	local selected
+
 	for subCategory, _ in subCategories do
 		local header = template:Clone()
 		header.Visible = true
 		header.Name = subCategory
 		header.TextLabel.Text = subCategory
 
-		local textColor = if subCategory == currentSubcategory
-			then Color3.fromRGB(10, 132, 255)
-			else Color3.fromRGB(162, 162, 162)
-
-		header.TextLabel.TextColor3 = textColor
+		if subCategory == currentSubcategory then
+			header.TextLabel.TextColor3 = Color3.fromRGB(10, 132, 255)
+			selected = header
+		else
+			header.TextLabel.TextColor3 = Color3.fromRGB(162, 162, 162)
+		end
 
 		header.Activated:Connect(function()
-			local middle = list.AbsolutePosition.X + (list.AbsoluteSize.X / 2)
-			local currentPosition = header.AbsolutePosition.X + (header.AbsoluteSize.X / 2)
-			local delta = currentPosition - middle
-			local newPosition = list.CanvasPosition + Vector2.new(delta, 0)
-
-			TweenService:Create(
-				list,
-				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-				{ CanvasPosition = newPosition }
-			):Play()
-
 			currentSubcategory = subCategory :: any
+			SearchCatalog()
 			RenderSubcategories()
 		end)
 		header:SetAttribute("Temporary", true)
 
 		header.Parent = template.Parent
 	end
+
+	local middle = list.AbsolutePosition.X + (list.AbsoluteSize.X / 2)
+	local currentPosition = selected.AbsolutePosition.X + (selected.AbsoluteSize.X / 2)
+	local delta = currentPosition - middle
+	local newPosition = list.CanvasPosition + Vector2.new(delta, 0)
+
+	TweenService:Create(
+		list,
+		TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+		{ CanvasPosition = newPosition }
+	):Play()
 end
 
 local function RenderCategories()
