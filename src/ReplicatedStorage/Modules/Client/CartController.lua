@@ -4,8 +4,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local Future = require(ReplicatedStorage.Packages.Future)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 
 local cartItems: { number } = {}
+
+CartController.CartUpdated = Signal()
 
 function UpdateCharacter()
 	local character = Players.LocalPlayer.Character
@@ -14,6 +17,7 @@ function UpdateCharacter()
 	end
 
 	AvatarEvents.ApplyDescription:FireServer(cartItems)
+	CartController.CartUpdated:Fire(cartItems)
 end
 
 function CartController:RemoveFromCart(id: number)
@@ -48,7 +52,7 @@ function CartController:GetCart()
 	return table.clone(cartItems)
 end
 
-function HandleReset()
+function CartController:Reset()
 	return Future.new(function()
 		local success, description =
 			pcall(Players.GetHumanoidDescriptionFromUserId, Players, Players.LocalPlayer.UserId)
@@ -78,13 +82,11 @@ local function InitialCharacterLoad(char: Model)
 	for i, accessory in description:GetAccessories(true) do
 		table.insert(cartItems, accessory.AssetId)
 	end
+
+	CartController.CartUpdated:Fire(cartItems)
 end
 
 function CartController:Initialize()
-	-- CartUI.Deleted:Connect(function(id: number)
-	-- 	CartController:RemoveFromCart(id)
-	-- end)
-
 	local player = Players.LocalPlayer
 
 	task.spawn(function()

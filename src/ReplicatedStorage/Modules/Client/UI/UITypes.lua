@@ -941,61 +941,23 @@ export type Catalog = ScreenGui & {
 		UIListLayout: UIListLayout,
 		LeftPane: Frame & {
 			Close: TextButton & {
-				UIListLayout: UIListLayout,
-				UICorner: UICorner,
-				UISizeConstraint: UISizeConstraint,
+				TextLabel: TextLabel & {
+					UITextSizeConstraint: UITextSizeConstraint,
+				},
 				Close: ImageLabel & {
 					UICorner: UICorner,
 				},
+				UIListLayout: UIListLayout,
+				UISizeConstraint: UISizeConstraint,
+				UICorner: UICorner,
 			},
 			Preview: Frame & {
 				UIListLayout: UIListLayout,
-				ImageLabel: ImageLabel,
+				ViewportFrame: ViewportFrame,
 			},
 		},
 		RightPane: Frame & {
 			Overlay: Frame & {
-				Wearing: Frame & {
-					UIListLayout: UIListLayout,
-					UIPadding: UIPadding,
-					ListWrapper: Frame & {
-						UIPadding: UIPadding,
-						List: ScrollingFrame & {
-							ItemWrapper: ImageButton & {
-								Owned: TextButton & {
-									UICorner: UICorner,
-									UISizeConstraint: UISizeConstraint,
-									TextLabel: TextLabel,
-									UIListLayout: UIListLayout,
-								},
-								IsLimited: TextButton & {
-									UIListLayout: UIListLayout,
-									UICorner: UICorner,
-									ImageLabel: ImageLabel,
-								},
-								ImageFrame: Frame & {
-									Frame: Frame & {
-										UIListLayout: UIListLayout,
-										ItemImage: ImageLabel & {
-											UICorner: UICorner,
-										},
-									},
-								},
-								UIStroke: UIStroke,
-								UICorner: UICorner,
-								Buy: TextButton & {
-									TextLabel: TextLabel,
-									UICorner: UICorner,
-									UIListLayout: UIListLayout,
-									UISizeConstraint: UISizeConstraint,
-									ImageLabel: ImageLabel,
-								},
-							},
-							UIGridLayout: UIGridLayout,
-						},
-					},
-					Divider: Frame,
-				},
 				Search: Frame & {
 					Divider: Frame,
 					UISizeConstraint: UISizeConstraint,
@@ -1063,16 +1025,7 @@ export type Catalog = ScreenGui & {
 				},
 				UIListLayout: UIListLayout,
 				Actions: Frame & {
-					Wearing: TextButton & {
-						TextLabel: TextLabel & {
-							UITextSizeConstraint: UITextSizeConstraint,
-						},
-						Close: ImageLabel & {
-							UICorner: UICorner,
-						},
-						UICorner: UICorner,
-						UIListLayout: UIListLayout,
-					},
+					UIListLayout: UIListLayout,
 					Search: TextButton & {
 						UIListLayout: UIListLayout,
 						ItemImage: ImageLabel,
@@ -1081,6 +1034,7 @@ export type Catalog = ScreenGui & {
 							UICorner: UICorner,
 						},
 					},
+					UISizeConstraint: UISizeConstraint,
 					Filter: TextButton & {
 						TextLabel: TextLabel & {
 							UITextSizeConstraint: UITextSizeConstraint,
@@ -1094,14 +1048,11 @@ export type Catalog = ScreenGui & {
 							UICorner: UICorner,
 						},
 					},
-					UIListLayout: UIListLayout,
-					UISizeConstraint: UISizeConstraint,
 				},
 				Spacer: Frame,
 			},
 			Marketplace: Frame & {
 				Categories: Frame & {
-					UIListLayout: UIListLayout,
 					Frame: Frame & {
 						UICorner: UICorner,
 						List: ScrollingFrame & {
@@ -1121,8 +1072,7 @@ export type Catalog = ScreenGui & {
 					Categories: Frame & {
 						UICorner: UICorner,
 						List: ScrollingFrame & {
-							UIListLayout: UIListLayout,
-							Characters: TextButton & {
+							Wearing: TextButton & {
 								TextLabel: TextLabel & {
 									UITextSizeConstraint: UITextSizeConstraint,
 								},
@@ -1148,6 +1098,28 @@ export type Catalog = ScreenGui & {
 								},
 								UICorner: UICorner,
 								UIListLayout: UIListLayout,
+								ItemImage: ImageLabel & {
+									UICorner: UICorner,
+								},
+							},
+							UIListLayout: UIListLayout,
+							UIPadding: UIPadding,
+							Characters: TextButton & {
+								TextLabel: TextLabel & {
+									UITextSizeConstraint: UITextSizeConstraint,
+								},
+								UIListLayout: UIListLayout,
+								UICorner: UICorner,
+								ItemImage: ImageLabel & {
+									UICorner: UICorner,
+								},
+							},
+							Body: TextButton & {
+								TextLabel: TextLabel & {
+									UITextSizeConstraint: UITextSizeConstraint,
+								},
+								UIListLayout: UIListLayout,
+								UICorner: UICorner,
 								ItemImage: ImageLabel & {
 									UICorner: UICorner,
 								},

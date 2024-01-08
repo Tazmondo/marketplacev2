@@ -1,5 +1,10 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
+local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local CartController = require(ReplicatedStorage.Modules.Client.CartController)
+local Future = require(ReplicatedStorage.Packages.Future)
 local UILoader = require(script.Parent.UILoader)
 local CatalogUI = {}
 
@@ -141,6 +146,58 @@ local function SwitchCategory(newCategory: Category)
 	RenderSubcategories()
 end
 
+local function RenderPreviewPane(accessories: { number })
+	return Future.new(function(accessories: { number })
+		local success, replicatedModel = AvatarEvents.GenerateModel:Call(accessories):Await()
+		if not success or not replicatedModel then
+			if not success then
+				warn(replicatedModel)
+			else
+				warn("Received nil character model from server.")
+			end
+			return
+		end
+
+		-- Need to clone as the original model gets destroyed
+		local model = replicatedModel:Clone()
+		replicatedModel:Destroy()
+
+		local CAMERA_OFFSET = CFrame.new(
+			-19.3596764,
+			5.94872379,
+			-26.8514004,
+			-0.81115222,
+			0.077896364,
+			-0.579624236,
+			-5.26325294e-08,
+			0.99108994,
+			0.133193776,
+			0.584835112,
+			0.108040452,
+			-0.803924799
+		)
+		local CAMERA_FOV = 20
+
+		local viewport = gui.LeftPane.Preview.ViewportFrame
+		local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
+		viewport.CurrentCamera = camera
+		camera.FieldOfView = CAMERA_FOV
+
+		local existingModel = viewport:FindFirstChildOfClass("Model")
+		if existingModel then
+			existingModel:Destroy()
+		end
+
+		-- Allow accessories to attach
+		model:PivotTo(CFrame.new(0, -200, 0))
+		model.Parent = workspace
+		RunService.Heartbeat:Wait()
+
+		model.Parent = viewport
+		camera.CFrame = model:GetPivot():ToWorldSpace(CAMERA_OFFSET)
+	end, accessories)
+end
+
 function CatalogUI:Hide()
 	-- Toggles visibility off
 	CatalogUI:Display(currentMode)
@@ -180,6 +237,8 @@ function CatalogUI:Initialize()
 
 	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
 	gui.LeftPane.Close.Activated:Connect(CatalogUI.Hide)
+
+	CartController.CartUpdated:Connect(RenderPreviewPane)
 
 	-- Do initial render
 	RenderCategories()

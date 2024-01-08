@@ -67,11 +67,13 @@ local function GenerateModel(player: Player, accessories: { number }): Model?
 
 	local newModel = Players:CreateHumanoidModelFromDescription(baseDescription, Enum.HumanoidRigType.R15)
 	newModel.Name = "GeneratedViewportModel"
-	newModel.Parent = ReplicatedStorage
+
+	-- Use playergui so it is only replicated to the relevant player
+	newModel.Parent = player.PlayerGui
 
 	Debris:AddItem(newModel, 30)
 
-	-- It should be replicated through ReplicatedStorage before this remote function return is processed by the client, so this should never be nil
+	-- It should be replicated through PlayerGui before this remote function return is processed by the client, so this should never be nil
 	return newModel
 end
 
