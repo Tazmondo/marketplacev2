@@ -264,8 +264,21 @@ local function SwitchCategory(newCategory: Category)
 	SearchCatalog()
 end
 
+local renderTrack = newproxy()
 local function RenderPreviewPane(accessories: { number })
 	return Future.new(function(accessories: { number })
+		local tracker = newproxy()
+		renderTrack = tracker
+
+		local viewport = gui.LeftPane.Preview.ViewportFrame
+		local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
+		viewport.CurrentCamera = camera
+
+		local existingModel = viewport:FindFirstChildOfClass("Model")
+		if existingModel then
+			existingModel:Destroy()
+		end
+
 		local success, replicatedModel = AvatarEvents.GenerateModel:Call(accessories):Await()
 		if not success or not replicatedModel then
 			if not success then
@@ -273,6 +286,11 @@ local function RenderPreviewPane(accessories: { number })
 			else
 				warn("Received nil character model from server.")
 			end
+			return
+		end
+
+		if renderTrack ~= tracker then
+			-- Overwritten by a new render request
 			return
 		end
 
@@ -296,20 +314,17 @@ local function RenderPreviewPane(accessories: { number })
 		)
 		local CAMERA_FOV = 20
 
-		local viewport = gui.LeftPane.Preview.ViewportFrame
-		local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
-		viewport.CurrentCamera = camera
 		camera.FieldOfView = CAMERA_FOV
-
-		local existingModel = viewport:FindFirstChildOfClass("Model")
-		if existingModel then
-			existingModel:Destroy()
-		end
 
 		-- Allow accessories to attach
 		model:PivotTo(CFrame.new(0, -200, 0))
 		model.Parent = workspace
 		RunService.Heartbeat:Wait()
+
+		if renderTrack ~= tracker then
+			model:Destroy()
+			return
+		end
 
 		model.Parent = viewport
 		camera.CFrame = model:GetPivot():ToWorldSpace(CAMERA_OFFSET)
