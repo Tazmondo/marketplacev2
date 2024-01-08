@@ -1,12 +1,19 @@
+local CatalogUI = {}
+local AvatarEditorService = game:GetService("AvatarEditorService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
-local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
+local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
+local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Future = require(ReplicatedStorage.Packages.Future)
 local UILoader = require(script.Parent.UILoader)
-local CatalogUI = {}
+
+local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
 type DisplayMode = "Marketplace" | "Outfit"
 
@@ -47,7 +54,113 @@ local currentMode: DisplayMode = "Marketplace"
 local currentCategory: Category = "Accessories"
 local currentSubcategory: ClothingCategory | AccessoryCategory = "Waist"
 
+local searchIdentifier = newproxy() -- Used so old searches dont overwrite new ones
+local searchPages: CatalogPages? = nil
+local currentResults: { SearchResult } = {}
+
 local gui = UILoader:GetCatalog().Catalog
+
+local function RefreshResults()
+	local list = gui.RightPane.Marketplace.Results.ListWrapper.List
+	for i, child in list:GetChildren() do
+		if child:GetAttribute("Temporary") then
+			child:Destroy()
+		end
+	end
+
+	local template = list.ItemWrapper
+	template.Visible = false
+
+	for i, result in currentResults do
+		local item = template:Clone()
+		item.Name = "item"
+		item:SetAttribute("Temporary", true)
+		item.Visible = true
+		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(result.Id)
+
+		if CartController:IsInCart(result.Id) then
+			item.Buy.Visible = true
+			item.Buy.TextLabel.Text = tostring(result.Price)
+			item.Buy.Activated:Connect(function()
+				PurchaseAssetEvent:Fire(result.Id)
+			end)
+			item.UIStroke.Enabled = true
+		else
+			item.UIStroke.Enabled = false
+			item.Buy.Visible = false
+		end
+
+		item.Activated:Connect(function()
+			CartController:ToggleInCart(result.Id)
+			RefreshResults()
+		end)
+
+		item.Parent = list
+
+		DataFetch.PlayerOwnsAsset(result.Id, Players.LocalPlayer):After(function(owned)
+			if item.Parent == nil then
+				return
+			end
+
+			if owned then
+				item.Buy.Visible = false
+				item.Owned.Visible = true
+			end
+		end)
+	end
+end
+
+local function AddSearchResults(results: { SearchResult })
+	for i, result in results do
+		table.insert(currentResults, result)
+	end
+
+	RefreshResults()
+end
+
+local function ClearResults()
+	currentResults = {}
+	searchPages = nil
+	RefreshResults()
+end
+
+local function SearchCatalog()
+	ClearResults()
+
+	local identifier = newproxy()
+	searchIdentifier = identifier
+
+	-- todo: add filters
+	local paramsInstance: any = CatalogSearchParams.new()
+
+	local currentAssetType: Enum.AvatarAssetType? = accessoryCategories[currentSubcategory :: AccessoryCategory]
+		or clothingCategories[currentSubcategory :: ClothingCategory]
+
+	if currentAssetType then
+		paramsInstance.AssetTypes = { currentAssetType }
+	end
+
+	task.spawn(function()
+		local success, pages = pcall(function()
+			return AvatarEditorService:SearchCatalog(paramsInstance)
+		end)
+
+		if not success or identifier ~= searchIdentifier then
+			return
+		end
+
+		local filteredItems = {}
+
+		local items = pages:GetCurrentPage() :: { SearchResult }
+		for i, item in items do
+			if item.AssetType and DataFetch.IsAssetTypeValid(item.AssetType) then
+				table.insert(filteredItems, item)
+			end
+		end
+
+		AddSearchResults(filteredItems)
+	end)
+end
 
 local function GetAccessoryTableForCategory(
 	category: Category
@@ -148,6 +261,7 @@ local function SwitchCategory(newCategory: Category)
 
 	RenderCategories()
 	RenderSubcategories()
+	SearchCatalog()
 end
 
 local function RenderPreviewPane(accessories: { number })
@@ -247,6 +361,7 @@ function CatalogUI:Initialize()
 	-- Do initial render
 	RenderCategories()
 	RenderSubcategories()
+	SearchCatalog()
 end
 
 CatalogUI:Initialize()

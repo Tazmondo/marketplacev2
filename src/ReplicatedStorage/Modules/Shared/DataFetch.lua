@@ -105,6 +105,20 @@ function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 	end, assetId)
 end
 
+function DataFetch.PlayerOwnsAsset(asset: number, player: Player)
+	return Future.new(function()
+		local ownedSuccess, owned = pcall(function()
+			return MarketplaceService:PlayerOwnsAsset(player, asset)
+		end)
+
+		if not ownedSuccess then
+			-- warn(owned)
+		end
+
+		return ownedSuccess and owned
+	end)
+end
+
 function DataFetch.IsAssetTypeValid(assetType: string)
 	return validAssetNames[assetType] == true
 end
