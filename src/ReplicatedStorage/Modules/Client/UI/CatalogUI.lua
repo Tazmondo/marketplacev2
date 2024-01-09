@@ -40,6 +40,17 @@ local accessoryCategories: { [AccessoryCategory]: Enum.AvatarAssetType } = {
 	Shoulder = Enum.AvatarAssetType.ShoulderAccessory,
 }
 
+local accessoryOrder = {
+	Hair = 1,
+	Head = 2,
+	Face = 3,
+	Neck = 4,
+	Front = 5,
+	Back = 6,
+	Shoulder = 7,
+	Waist = 8,
+}
+
 local clothingCategories: { [ClothingCategory]: Enum.AvatarAssetType } = {
 	["Dresses & Skirts"] = Enum.AvatarAssetType.DressSkirtAccessory,
 	Jackets = Enum.AvatarAssetType.JacketAccessory,
@@ -50,9 +61,20 @@ local clothingCategories: { [ClothingCategory]: Enum.AvatarAssetType } = {
 	["T-Shirts"] = Enum.AvatarAssetType.TShirtAccessory,
 }
 
+local clothingOrder = {
+	Jackets = 1,
+	Sweaters = 2,
+	Shirts = 3,
+	["T-Shirts"] = 4,
+	Pants = 5,
+	Shorts = 6,
+	["Dresses & Skirts"] = 7,
+}
+
 local currentMode: DisplayMode = "Marketplace"
-local currentCategory: Category = "Accessories"
-local currentSubcategory: ClothingCategory | AccessoryCategory = "Waist"
+
+local currentCategory: Category = "Clothing"
+local currentSubcategory: ClothingCategory | AccessoryCategory = "Jackets"
 
 local searchIdentifier = newproxy() -- Used so old searches dont overwrite new ones
 local searchPages: CatalogPages? = nil
@@ -207,6 +229,9 @@ local function RenderSubcategories()
 			header.TextLabel.TextColor3 = Color3.fromRGB(162, 162, 162)
 		end
 
+		header.LayoutOrder =
+			assert(clothingOrder[subCategory] or accessoryOrder[subCategory], `No order found for: {subCategory}`)
+
 		header.Activated:Connect(function()
 			currentSubcategory = subCategory :: any
 			SearchCatalog()
@@ -257,10 +282,10 @@ local function SwitchCategory(newCategory: Category)
 
 	if newCategory == "Accessories" then
 		currentCategory = "Accessories"
-		currentSubcategory = "Waist"
+		currentSubcategory = "Hair"
 	elseif newCategory == "Clothing" then
 		currentCategory = "Clothing"
-		currentSubcategory = "Shorts"
+		currentSubcategory = "Jackets"
 	else
 		error(`Invalid category passed: {newCategory}`)
 	end
