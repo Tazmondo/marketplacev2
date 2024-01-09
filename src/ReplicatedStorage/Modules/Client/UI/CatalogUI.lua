@@ -2,7 +2,6 @@ local CatalogUI = {}
 local AvatarEditorService = game:GetService("AvatarEditorService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
 
@@ -78,6 +77,7 @@ local currentSubcategory: ClothingCategory | AccessoryCategory = "Jackets"
 
 local searchIdentifier = newproxy() -- Used so old searches dont overwrite new ones
 local searchPages: CatalogPages? = nil
+local currentlySearching = false
 local currentResults: { SearchResult } = {}
 
 local studio = assert(workspace:FindFirstChild("Studio"), "Could not find studio in workspace.") :: Model
@@ -125,16 +125,17 @@ local function RefreshResults()
 
 		item.Parent = list
 
-		DataFetch.PlayerOwnsAsset(result.Id, Players.LocalPlayer):After(function(owned)
-			if item.Parent == nil then
-				return
-			end
+		-- Was causing major lag due to hitting roblox rate limits
+		-- DataFetch.PlayerOwnsAsset(result.Id, Players.LocalPlayer):After(function(owned)
+		-- 	if item.Parent == nil then
+		-- 		return
+		-- 	end
 
-			if owned then
-				item.Buy.Visible = false
-				item.Owned.Visible = true
-			end
-		end)
+		-- 	if owned then
+		-- 		item.Buy.Visible = false
+		-- 		item.Owned.Visible = true
+		-- 	end
+		-- end)
 	end
 end
 
@@ -152,11 +153,41 @@ local function ClearResults()
 	RefreshResults()
 end
 
+local function ProcessPage()
+	if not searchPages or searchPages.IsFinished then
+		return
+	end
+
+	local filteredItems = {}
+
+	local items = searchPages:GetCurrentPage() :: { SearchResult }
+	for i, item in items do
+		if item.AssetType and DataFetch.IsAssetTypeValid(item.AssetType) then
+			table.insert(filteredItems, item)
+		end
+	end
+
+	AddSearchResults(filteredItems)
+end
+
+local function ReadNextPage()
+	return Future.new(function()
+		if currentlySearching or not searchPages or searchPages.IsFinished then
+			return
+		end
+		currentlySearching = true
+		searchPages:AdvanceToNextPageAsync()
+		currentlySearching = false
+		ProcessPage()
+	end)
+end
+
 local function SearchCatalog()
 	ClearResults()
 
 	local identifier = newproxy()
 	searchIdentifier = identifier
+	currentlySearching = true
 
 	-- todo: add filters
 	local paramsInstance: any = CatalogSearchParams.new()
@@ -176,17 +207,9 @@ local function SearchCatalog()
 		if not success or identifier ~= searchIdentifier then
 			return
 		end
-
-		local filteredItems = {}
-
-		local items = pages:GetCurrentPage() :: { SearchResult }
-		for i, item in items do
-			if item.AssetType and DataFetch.IsAssetTypeValid(item.AssetType) then
-				table.insert(filteredItems, item)
-			end
-		end
-
-		AddSearchResults(filteredItems)
+		searchPages = pages
+		currentlySearching = false
+		ProcessPage()
 	end)
 end
 
@@ -295,6 +318,24 @@ local function SwitchCategory(newCategory: Category)
 	SearchCatalog()
 end
 
+local function HandleResultsScrolled()
+	local results = gui.RightPane.Marketplace.Results.ListWrapper.List
+
+	-- The position of the bottom of the results relative to how much has been scrolled
+	local bottomPosition = results.CanvasPosition.Y + results.AbsoluteSize.Y
+
+	if
+		bottomPosition < (results.AbsoluteCanvasSize.Y * 0.8) - 50 -- allow for some leeway
+		or currentlySearching
+		or not searchPages
+		or searchPages.IsFinished
+	then
+		return
+	end
+
+	ReadNextPage()
+end
+
 local renderTrack = newproxy()
 local function RenderPreviewPane(accessories: { number })
 	return Future.new(function(accessories: { number })
@@ -394,6 +435,9 @@ function CatalogUI:Initialize()
 
 	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
 	gui.LeftPane.Close.Activated:Connect(CatalogUI.Hide)
+	gui.RightPane.Marketplace.Results.ListWrapper.List
+		:GetPropertyChangedSignal("CanvasPosition")
+		:Connect(HandleResultsScrolled)
 
 	CartController.CartUpdated:Connect(RenderPreviewPane)
 
