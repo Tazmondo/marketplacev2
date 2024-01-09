@@ -58,6 +58,12 @@ local searchIdentifier = newproxy() -- Used so old searches dont overwrite new o
 local searchPages: CatalogPages? = nil
 local currentResults: { SearchResult } = {}
 
+local studio = assert(workspace:FindFirstChild("Studio"), "Could not find studio in workspace.") :: Model
+local studioCamera =
+	assert(studio:FindFirstChild("StudioCamera"), "Studio did not have a StudioCamera part.") :: BasePart
+studioCamera.Transparency = 1
+local studioStand = assert(studio:FindFirstChild("StudioStand"), "Studio did not have a stand part.") :: BasePart
+
 local gui = UILoader:GetCatalog().Catalog
 
 local function RefreshResults()
@@ -270,15 +276,6 @@ local function RenderPreviewPane(accessories: { number })
 		local tracker = newproxy()
 		renderTrack = tracker
 
-		local viewport = gui.LeftPane.Preview.ViewportFrame
-		local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
-		viewport.CurrentCamera = camera
-
-		local existingModel = viewport:FindFirstChildOfClass("Model")
-		if existingModel then
-			existingModel:Destroy()
-		end
-
 		local success, replicatedModel = AvatarEvents.GenerateModel:Call(accessories):Await()
 		if not success or not replicatedModel then
 			if not success then
@@ -297,46 +294,32 @@ local function RenderPreviewPane(accessories: { number })
 		-- Need to clone as the original model gets destroyed
 		local model = replicatedModel:Clone()
 		replicatedModel:Destroy()
+		model.Name = "CharacterModel"
 
-		local CAMERA_OFFSET = CFrame.new(
-			-19.3596764,
-			5.94872379,
-			-26.8514004,
-			-0.81115222,
-			0.077896364,
-			-0.579624236,
-			-5.26325294e-08,
-			0.99108994,
-			0.133193776,
-			0.584835112,
-			0.108040452,
-			-0.803924799
-		)
-		local CAMERA_FOV = 20
-
-		camera.FieldOfView = CAMERA_FOV
-
-		-- Allow accessories to attach
-		model:PivotTo(CFrame.new(0, -200, 0))
-		model.Parent = workspace
-		RunService.Heartbeat:Wait()
-
-		if renderTrack ~= tracker then
-			model:Destroy()
-			return
+		local existingModel = studio:FindFirstChild("CharacterModel")
+		if existingModel then
+			existingModel:Destroy()
 		end
 
-		model.Parent = viewport
-		camera.CFrame = model:GetPivot():ToWorldSpace(CAMERA_OFFSET)
+		local HRP = model:FindFirstChild("HumanoidRootPart") :: BasePart
+		local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
+
+		-- Allow accessories to attach
+		model:PivotTo(studioStand.CFrame + Vector3.new(0, humanoid.HipHeight + (HRP.Size.Y / 2), 0))
+		model.Parent = studio
 	end, accessories)
 end
 
 function CatalogUI:Hide()
 	-- Toggles visibility off
-	CatalogUI:Display(currentMode)
+	if gui.Visible then
+		CatalogUI:Display(currentMode)
+	end
 end
 
 function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
+	local cam = workspace.CurrentCamera
+
 	if mode == currentMode then
 		local visible = not gui.Visible
 		gui.Visible = visible
@@ -346,12 +329,28 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 	end
 
 	StarterGui:SetCore("TopbarEnabled", not gui.Visible)
+	if gui.Visible and not previewDisabled then
+		cam.CameraType = Enum.CameraType.Scriptable
+		cam.FieldOfView = 20
+	else
+		cam.CameraType = Enum.CameraType.Custom
+		cam.FieldOfView = 80
+	end
 
 	if not gui.Visible then
 		return
 	end
 
-	gui.LeftPane.Visible = not (previewDisabled or false)
+	if not previewDisabled then
+		local leftCentre = gui.RightPane.AbsolutePosition.X / 2 -- get centre of the left side of the screen
+		local offCentreProportion = leftCentre / (cam.ViewportSize.X / 2)
+		local horizontalFov = cam.FieldOfView * cam.ViewportSize.X / cam.ViewportSize.Y
+		local angleDifference = offCentreProportion * (horizontalFov / 3)
+
+		cam.CFrame = studioCamera.CFrame * CFrame.Angles(0, -math.rad(angleDifference), 0)
+	end
+
+	gui.LeftPane.Visible = false
 	gui.RightPane.Close.Visible = not gui.LeftPane.Visible -- only show rightpane close if leftpane is not open
 end
 
