@@ -118,7 +118,8 @@ local function RefreshResults()
 			item.Buy.Visible = false
 		end
 
-		item.Activated:Connect(function()
+		-- using .Activated here doesnt work on mobile
+		item.MouseButton1Down:Connect(function()
 			CartController:ToggleInCart(result.Id)
 			RefreshResults()
 		end)
