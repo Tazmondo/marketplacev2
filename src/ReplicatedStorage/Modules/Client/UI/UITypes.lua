@@ -939,23 +939,6 @@ export type Main = ScreenGui & {
 export type Catalog = ScreenGui & {
 	Catalog: Frame & {
 		UIListLayout: UIListLayout,
-		LeftPane: Frame & {
-			Close: TextButton & {
-				TextLabel: TextLabel & {
-					UITextSizeConstraint: UITextSizeConstraint,
-				},
-				Close: ImageLabel & {
-					UICorner: UICorner,
-				},
-				UIListLayout: UIListLayout,
-				UISizeConstraint: UISizeConstraint,
-				UICorner: UICorner,
-			},
-			Preview: Frame & {
-				UIListLayout: UIListLayout,
-				ViewportFrame: ViewportFrame,
-			},
-		},
 		RightPane: Frame & {
 			Overlay: Frame & {
 				Search: Frame & {
@@ -1126,21 +1109,8 @@ export type Catalog = ScreenGui & {
 							},
 						},
 					},
-					UIListLayout: UIListLayout,
 					UISizeConstraint: UISizeConstraint,
-					Switcher: Frame & {
-						Inventory: TextButton & {
-							UIListLayout: UIListLayout,
-							UICorner: UICorner,
-						},
-						Marketplace: TextButton & {
-							UIListLayout: UIListLayout,
-							UICorner: UICorner,
-						},
-						UIPadding: UIPadding,
-						UICorner: UICorner,
-						UIListLayout: UIListLayout,
-					},
+					UIListLayout: UIListLayout,
 				},
 				UIListLayout: UIListLayout,
 				UIPadding: UIPadding,
@@ -1151,6 +1121,17 @@ export type Catalog = ScreenGui & {
 						UIPadding: UIPadding,
 						List: ScrollingFrame & {
 							ItemWrapper: ImageButton & {
+								Label: TextButton & {
+									UICorner: UICorner,
+									UISizeConstraint: UISizeConstraint,
+									TextLabel: TextLabel,
+									UIListLayout: UIListLayout,
+								},
+								Edit: TextButton & {
+									UIListLayout: UIListLayout,
+									UICorner: UICorner,
+									ImageLabel: ImageLabel,
+								},
 								Owned: TextButton & {
 									UICorner: UICorner,
 									UISizeConstraint: UISizeConstraint,
@@ -1187,12 +1168,13 @@ export type Catalog = ScreenGui & {
 			},
 			Divider: Frame,
 			Close: TextButton & {
-				UIListLayout: UIListLayout,
-				UICorner: UICorner,
-				UISizeConstraint: UISizeConstraint,
 				Close: ImageLabel & {
 					UICorner: UICorner,
 				},
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+				UISizeConstraint: UISizeConstraint,
+				UIListLayout: UIListLayout,
 			},
 			Outfit: Frame & {
 				Wearing: Frame & {
@@ -1306,6 +1288,21 @@ export type Catalog = ScreenGui & {
 						},
 					},
 				},
+			},
+			Switcher: Frame & {
+				Inventory: TextButton & {
+					UIListLayout: UIListLayout,
+					UICorner: UICorner,
+				},
+				Marketplace: TextButton & {
+					UIListLayout: UIListLayout,
+					UICorner: UICorner,
+				},
+				UIPadding: UIPadding,
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+				UISizeConstraint: UISizeConstraint,
+				UIListLayout: UIListLayout,
 			},
 		},
 	},

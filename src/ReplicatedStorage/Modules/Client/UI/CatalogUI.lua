@@ -1,6 +1,5 @@
 local CatalogUI = {}
 local AvatarEditorService = game:GetService("AvatarEditorService")
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
@@ -417,8 +416,7 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 		cam.CFrame = studioCamera.CFrame * CFrame.Angles(0, -math.rad(angleDifference), 0)
 	end
 
-	gui.LeftPane.Visible = false
-	gui.RightPane.Close.Visible = not gui.LeftPane.Visible -- only show rightpane close if leftpane is not open
+	gui.RightPane.Close.Visible = true
 end
 
 function CatalogUI:Initialize()
@@ -435,7 +433,6 @@ function CatalogUI:Initialize()
 	end
 
 	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
-	gui.LeftPane.Close.Activated:Connect(CatalogUI.Hide)
 	gui.RightPane.Marketplace.Results.ListWrapper.List
 		:GetPropertyChangedSignal("CanvasPosition")
 		:Connect(HandleResultsScrolled)
