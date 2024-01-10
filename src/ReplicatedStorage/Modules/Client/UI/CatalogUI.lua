@@ -139,18 +139,6 @@ local function RefreshResults()
 		end)
 
 		item.Parent = list
-
-		-- Was causing major lag due to hitting roblox rate limits
-		-- DataFetch.PlayerOwnsAsset(result.Id, Players.LocalPlayer):After(function(owned)
-		-- 	if item.Parent == nil then
-		-- 		return
-		-- 	end
-
-		-- 	if owned then
-		-- 		item.Buy.Visible = false
-		-- 		item.Owned.Visible = true
-		-- 	end
-		-- end)
 	end
 end
 
