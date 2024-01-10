@@ -1291,12 +1291,24 @@ export type Catalog = ScreenGui & {
 			},
 			Switcher: Frame & {
 				Inventory: TextButton & {
-					UIListLayout: UIListLayout,
 					UICorner: UICorner,
+					UIListLayout: UIListLayout,
+					SelectedIcon: ImageLabel & {
+						UICorner: UICorner,
+					},
+					DeselectedIcon: ImageLabel & {
+						UICorner: UICorner,
+					},
 				},
 				Marketplace: TextButton & {
-					UIListLayout: UIListLayout,
 					UICorner: UICorner,
+					UIListLayout: UIListLayout,
+					SelectedIcon: ImageLabel & {
+						UICorner: UICorner,
+					},
+					DeselectedIcon: ImageLabel & {
+						UICorner: UICorner,
+					},
 				},
 				UIPadding: UIPadding,
 				UICorner: UICorner,

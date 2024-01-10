@@ -13,10 +13,11 @@ local UILoader = require(script.Parent.UILoader)
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
-type DisplayMode = "Marketplace" | "Outfit"
+type DisplayMode = "Marketplace" | "Inventory"
 
 type ClothingCategory = "Dresses & Skirts" | "Jackets" | "Shirts" | "Shorts" | "Pants" | "Sweaters" | "T-Shirts"
 type AccessoryCategory = "Back" | "Face" | "Front" | "Head" | "Hair" | "Neck" | "Waist" | "Shoulder"
+type SubCategory = ClothingCategory | AccessoryCategory | "Current" | "Outfits"
 type SearchResult = {
 	Id: number,
 	Name: string,
@@ -25,18 +26,7 @@ type SearchResult = {
 	AssetType: string?,
 }
 
-type Category = "Clothing" | "Accessories"
-
-local accessoryCategories: { [AccessoryCategory]: Enum.AvatarAssetType } = {
-	Back = Enum.AvatarAssetType.BackAccessory,
-	Face = Enum.AvatarAssetType.FaceAccessory,
-	Front = Enum.AvatarAssetType.FrontAccessory,
-	Head = Enum.AvatarAssetType.Hat,
-	Hair = Enum.AvatarAssetType.HairAccessory,
-	Neck = Enum.AvatarAssetType.NeckAccessory,
-	Waist = Enum.AvatarAssetType.WaistAccessory,
-	Shoulder = Enum.AvatarAssetType.ShoulderAccessory,
-}
+type Category = "Clothing" | "Accessories" | "Wearing"
 
 local accessoryOrder = {
 	Hair = 1,
@@ -49,16 +39,6 @@ local accessoryOrder = {
 	Waist = 8,
 }
 
-local clothingCategories: { [ClothingCategory]: Enum.AvatarAssetType } = {
-	["Dresses & Skirts"] = Enum.AvatarAssetType.DressSkirtAccessory,
-	Jackets = Enum.AvatarAssetType.JacketAccessory,
-	Shirts = Enum.AvatarAssetType.ShirtAccessory,
-	Shorts = Enum.AvatarAssetType.ShortsAccessory,
-	Pants = Enum.AvatarAssetType.PantsAccessory,
-	Sweaters = Enum.AvatarAssetType.SweaterAccessory,
-	["T-Shirts"] = Enum.AvatarAssetType.TShirtAccessory,
-}
-
 local clothingOrder = {
 	Jackets = 1,
 	Sweaters = 2,
@@ -69,10 +49,45 @@ local clothingOrder = {
 	["Dresses & Skirts"] = 7,
 }
 
+local wearingOrder = {
+	Current = 1,
+	Outfits = 2,
+}
+
+local categories = {
+	Marketplace = {
+		Clothing = {
+			["Dresses & Skirts"] = Enum.AvatarAssetType.DressSkirtAccessory,
+			Jackets = Enum.AvatarAssetType.JacketAccessory,
+			Shirts = Enum.AvatarAssetType.ShirtAccessory,
+			Shorts = Enum.AvatarAssetType.ShortsAccessory,
+			Pants = Enum.AvatarAssetType.PantsAccessory,
+			Sweaters = Enum.AvatarAssetType.SweaterAccessory,
+			["T-Shirts"] = Enum.AvatarAssetType.TShirtAccessory,
+		},
+		Accessories = {
+			Back = Enum.AvatarAssetType.BackAccessory,
+			Face = Enum.AvatarAssetType.FaceAccessory,
+			Front = Enum.AvatarAssetType.FrontAccessory,
+			Head = Enum.AvatarAssetType.Hat,
+			Hair = Enum.AvatarAssetType.HairAccessory,
+			Neck = Enum.AvatarAssetType.NeckAccessory,
+			Waist = Enum.AvatarAssetType.WaistAccessory,
+			Shoulder = Enum.AvatarAssetType.ShoulderAccessory,
+		},
+	},
+	Inventory = {
+		Wearing = {
+			Current = true,
+			Outfits = true,
+		},
+	},
+}
+
 local currentMode: DisplayMode = "Marketplace"
 
 local currentCategory: Category = "Clothing"
-local currentSubcategory: ClothingCategory | AccessoryCategory = "Jackets"
+local currentSubcategory: SubCategory = "Jackets"
 
 local searchIdentifier = newproxy() -- Used so old searches dont overwrite new ones
 local searchPages: CatalogPages? = nil
@@ -184,6 +199,9 @@ end
 
 local function SearchCatalog()
 	ClearResults()
+	if currentMode ~= "Marketplace" then
+		return
+	end
 
 	local identifier = newproxy()
 	searchIdentifier = identifier
@@ -192,8 +210,7 @@ local function SearchCatalog()
 	-- todo: add filters
 	local paramsInstance: any = CatalogSearchParams.new()
 
-	local currentAssetType: Enum.AvatarAssetType? = accessoryCategories[currentSubcategory :: AccessoryCategory]
-		or clothingCategories[currentSubcategory :: ClothingCategory]
+	local currentAssetType: Enum.AvatarAssetType? = categories[currentMode][currentCategory][currentSubcategory]
 
 	if currentAssetType then
 		paramsInstance.AssetTypes = { currentAssetType }
@@ -213,18 +230,6 @@ local function SearchCatalog()
 	end)
 end
 
-local function GetAccessoryTableForCategory(
-	category: Category
-): { [ClothingCategory | AccessoryCategory]: Enum.AvatarAssetType }
-	if category == "Clothing" then
-		return clothingCategories
-	elseif category == "Accessories" then
-		return accessoryCategories
-	else
-		error(`Invalid category provided! {category}`)
-	end
-end
-
 local function RenderSubcategories()
 	local list = gui.RightPane.Marketplace.Categories.Frame.List
 	for i, child in list:GetChildren() do
@@ -235,7 +240,7 @@ local function RenderSubcategories()
 
 	local template = list.Template
 	template.Visible = false
-	local subCategories = GetAccessoryTableForCategory(currentCategory)
+	local subCategories = categories[currentMode][currentCategory]
 
 	local selected
 
@@ -252,8 +257,10 @@ local function RenderSubcategories()
 			header.TextLabel.TextColor3 = Color3.fromRGB(162, 162, 162)
 		end
 
-		header.LayoutOrder =
-			assert(clothingOrder[subCategory] or accessoryOrder[subCategory], `No order found for: {subCategory}`)
+		header.LayoutOrder = assert(
+			clothingOrder[subCategory] or accessoryOrder[subCategory] or wearingOrder[subCategory],
+			`No order found for: {subCategory}`
+		)
 
 		header.Activated:Connect(function()
 			currentSubcategory = subCategory :: any
@@ -283,10 +290,14 @@ local function RenderCategories()
 	type Header = typeof(tabs.Accessories)
 
 	local function RenderHeader(header: Header)
+		header.Visible = true
+
 		if header.Name == currentCategory then
 			header.BackgroundTransparency = 0
 			header.ItemImage.ImageTransparency = 0
 			header.TextLabel.TextTransparency = 0
+		elseif not categories[currentMode][header.Name] then
+			header.Visible = false
 		else
 			header.BackgroundTransparency = 1
 			header.ItemImage.ImageTransparency = 0.8
@@ -296,6 +307,9 @@ local function RenderCategories()
 
 	RenderHeader(tabs.Accessories)
 	RenderHeader(tabs.Clothing)
+	RenderHeader(tabs.Body)
+	RenderHeader(tabs.Characters)
+	RenderHeader(tabs.Wearing)
 end
 
 local function SwitchCategory(newCategory: Category)
@@ -303,12 +317,13 @@ local function SwitchCategory(newCategory: Category)
 		return
 	end
 
+	currentCategory = newCategory
 	if newCategory == "Accessories" then
-		currentCategory = "Accessories"
 		currentSubcategory = "Hair"
 	elseif newCategory == "Clothing" then
-		currentCategory = "Clothing"
 		currentSubcategory = "Jackets"
+	elseif newCategory == "Wearing" then
+		currentSubcategory = "Current"
 	else
 		error(`Invalid category passed: {newCategory}`)
 	end
@@ -316,6 +331,37 @@ local function SwitchCategory(newCategory: Category)
 	RenderCategories()
 	RenderSubcategories()
 	SearchCatalog()
+end
+
+local function SwitchMode(newMode: DisplayMode)
+	if newMode == currentMode then
+		return
+	end
+	local switcher = gui.RightPane.Switcher
+
+	currentMode = newMode
+	if newMode == "Marketplace" then
+		SwitchCategory("Clothing")
+	elseif newMode == "Inventory" then
+		SwitchCategory("Wearing")
+	end
+
+	type Switcher = typeof(switcher.Inventory)
+	local function RenderSwitcher(switcher: Switcher)
+		local selected = switcher.Name == currentMode
+		if selected then
+			switcher.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			switcher.BackgroundTransparency = 0
+		else
+			switcher.BackgroundTransparency = 1
+		end
+
+		switcher.DeselectedIcon.Visible = not selected
+		switcher.SelectedIcon.Visible = selected
+	end
+
+	RenderSwitcher(switcher.Marketplace)
+	RenderSwitcher(switcher.Inventory)
 end
 
 local function HandleResultsScrolled()
@@ -431,6 +477,13 @@ function CatalogUI:Initialize()
 			end)
 		end
 	end
+
+	gui.RightPane.Switcher.Marketplace.Activated:Connect(function()
+		SwitchMode("Marketplace")
+	end)
+	gui.RightPane.Switcher.Inventory.Activated:Connect(function()
+		SwitchMode("Inventory")
+	end)
 
 	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
 	gui.RightPane.Marketplace.Results.ListWrapper.List
