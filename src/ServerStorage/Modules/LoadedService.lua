@@ -2,7 +2,7 @@ local LoadedService = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Future = require(ReplicatedStorage.Packages.Future)
-local Loaded = require(ReplicatedStorage.Events.Loaded):Server()
+local Loaded = require(ReplicatedStorage.Events.LoadedEvent):Server()
 
 local loadedAttribute = "LoadedService_Loaded"
 

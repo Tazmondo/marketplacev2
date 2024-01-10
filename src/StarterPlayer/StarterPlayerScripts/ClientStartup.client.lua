@@ -1,8 +1,8 @@
 --!nonstrict
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Spawn = require(ReplicatedStorage.Packages.Spawn)
 
-local LoadedEvent = require(ReplicatedStorage.Events.Loaded):Client()
+local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
+local Spawn = require(ReplicatedStorage.Packages.Spawn)
 
 local Client = ReplicatedStorage.Modules.Client
 
@@ -36,4 +36,4 @@ end
 
 print("Finished loading, firing server.")
 
-LoadedEvent:Fire()
+Loaded:RegisterLoaded()

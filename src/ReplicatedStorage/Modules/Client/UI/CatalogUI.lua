@@ -521,7 +521,11 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 	end
 
 	StarterGui:SetCore("TopbarEnabled", not gui.Visible)
+
+	-- UI should never be enabled before the character has loaded.
+	if Loaded:HasCharacterLoaded() then
 	UILoader:GetMain().Enabled = not gui.Visible
+	end
 
 	if gui.Visible and not previewDisabled then
 		cam.CameraType = Enum.CameraType.Scriptable

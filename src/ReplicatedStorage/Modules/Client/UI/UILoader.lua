@@ -3,7 +3,10 @@
 
 local UILoader = {}
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
+
+local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
 local UITypes = require(script.Parent.UITypes)
 
 local PlayerGui = Players.LocalPlayer.PlayerGui
@@ -13,7 +16,10 @@ function GetUI(uiName: string)
 		return PlayerGui[uiName]
 	else
 		local template = assert(StarterGui:FindFirstChild(uiName), `{uiName} did not exist in startergui`)
+		assert(template:IsA("ScreenGui"))
+
 		local newUI = template:Clone()
+		newUI.Enabled = false
 		newUI.Parent = PlayerGui
 		return newUI
 	end
@@ -23,7 +29,7 @@ local main = GetUI("Main") :: UITypes.Main
 
 local nav = GetUI("Nav") :: UITypes.Nav
 
-local outfit = GetUI("Catalog") :: UITypes.Catalog
+local catalog = GetUI("Catalog") :: UITypes.Catalog
 
 function UILoader:GetMain(): UITypes.Main
 	return main
@@ -34,7 +40,7 @@ function UILoader:GetNavigation(): UITypes.Nav
 end
 
 function UILoader:GetCatalog(): UITypes.Catalog
-	return outfit
+	return catalog
 end
 
 function UILoader:Initialize()
@@ -45,6 +51,12 @@ function UILoader:Initialize()
 			print("Destroying cloned gui:", instance.Name)
 			instance:Destroy()
 		end
+	end)
+
+	Loaded:CharacterLoadedFuture():After(function()
+		main.Enabled = true
+		nav.Enabled = true
+		catalog.Enabled = true
 	end)
 end
 
