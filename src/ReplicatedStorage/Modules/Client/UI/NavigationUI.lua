@@ -26,6 +26,11 @@ function ProfileClicked()
 	ProfileUI:Toggle()
 end
 
+local function UpdateFeedPickerVisibility()
+	local visible = not CatalogUI:IsDisplayed()
+	feedUI.Visible = visible
+end
+
 local function CatalogClicked()
 	CatalogUI:Display("Marketplace")
 end
@@ -106,6 +111,9 @@ function NavigationUI:Initialize()
 	nav.Profile.Frame.ImageLabel.Image = Thumbs.GetHeadShot(Players.LocalPlayer.UserId)
 
 	FeedController.Updated:Connect(HandleFeedUpdated)
+	CatalogUI.VisibilityUpdated:Connect(function()
+		UpdateFeedPickerVisibility()
+	end)
 
 	nav.Profile.ImageButton.Activated:Connect(ProfileClicked)
 	nav.Catalog.ImageButton.Activated:Connect(CatalogClicked)

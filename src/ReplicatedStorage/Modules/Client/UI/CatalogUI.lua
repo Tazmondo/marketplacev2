@@ -15,6 +15,7 @@ local UILoader = require(script.Parent.UILoader)
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local Device = require(ReplicatedStorage.Modules.Client.Device)
 local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
 type DisplayMode = "Marketplace" | "Inventory"
@@ -87,6 +88,8 @@ local categories = {
 		},
 	},
 }
+
+CatalogUI.VisibilityUpdated = Signal()
 
 local animationFolder = ReplicatedStorage.Assets.Animations
 local idleAnimation = animationFolder.Idle
@@ -570,6 +573,8 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 		gui.Visible = true
 	end
 
+	CatalogUI.VisibilityUpdated:Fire(gui.Visible)
+
 	-- This can occasionally error
 	pcall(function()
 		StarterGui:SetCore("TopbarEnabled", not gui.Visible)
@@ -602,6 +607,10 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 
 		cam.CFrame = studioCamera.CFrame * CFrame.Angles(0, -math.rad(angleDifference), 0)
 	end
+end
+
+function CatalogUI:IsDisplayed()
+	return gui.Visible
 end
 
 function CatalogUI:Initialize()
