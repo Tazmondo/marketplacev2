@@ -67,6 +67,7 @@ local function GenerateModel(player: Player, accessories: { number }): Model?
 
 	local newModel = Players:CreateHumanoidModelFromDescription(baseDescription, Enum.HumanoidRigType.R15)
 	newModel.Name = "GeneratedViewportModel"
+	newModel:PivotTo(CFrame.new(10000, 10000, 0)) -- ensures the nametag is not visible to the player
 
 	-- Use playergui so it is only replicated to the relevant player
 	newModel.Parent = player.PlayerGui
