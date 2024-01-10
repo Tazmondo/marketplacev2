@@ -85,6 +85,9 @@ local categories = {
 	},
 }
 
+local animationFolder = ReplicatedStorage.Assets.Animations
+local idleAnimation = animationFolder.Idle
+
 local currentMode: DisplayMode = "Marketplace"
 
 local currentCategory: Category = "Clothing"
@@ -457,10 +460,14 @@ function RenderPreviewPane(accessories: { number })
 
 		local HRP = model:FindFirstChild("HumanoidRootPart") :: BasePart
 		local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
+		local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
 
 		-- Allow accessories to attach
 		model:PivotTo(studioStand.CFrame + Vector3.new(0, humanoid.HipHeight + (HRP.Size.Y / 2), 0))
 		model.Parent = studio
+
+		-- Must only play after parenting to workspace
+		animator:LoadAnimation(idleAnimation):Play()
 	end, accessories)
 end
 
