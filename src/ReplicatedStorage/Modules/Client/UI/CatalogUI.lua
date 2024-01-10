@@ -88,6 +88,7 @@ local categories = {
 
 local animationFolder = ReplicatedStorage.Assets.Animations
 local idleAnimation = animationFolder.Idle
+local currentIdleTrack: AnimationTrack? = nil
 
 local currentMode: DisplayMode = "Marketplace"
 
@@ -480,10 +481,17 @@ function RenderPreviewPane(accessories: { number })
 
 		-- Allow accessories to attach
 		model:PivotTo(studioStand.CFrame + Vector3.new(0, humanoid.HipHeight + (HRP.Size.Y / 2), 0))
+		HRP.Anchored = true
 		model.Parent = studio
 
 		-- Must only play after parenting to workspace
-		animator:LoadAnimation(idleAnimation):Play()
+		local newTrack = animator:LoadAnimation(idleAnimation)
+		newTrack:Play(0)
+		if currentIdleTrack then
+			newTrack.TimePosition = currentIdleTrack.TimePosition
+		end
+
+		currentIdleTrack = newTrack
 	end, accessories)
 end
 
