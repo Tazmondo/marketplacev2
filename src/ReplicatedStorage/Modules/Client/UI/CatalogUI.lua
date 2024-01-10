@@ -1,5 +1,6 @@
 local CatalogUI = {}
 local AvatarEditorService = game:GetService("AvatarEditorService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
@@ -102,7 +103,7 @@ local studioStand = assert(studio:FindFirstChild("StudioStand"), "Studio did not
 
 local gui = UILoader:GetCatalog().Catalog
 
-local function RefreshResults()
+function RefreshResults()
 	local list = gui.RightPane.Marketplace.Results.ListWrapper.List
 	for i, child in list:GetChildren() do
 		if child:GetAttribute("Temporary") then
@@ -142,7 +143,7 @@ local function RefreshResults()
 	end
 end
 
-local function AddSearchResults(results: { SearchResult })
+function AddSearchResults(results: { SearchResult })
 	for i, result in results do
 		table.insert(currentResults, result)
 	end
@@ -150,13 +151,13 @@ local function AddSearchResults(results: { SearchResult })
 	RefreshResults()
 end
 
-local function ClearResults()
+function ClearResults()
 	currentResults = {}
 	searchPages = nil
 	RefreshResults()
 end
 
-local function ProcessPage()
+function ProcessPage()
 	if not searchPages or searchPages.IsFinished then
 		return
 	end
@@ -173,7 +174,7 @@ local function ProcessPage()
 	AddSearchResults(filteredItems)
 end
 
-local function ReadNextPage()
+function ReadNextPage()
 	return Future.new(function()
 		if currentlySearching or not searchPages or searchPages.IsFinished then
 			return
@@ -185,7 +186,7 @@ local function ReadNextPage()
 	end)
 end
 
-local function SearchCatalog()
+function SearchCatalog()
 	ClearResults()
 	if currentMode ~= "Marketplace" then
 		return
@@ -218,7 +219,53 @@ local function SearchCatalog()
 	end)
 end
 
-local function RenderSubcategories()
+function RenderInventory()
+	ClearResults()
+	if currentMode ~= "Inventory" then
+		return
+	end
+
+	local list = gui.RightPane.Marketplace.Results.ListWrapper.List
+
+	local template = list.ItemWrapper
+	template.Visible = false
+
+	local cart = CartController:GetCart()
+
+	for i, id in cart do
+		local item = template:Clone()
+
+		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
+
+		item.Visible = true
+		item:SetAttribute("Temporary", true)
+		item.LayoutOrder = #cart - i -- so most recent additions are at the top
+		item.UIStroke.Enabled = true
+
+		-- Toggle equip
+		item.Activated:Connect(function()
+			item.UIStroke.Enabled = not item.UIStroke.Enabled
+			CartController:ToggleInCart(id)
+		end)
+
+		item.Parent = template.Parent
+
+		DataFetch.PlayerOwnsAsset(id, Players.LocalPlayer):After(function(owned)
+			item.Owned.Visible = owned
+			item.Buy.Visible = not owned
+		end)
+	end
+end
+
+local function PopulateResults()
+	if currentMode == "Marketplace" then
+		SearchCatalog()
+	elseif currentMode == "Inventory" then
+		RenderInventory()
+	end
+end
+
+function RenderSubcategories()
 	local list = gui.RightPane.Marketplace.Categories.Frame.List
 	for i, child in list:GetChildren() do
 		if child:GetAttribute("Temporary") then
@@ -272,7 +319,7 @@ local function RenderSubcategories()
 	):Play()
 end
 
-local function RenderCategories()
+function RenderCategories()
 	local tabs = gui.RightPane.Marketplace.Tabs.Categories.List
 
 	type Header = typeof(tabs.Accessories)
@@ -300,7 +347,7 @@ local function RenderCategories()
 	RenderHeader(tabs.Wearing)
 end
 
-local function SwitchCategory(newCategory: Category)
+function SwitchCategory(newCategory: Category)
 	if newCategory == currentCategory then
 		return
 	end
@@ -318,10 +365,10 @@ local function SwitchCategory(newCategory: Category)
 
 	RenderCategories()
 	RenderSubcategories()
-	SearchCatalog()
+	PopulateResults()
 end
 
-local function SwitchMode(newMode: DisplayMode)
+function SwitchMode(newMode: DisplayMode)
 	if newMode == currentMode then
 		return
 	end
@@ -352,7 +399,7 @@ local function SwitchMode(newMode: DisplayMode)
 	RenderSwitcher(switcher.Inventory)
 end
 
-local function HandleResultsScrolled()
+function HandleResultsScrolled()
 	local results = gui.RightPane.Marketplace.Results.ListWrapper.List
 
 	-- The position of the bottom of the results relative to how much has been scrolled
@@ -371,7 +418,7 @@ local function HandleResultsScrolled()
 end
 
 local renderTrack = newproxy()
-local function RenderPreviewPane(accessories: { number })
+function RenderPreviewPane(accessories: { number })
 	return Future.new(function(accessories: { number })
 		local tracker = newproxy()
 		renderTrack = tracker
