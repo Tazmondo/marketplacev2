@@ -12,6 +12,7 @@ local Future = require(ReplicatedStorage.Packages.Future)
 local UILoader = require(script.Parent.UILoader)
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local Device = require(ReplicatedStorage.Modules.Client.Device)
 local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
@@ -212,6 +213,8 @@ function SearchCatalog()
 	if currentAssetType then
 		paramsInstance.AssetTypes = { currentAssetType }
 	end
+
+	print("Searching...")
 
 	task.spawn(function()
 		local success, pages = pcall(function()
@@ -498,32 +501,45 @@ function RenderPreviewPane(accessories: { number })
 	end, accessories)
 end
 
+local delayedSearchTask: thread? = nil
 function HandleSearchUpdated()
-	local search = gui.RightPane.Overlay.Search.Search.Search
-	local currentText = search.Text
+	if delayedSearchTask then
+		task.cancel(delayedSearchTask)
+	end
 
-	task.delay(4, function()
-		if search.Text ~= currentText or not search.Visible then
-			return
-		end
-
+	delayedSearchTask = task.delay(1.5, function()
 		SearchCatalog()
 	end)
 end
 
+function HandleSearched()
+	if delayedSearchTask then
+		task.cancel(delayedSearchTask)
+		delayedSearchTask = nil
+	end
+	SearchCatalog()
+end
+
 function ToggleSearch()
 	local search = gui.RightPane.Overlay.Search
+	local searchAction = gui.RightPane.Overlay.Actions.Search
 	search.Visible = not search.Visible
+	searchAction.ItemImage.Visible = not search.Visible
+	searchAction.Close.Visible = search.Visible
+
 	if not search.Visible then
 		search.Search.Search.Text = ""
-	else
+	elseif Device() == "PC" then
 		search.Search.Search:CaptureFocus()
 	end
 end
 
 function ToggleFilter()
 	local filter = gui.RightPane.Overlay.Filter
+	local filterAction = gui.RightPane.Overlay.Actions.Filter
 	filter.Visible = not filter.Visible
+	filterAction.ItemImage.Visible = not filter.Visible
+	filterAction.Close.Visible = filter.Visible
 end
 
 function CatalogUI:Hide()
@@ -598,6 +614,8 @@ function CatalogUI:Initialize()
 	gui.RightPane.Overlay.Actions.Search.Activated:Connect(ToggleSearch)
 	gui.RightPane.Overlay.Actions.Filter.Activated:Connect(ToggleFilter)
 	gui.RightPane.Overlay.Search.Search.Search:GetPropertyChangedSignal("Text"):Connect(HandleSearchUpdated)
+	gui.RightPane.Overlay.Search.Search.Search.ReturnPressedFromOnScreenKeyboard:Connect(HandleSearched)
+	gui.RightPane.Overlay.Search.Search.Search.FocusLost:Connect(HandleSearched)
 
 	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
 	gui.RightPane.Marketplace.Results.ListWrapper.List
