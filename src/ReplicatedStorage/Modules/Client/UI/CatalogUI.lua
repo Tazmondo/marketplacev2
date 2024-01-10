@@ -199,8 +199,11 @@ function SearchCatalog()
 	searchIdentifier = identifier
 	currentlySearching = true
 
-	-- todo: add filters
+	local overlay = gui.RightPane.Overlay
+
+	-- types for this instance are incorrect
 	local paramsInstance: any = CatalogSearchParams.new()
+	paramsInstance.SearchKeyword = overlay.Search.Search.Search.Text
 
 	local currentAssetType: Enum.AvatarAssetType? = categories[currentMode][currentCategory][currentSubcategory]
 
@@ -471,6 +474,34 @@ function RenderPreviewPane(accessories: { number })
 	end, accessories)
 end
 
+function HandleSearchUpdated()
+	local search = gui.RightPane.Overlay.Search.Search.Search
+	local currentText = search.Text
+
+	task.delay(4, function()
+		if search.Text ~= currentText or not search.Visible then
+			return
+		end
+
+		SearchCatalog()
+	end)
+end
+
+function ToggleSearch()
+	local search = gui.RightPane.Overlay.Search
+	search.Visible = not search.Visible
+	if not search.Visible then
+		search.Search.Search.Text = ""
+	else
+		search.Search.Search:CaptureFocus()
+	end
+end
+
+function ToggleFilter()
+	local filter = gui.RightPane.Overlay.Filter
+	filter.Visible = not filter.Visible
+end
+
 function CatalogUI:Hide()
 	-- Toggles visibility off
 	if gui.Visible then
@@ -535,6 +566,10 @@ function CatalogUI:Initialize()
 	gui.RightPane.Switcher.Inventory.Activated:Connect(function()
 		SwitchMode("Inventory")
 	end)
+
+	gui.RightPane.Overlay.Actions.Search.Activated:Connect(ToggleSearch)
+	gui.RightPane.Overlay.Actions.Filter.Activated:Connect(ToggleFilter)
+	gui.RightPane.Overlay.Search.Search.Search:GetPropertyChangedSignal("Text"):Connect(HandleSearchUpdated)
 
 	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
 	gui.RightPane.Marketplace.Results.ListWrapper.List
