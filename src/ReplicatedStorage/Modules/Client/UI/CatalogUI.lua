@@ -441,6 +441,8 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 	end
 
 	StarterGui:SetCore("TopbarEnabled", not gui.Visible)
+	UILoader:GetMain().Enabled = not gui.Visible
+
 	if gui.Visible and not previewDisabled then
 		cam.CameraType = Enum.CameraType.Scriptable
 		cam.FieldOfView = 20
