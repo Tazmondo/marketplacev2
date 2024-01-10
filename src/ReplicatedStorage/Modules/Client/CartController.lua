@@ -97,13 +97,13 @@ function CartController:Reset()
 			return
 		end
 
-		local items = {}
+		cartItems = {}
+
 		for i, accessory in description:GetAccessories(true) do
-			table.insert(items, accessory.AssetId)
+			table.insert(cartItems, NewCartItem(accessory.AssetId))
 			cartSet[accessory.AssetId] = true
 		end
 
-		cartItems = items
 		UpdateCharacter()
 	end)
 end

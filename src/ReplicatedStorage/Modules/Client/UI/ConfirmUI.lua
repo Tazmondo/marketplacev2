@@ -20,7 +20,7 @@ ConfirmUI.Confirmations = {
 	} :: Confirmation,
 }
 
-local confirmationFrame = UILoader:GetMain().Confirm
+local confirmationFrame = UILoader:GetConfirm().Confirm
 local showing = false
 local finishedSignal = Signal()
 

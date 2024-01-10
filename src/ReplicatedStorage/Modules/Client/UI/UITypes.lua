@@ -1113,8 +1113,9 @@ export type Catalog = ScreenGui & {
 					ListWrapper: Frame & {
 						UIPadding: UIPadding,
 						List: ScrollingFrame & {
+							UIGridLayout: UIGridLayout,
 							ItemWrapper: ImageButton & {
-								Label: TextButton & {
+								Owned: TextButton & {
 									UICorner: UICorner,
 									UISizeConstraint: UISizeConstraint,
 									TextLabel: TextLabel,
@@ -1125,7 +1126,7 @@ export type Catalog = ScreenGui & {
 									UICorner: UICorner,
 									ImageLabel: ImageLabel,
 								},
-								Owned: TextButton & {
+								Title: TextButton & {
 									UICorner: UICorner,
 									UISizeConstraint: UISizeConstraint,
 									TextLabel: TextLabel,
@@ -1154,20 +1155,47 @@ export type Catalog = ScreenGui & {
 									ImageLabel: ImageLabel,
 								},
 							},
-							UIGridLayout: UIGridLayout,
+							ItemButton: ImageButton & {
+								ImageFrame: Frame & {
+									Frame: Frame & {
+										UIListLayout: UIListLayout,
+										TextLabel: TextLabel & {
+											UITextSizeConstraint: UITextSizeConstraint,
+										},
+										ItemImage: ImageLabel & {
+											UICorner: UICorner,
+										},
+									},
+								},
+								UICorner: UICorner,
+							},
 						},
 					},
 				},
 			},
 			Divider: Frame,
-			Close: TextButton & {
-				Close: ImageLabel & {
+			Controls: Frame & {
+				Close: TextButton & {
+					Close: ImageLabel & {
+						UICorner: UICorner,
+					},
 					UICorner: UICorner,
+					UIStroke: UIStroke,
+					UISizeConstraint: UISizeConstraint,
+					UIListLayout: UIListLayout,
 				},
 				UICorner: UICorner,
-				UIStroke: UIStroke,
-				UISizeConstraint: UISizeConstraint,
 				UIListLayout: UIListLayout,
+				UISizeConstraint: UISizeConstraint,
+				Reset: TextButton & {
+					Close: ImageLabel & {
+						UICorner: UICorner,
+					},
+					UICorner: UICorner,
+					UIStroke: UIStroke,
+					UISizeConstraint: UISizeConstraint,
+					UIListLayout: UIListLayout,
+				},
 			},
 			Outfit: Frame & {
 				Wearing: Frame & {
@@ -1310,6 +1338,30 @@ export type Catalog = ScreenGui & {
 				UIListLayout: UIListLayout,
 			},
 		},
+	},
+}
+
+export type Confirm = ScreenGui & {
+	Confirm: Frame & {
+		Title: TextLabel,
+		UIPadding: UIPadding,
+		UICorner: UICorner,
+		UIListLayout: UIListLayout,
+		Actions: Frame & {
+			UIListLayout: UIListLayout,
+			SecondaryButton: TextButton & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+				UICorner: UICorner,
+			},
+			PrimaryButton: TextButton & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+				UICorner: UICorner,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Body: TextLabel,
 	},
 }
 

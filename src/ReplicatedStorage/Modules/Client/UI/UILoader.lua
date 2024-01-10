@@ -31,6 +31,8 @@ local nav = GetUI("Nav") :: UITypes.Nav
 
 local catalog = GetUI("Catalog") :: UITypes.Catalog
 
+local confirm = GetUI("Confirm") :: UITypes.Confirm
+
 function UILoader:GetMain(): UITypes.Main
 	return main
 end
@@ -41,6 +43,10 @@ end
 
 function UILoader:GetCatalog(): UITypes.Catalog
 	return catalog
+end
+
+function UILoader:GetConfirm(): UITypes.Confirm
+	return confirm
 end
 
 function UILoader:Initialize()
@@ -57,6 +63,7 @@ function UILoader:Initialize()
 		main.Enabled = true
 		nav.Enabled = true
 		catalog.Enabled = true
+		confirm.Enabled = true
 	end)
 end
 

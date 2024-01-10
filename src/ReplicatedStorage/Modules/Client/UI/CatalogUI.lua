@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
 
+local ConfirmUI = require(script.Parent.ConfirmUI)
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
@@ -542,6 +543,15 @@ function ToggleFilter()
 	filterAction.Close.Visible = filter.Visible
 end
 
+function HandleReset()
+	local confirmed = ConfirmUI:Confirm(ConfirmUI.Confirmations.ResetAvatar):Await()
+	if not confirmed then
+		return
+	end
+
+	CartController:Reset()
+end
+
 function CatalogUI:Hide()
 	-- Toggles visibility off
 	if gui.Visible then
@@ -560,7 +570,10 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 		gui.Visible = true
 	end
 
-	StarterGui:SetCore("TopbarEnabled", not gui.Visible)
+	-- This can occasionally error
+	pcall(function()
+		StarterGui:SetCore("TopbarEnabled", not gui.Visible)
+	end)
 
 	-- UI should never be enabled before the character has loaded.
 	if Loaded:HasCharacterLoaded() then
@@ -617,7 +630,9 @@ function CatalogUI:Initialize()
 	gui.RightPane.Overlay.Search.Search.Search.ReturnPressedFromOnScreenKeyboard:Connect(HandleSearched)
 	gui.RightPane.Overlay.Search.Search.Search.FocusLost:Connect(HandleSearched)
 
-	gui.RightPane.Close.Activated:Connect(CatalogUI.Hide)
+	gui.RightPane.Controls.Close.Activated:Connect(CatalogUI.Hide)
+	gui.RightPane.Controls.Reset.Activated:Connect(HandleReset)
+
 	gui.RightPane.Marketplace.Results.ListWrapper.List
 		:GetPropertyChangedSignal("CanvasPosition")
 		:Connect(HandleResultsScrolled)
