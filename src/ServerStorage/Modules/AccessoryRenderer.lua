@@ -17,6 +17,7 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 	end
 
 	local newAccessories = {}
+	local currentOrder = 1
 
 	for i, id in accessories do
 		local existingAccessory = existingAccessorySet[id]
@@ -27,9 +28,11 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 			table.insert(newAccessories, {
 				AssetId = id,
 				AccessoryType = Enum.AccessoryType.Face,
-				IsLayered = false,
+				IsLayered = true,
+				Order = currentOrder,
 			})
 		end
+		currentOrder += 1
 	end
 
 	description:SetAccessories(newAccessories, true)
