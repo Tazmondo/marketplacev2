@@ -2,12 +2,16 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Guard = require(ReplicatedStorage.Packages.Guard)
+
+export type Limited = "Limited" | "LimitedU" | "UGC"
+
 export type Item = {
 	creator: string,
 	name: string,
 	assetId: number,
 	price: number?,
 	owned: boolean?,
+	limited: Limited?,
 }
 
 export type Stand = {

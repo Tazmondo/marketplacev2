@@ -250,9 +250,16 @@ function RenderInventory()
 
 		item.Parent = template.Parent
 
-		DataFetch.PlayerOwnsAsset(id, Players.LocalPlayer):After(function(owned)
+		DataFetch.GetItemDetails(id, Players.LocalPlayer):After(function(details)
+			local owned = if details then assert(details.owned) else false
 			item.Owned.Visible = owned
 			item.Buy.Visible = not owned
+
+			if not details then
+				return
+			end
+
+			item.IsLimited.Visible = details.limited ~= nil
 		end)
 	end
 end

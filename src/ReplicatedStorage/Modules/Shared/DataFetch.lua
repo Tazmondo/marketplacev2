@@ -91,12 +91,22 @@ function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 			elseif details.IsPublicDomain then 0 -- Item is free
 			else details.PriceInRobux
 
+		local limited: Types.Limited? = nil
+		if details.CollectiblesItemDetails then
+			limited = "UGC"
+		elseif details.IsLimited then
+			limited = "Limited"
+		elseif details.IsLimitedUnique then
+			limited = "LimitedU"
+		end
+
 		local item: Types.Item = {
 			assetId = assetId,
 			name = details.Name,
 			creator = details.Creator.Name or "Roblox",
 			price = price,
 			owned = if ownership then ownedSuccess and owned else nil,
+			limited = limited,
 		}
 
 		cachedItems[assetId] = item
