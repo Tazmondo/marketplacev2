@@ -126,7 +126,11 @@ function CartController:ToggleEquipped(id: number, force: boolean?)
 end
 
 function CartController:ClearUnequippedItems()
+	cartSet = {}
 	cartItems = TableUtil.Filter(cartItems, function(item)
+		if item.equipped then
+			cartSet[item.id] = true
+		end
 		return item.equipped
 	end)
 end

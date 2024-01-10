@@ -143,8 +143,7 @@ function RefreshResults()
 			item.Buy.Visible = false
 		end
 
-		-- using .Activated here doesnt work on mobile
-		item.MouseButton1Down:Connect(function()
+		item.Activated:Connect(function()
 			CartController:ToggleInCart(result.Id)
 			RefreshResults()
 		end)
@@ -266,6 +265,10 @@ function RenderInventory()
 		item.Parent = template.Parent
 
 		DataFetch.GetItemDetails(cartItem.id, Players.LocalPlayer):After(function(details)
+			if item.Parent == nil then
+				return
+			end
+
 			local owned = if details then (details.owned or false) else false
 			item.Owned.Visible = owned
 			item.Buy.Visible = not owned
@@ -295,6 +298,7 @@ function SwitchSubCategory(newCategory: SubCategory)
 	print(currentSubcategory, newCategory)
 	-- Clear out unequipped items when switching tabs
 	if currentSubcategory == "Current" then
+		print("Clearing unequipped")
 		CartController:ClearUnequippedItems()
 	end
 
