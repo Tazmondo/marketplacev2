@@ -400,12 +400,15 @@ function SwitchMode(newMode: DisplayMode)
 		return
 	end
 	local switcher = gui.RightPane.Switcher
+	local overlay = gui.RightPane.Overlay
 
 	currentMode = newMode
 	if newMode == "Marketplace" then
 		SwitchCategory("Clothing")
+		overlay.Visible = true
 	elseif newMode == "Inventory" then
 		SwitchCategory("Wearing")
+		overlay.Visible = false
 	end
 
 	type Switcher = typeof(switcher.Inventory)
