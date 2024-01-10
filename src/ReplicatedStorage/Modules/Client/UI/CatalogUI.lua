@@ -12,6 +12,7 @@ local Future = require(ReplicatedStorage.Packages.Future)
 local UILoader = require(script.Parent.UILoader)
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
 type DisplayMode = "Marketplace" | "Inventory"
@@ -238,26 +239,26 @@ function RenderInventory()
 
 	local cart = CartController:GetCart()
 
-	for i, id in cart do
+	for i, cartItem in cart do
 		local item = template:Clone()
 
-		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
+		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(cartItem.id)
 
 		item.Visible = true
 		item:SetAttribute("Temporary", true)
 		item.LayoutOrder = #cart - i -- so most recent additions are at the top
-		item.UIStroke.Enabled = true
+		item.UIStroke.Enabled = cartItem.equipped
 
 		-- Toggle equip
 		item.Activated:Connect(function()
 			item.UIStroke.Enabled = not item.UIStroke.Enabled
-			CartController:ToggleInCart(id)
+			CartController:ToggleEquipped(cartItem.id)
 		end)
 
 		item.Parent = template.Parent
 
-		DataFetch.GetItemDetails(id, Players.LocalPlayer):After(function(details)
-			local owned = if details then assert(details.owned) else false
+		DataFetch.GetItemDetails(cartItem.id, Players.LocalPlayer):After(function(details)
+			local owned = if details then (details.owned or false) else false
 			item.Owned.Visible = owned
 			item.Buy.Visible = not owned
 
@@ -273,9 +274,25 @@ end
 local function PopulateResults()
 	if currentMode == "Marketplace" then
 		SearchCatalog()
-	elseif currentMode == "Inventory" then
+	elseif currentSubcategory == "Current" then
 		RenderInventory()
 	end
+end
+
+function SwitchSubCategory(newCategory: SubCategory)
+	if newCategory == currentSubcategory then
+		return
+	end
+
+	print(currentSubcategory, newCategory)
+	-- Clear out unequipped items when switching tabs
+	if currentSubcategory == "Current" then
+		CartController:ClearUnequippedItems()
+	end
+
+	currentSubcategory = newCategory
+	PopulateResults()
+	RenderSubcategories()
 end
 
 function RenderSubcategories()
@@ -311,9 +328,7 @@ function RenderSubcategories()
 		)
 
 		header.Activated:Connect(function()
-			currentSubcategory = subCategory :: any
-			SearchCatalog()
-			RenderSubcategories()
+			SwitchSubCategory(subCategory)
 		end)
 		header:SetAttribute("Temporary", true)
 
@@ -367,18 +382,16 @@ function SwitchCategory(newCategory: Category)
 
 	currentCategory = newCategory
 	if newCategory == "Accessories" then
-		currentSubcategory = "Hair"
+		SwitchSubCategory("Hair")
 	elseif newCategory == "Clothing" then
-		currentSubcategory = "Jackets"
+		SwitchSubCategory("Jackets")
 	elseif newCategory == "Wearing" then
-		currentSubcategory = "Current"
+		SwitchSubCategory("Current")
 	else
 		error(`Invalid category passed: {newCategory}`)
 	end
 
 	RenderCategories()
-	RenderSubcategories()
-	PopulateResults()
 end
 
 function SwitchMode(newMode: DisplayMode)
@@ -524,7 +537,7 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 
 	-- UI should never be enabled before the character has loaded.
 	if Loaded:HasCharacterLoaded() then
-	UILoader:GetMain().Enabled = not gui.Visible
+		UILoader:GetMain().Enabled = not gui.Visible
 	end
 
 	if gui.Visible and not previewDisabled then
@@ -580,7 +593,12 @@ function CatalogUI:Initialize()
 		:GetPropertyChangedSignal("CanvasPosition")
 		:Connect(HandleResultsScrolled)
 
-	CartController.CartUpdated:Connect(RenderPreviewPane)
+	CartController.CartUpdated:Connect(function(items: { CartController.CartItem })
+		RenderPreviewPane(CartController:GetEquippedIds())
+		if currentSubcategory == "Current" then
+			RenderInventory()
+		end
+	end)
 
 	-- Do initial render
 	RenderCategories()

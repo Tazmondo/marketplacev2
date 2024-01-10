@@ -5,12 +5,25 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
+
+export type CartItem = {
+	id: number,
+	equipped: boolean,
+}
 
 -- O(1) lookup time but also ordered
-local cartItems: { number } = {}
+local cartItems: { CartItem } = {}
 local cartSet: { [number]: true? } = {}
 
 CartController.CartUpdated = Signal()
+
+local function NewCartItem(id: number)
+	return {
+		id = id,
+		equipped = true,
+	}
+end
 
 function UpdateCharacter()
 	local character = Players.LocalPlayer.Character
@@ -18,12 +31,26 @@ function UpdateCharacter()
 		return
 	end
 
-	AvatarEvents.ApplyDescription:FireServer(cartItems)
+	AvatarEvents.ApplyDescription:FireServer(CartController:GetEquippedIds())
 	CartController.CartUpdated:Fire(cartItems)
 end
 
+function CartController:GetEquippedIds(): { number }
+	return TableUtil.Map(
+		TableUtil.Filter(cartItems, function(item)
+			return item.equipped == true
+		end),
+		function(item)
+			return item.id
+		end
+	)
+end
+
 function CartController:RemoveFromCart(id: number)
-	local index = table.find(cartItems, id)
+	local _, index = TableUtil.Find(cartItems, function(item)
+		return item.id == id
+	end)
+
 	if index then
 		table.remove(cartItems, index)
 		cartSet[id] = nil
@@ -34,7 +61,7 @@ end
 
 function CartController:AddToCart(id: number)
 	if not cartSet[id] then
-		table.insert(cartItems, id)
+		table.insert(cartItems, NewCartItem(id))
 		cartSet[id] = true
 	end
 
@@ -42,12 +69,15 @@ function CartController:AddToCart(id: number)
 end
 
 function CartController:ToggleInCart(id: number)
-	local found = table.find(cartItems, id)
-	if not found then
-		table.insert(cartItems, id)
+	local _, index = TableUtil.Find(cartItems, function(item)
+		return item.id == id
+	end)
+
+	if not index then
+		table.insert(cartItems, NewCartItem(id))
 		cartSet[id] = true
 	else
-		table.remove(cartItems, found)
+		table.remove(cartItems, index)
 		cartSet[id] = nil
 	end
 
@@ -82,6 +112,25 @@ function CartController:IsInCart(id: number)
 	return cartSet[id] == true
 end
 
+function CartController:ToggleEquipped(id: number, force: boolean?)
+	local cartItem = TableUtil.Find(cartItems, function(item)
+		return item.id == id
+	end)
+	if not cartItem then
+		return
+	end
+
+	cartItem.equipped = if force == nil then not cartItem.equipped else force
+
+	UpdateCharacter()
+end
+
+function CartController:ClearUnequippedItems()
+	cartItems = TableUtil.Filter(cartItems, function(item)
+		return item.equipped
+	end)
+end
+
 local function InitialCharacterLoad(char: Model)
 	local player = Players.LocalPlayer
 	local character = player.Character or player.CharacterAdded:Wait()
@@ -91,7 +140,7 @@ local function InitialCharacterLoad(char: Model)
 
 	local description = humanoid:GetAppliedDescription()
 	for i, accessory in description:GetAccessories(true) do
-		table.insert(cartItems, accessory.AssetId)
+		table.insert(cartItems, NewCartItem(accessory.AssetId))
 		cartSet[accessory.AssetId] = true
 	end
 
