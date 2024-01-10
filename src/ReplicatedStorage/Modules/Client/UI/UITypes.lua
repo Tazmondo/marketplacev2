@@ -69,9 +69,10 @@ export type Nav = ScreenGui & {
 				UICorner: UICorner,
 			},
 			Frame: Frame & {
-				UIListLayout: UIListLayout,
-				UICorner: UICorner,
 				Body: TextLabel,
+				UICorner: UICorner,
+				UIListLayout: UIListLayout,
+				Shops: ImageLabel,
 				ImageLabel: ImageLabel & {
 					UICorner: UICorner,
 				},
@@ -87,17 +88,9 @@ export type Nav = ScreenGui & {
 				UICorner: UICorner,
 			},
 		},
-		Invite: ImageButton & {
-			UICorner: UICorner,
-			UIStroke: UIStroke,
-			UIListLayout: UIListLayout,
-			ImageButton: ImageLabel & {
-				UICorner: UICorner,
-			},
-		},
 		UIListLayout: UIListLayout,
 		UISizeConstraint: UISizeConstraint,
-		Avatar: Frame & {
+		Inventory: Frame & {
 			Frame: Frame & {
 				UIListLayout: UIListLayout,
 				Body: TextLabel,

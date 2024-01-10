@@ -455,6 +455,8 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 		return
 	end
 
+	SwitchMode(mode)
+
 	if not previewDisabled then
 		local leftCentre = gui.RightPane.AbsolutePosition.X / 2 -- get centre of the left side of the screen
 		local offCentreProportion = leftCentre / (cam.ViewportSize.X / 2)
@@ -463,8 +465,6 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 
 		cam.CFrame = studioCamera.CFrame * CFrame.Angles(0, -math.rad(angleDifference), 0)
 	end
-
-	gui.RightPane.Close.Visible = true
 end
 
 function CatalogUI:Initialize()

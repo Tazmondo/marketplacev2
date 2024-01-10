@@ -30,6 +30,10 @@ local function CatalogClicked()
 	CatalogUI:Display("Marketplace")
 end
 
+local function InventoryClicked()
+	CatalogUI:Display("Inventory")
+end
+
 function ExpandFeedClicked()
 	feedUI.Frame.Visible = not feedUI.Frame.Visible
 end
@@ -105,6 +109,7 @@ function NavigationUI:Initialize()
 
 	nav.Profile.ImageButton.Activated:Connect(ProfileClicked)
 	nav.Catalog.ImageButton.Activated:Connect(CatalogClicked)
+	nav.Inventory.ImageButton.Activated:Connect(InventoryClicked)
 
 	feedUI.Current.Expand.Activated:Connect(ExpandFeedClicked)
 	feedUI.Current.Activated:Connect(ExpandFeedClicked)
