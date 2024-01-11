@@ -55,7 +55,7 @@ local Config = {
 	-- MinimumStandsForRandom = 12,
 
 	-- Proportion of stands used to show up on the random feed
-	RequiredProportionForRandom = 0.35,
+	RequiredProportionForRandom = 0.6,
 
 	-- The total cut of our 40% commission that owners will receive.
 	-- E.g. 0.75 = 30% of the item
