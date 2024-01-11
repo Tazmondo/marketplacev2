@@ -14,18 +14,18 @@ local accessoryOrder = {
 	[Enum.AccessoryType.Shorts] = 2,
 	[Enum.AccessoryType.Pants] = 2,
 	[Enum.AccessoryType.DressSkirt] = 2,
-	[Enum.AccessoryType.Waist] = 3,
-	[Enum.AccessoryType.TShirt] = 4,
-	[Enum.AccessoryType.Jacket] = 4,
+	[Enum.AccessoryType.TShirt] = 3,
 	[Enum.AccessoryType.Shirt] = 4,
-	[Enum.AccessoryType.Sweater] = 4,
-	[Enum.AccessoryType.Back] = 4,
-	[Enum.AccessoryType.Front] = 4,
-	[Enum.AccessoryType.Neck] = 5,
-	[Enum.AccessoryType.Shoulder] = 5,
-	[Enum.AccessoryType.Hair] = 6,
-	[Enum.AccessoryType.Face] = 6,
-	[Enum.AccessoryType.Hat] = 6,
+	[Enum.AccessoryType.Sweater] = 5,
+	[Enum.AccessoryType.Jacket] = 6,
+	[Enum.AccessoryType.Waist] = 7,
+	[Enum.AccessoryType.Back] = 7,
+	[Enum.AccessoryType.Front] = 7,
+	[Enum.AccessoryType.Neck] = 8,
+	[Enum.AccessoryType.Shoulder] = 8,
+	[Enum.AccessoryType.Hair] = 9,
+	[Enum.AccessoryType.Face] = 9,
+	[Enum.AccessoryType.Hat] = 9,
 }
 
 local function ApplyToDescription(description: HumanoidDescription, accessories: { AvatarEvents.Accessory })
@@ -48,7 +48,7 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 				AssetId = existingAccessory.AssetId,
 				AccessoryType = existingAccessory.AccessoryType,
 				IsLayered = true,
-				Order = accessoryOrder[existingAccessory.AccessoryType] or 10,
+				Order = accessoryOrder[existingAccessory.AccessoryType] or 100,
 				Puffiness = existingAccessory.Puffiness,
 			})
 		else
@@ -57,7 +57,7 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 				AssetId = accessory.id,
 				AccessoryType = accessoryType,
 				IsLayered = true,
-				Order = accessoryOrder[accessoryType] or 10,
+				Order = accessoryOrder[accessoryType] or 100,
 				Puffiness = 1,
 			})
 		end
