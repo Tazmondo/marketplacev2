@@ -18,6 +18,7 @@ local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
+type UseMode = "Wear" | "Select"
 type DisplayMode = "Marketplace" | "Inventory"
 
 type ClothingCategory = "Dresses & Skirts" | "Jackets" | "Shirts" | "Shorts" | "Pants" | "Sweaters" | "T-Shirts"
@@ -90,13 +91,16 @@ local categories = {
 }
 
 CatalogUI.VisibilityUpdated = Signal()
+local ItemSelected: Signal.Signal<number> = Signal()
+
+local previewing = false
 
 local animationFolder = ReplicatedStorage.Assets.Animations
 local idleAnimation = animationFolder.Idle
 local currentIdleTrack: AnimationTrack? = nil
 
+local currentUseMode: UseMode = "Wear"
 local currentMode: DisplayMode = "Marketplace"
-
 local currentCategory: Category = "Clothing"
 local currentSubcategory: SubCategory = "Jackets"
 
@@ -144,8 +148,12 @@ function RefreshResults()
 		end
 
 		item.Activated:Connect(function()
-			CartController:ToggleInCart(result.Id)
-			RefreshResults()
+			if currentUseMode == "Wear" then
+				CartController:ToggleInCart(result.Id)
+				RefreshResults()
+			elseif currentUseMode == "Select" then
+				ItemSelected:Fire(result.Id)
+			end
 		end)
 
 		item.Parent = list
@@ -167,7 +175,7 @@ function ClearResults()
 end
 
 function ProcessPage()
-	if not searchPages or searchPages.IsFinished then
+	if not searchPages then
 		return
 	end
 
@@ -258,8 +266,12 @@ function RenderInventory()
 
 		-- Toggle equip
 		item.Activated:Connect(function()
-			item.UIStroke.Enabled = not item.UIStroke.Enabled
-			CartController:ToggleEquipped(cartItem.id)
+			if currentUseMode == "Wear" then
+				item.UIStroke.Enabled = not item.UIStroke.Enabled
+				CartController:ToggleEquipped(cartItem.id)
+			elseif currentUseMode == "Select" then
+				ItemSelected:Fire(cartItem.id)
+			end
 		end)
 
 		item.Parent = template.Parent
@@ -562,14 +574,15 @@ end
 function CatalogUI:Hide()
 	-- Toggles visibility off
 	if gui.Visible then
-		CatalogUI:Display(currentMode)
+		CatalogUI:Display(currentMode, currentUseMode)
 	end
 end
 
-function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
+function CatalogUI:Display(mode: DisplayMode, useMode: UseMode, previewDisabled: boolean?)
 	local cam = workspace.CurrentCamera
+	currentUseMode = useMode
 
-	if mode == currentMode then
+	if mode == currentMode and (previewDisabled == nil or (previewDisabled == not previewing)) then
 		local visible = not gui.Visible
 		gui.Visible = visible
 	else
@@ -592,9 +605,11 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 	if gui.Visible and not previewDisabled then
 		cam.CameraType = Enum.CameraType.Scriptable
 		cam.FieldOfView = 20
+		previewing = true
 	else
 		cam.CameraType = Enum.CameraType.Custom
 		cam.FieldOfView = 80
+		previewing = false
 	end
 
 	if not gui.Visible then
@@ -611,6 +626,44 @@ function CatalogUI:Display(mode: DisplayMode, previewDisabled: boolean?)
 
 		cam.CFrame = studioCamera.CFrame * CFrame.Angles(0, -math.rad(angleDifference), 0)
 	end
+end
+
+local selectTracker = newproxy()
+function CatalogUI:SelectItem()
+	return Future.new(function(): number?
+		local tracker = newproxy()
+		selectTracker = tracker
+		CatalogUI:Hide()
+
+		CatalogUI:Display("Marketplace", "Select", true)
+
+		local selectedItem: number? = nil
+		local parentThread = coroutine.running()
+		local selectedThread: thread
+		local visibilityThread: thread
+
+		selectedThread = task.spawn(function()
+			selectedItem = ItemSelected:Wait()
+			task.cancel(visibilityThread)
+			coroutine.resume(parentThread)
+		end)
+
+		visibilityThread = task.spawn(function()
+			gui:GetPropertyChangedSignal("Visible"):Wait()
+			task.cancel(selectedThread)
+			coroutine.resume(parentThread)
+		end)
+
+		coroutine.yield()
+
+		if selectTracker == tracker then
+			CatalogUI:Hide()
+
+			return selectedItem
+		else
+			return nil
+		end
+	end)
 end
 
 function CatalogUI:IsDisplayed()

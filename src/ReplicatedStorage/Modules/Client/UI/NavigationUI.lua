@@ -32,11 +32,11 @@ local function UpdateFeedPickerVisibility()
 end
 
 local function CatalogClicked()
-	CatalogUI:Display("Marketplace")
+	CatalogUI:Display("Marketplace", "Wear")
 end
 
 local function InventoryClicked()
-	CatalogUI:Display("Inventory")
+	CatalogUI:Display("Inventory", "Wear")
 end
 
 function ExpandFeedClicked()
