@@ -72,31 +72,6 @@ export type FeedData = {
 
 export type CreatorMode = "All" | "User" | "Group"
 
-export type SearchParams = {
-	SearchKeyword: string?,
-	CreatorName: string?,
-	MinPrice: number?,
-	MaxPrice: number?,
-	IncludeOffSale: boolean?,
-	SortType: number?, -- Enum.CatalogSortType
-	CreatorMode: CreatorMode,
-}
-function GuardSearchParams(value: unknown): SearchParams
-	local data: any = value
-	assert(data.CreatorMode == "All" or data.CreatorMode == "User" or data.CreatorMode == "Group")
-	assert(typeof(data.SortType) == "number" and Enum.CatalogSortType:GetEnumItems()[data.SortType])
-
-	return {
-		SearchKeyword = Guard.Optional(Guard.String)(data.SearchKeyword),
-		CreatorName = Guard.Optional(Guard.String)(data.CreatorName),
-		MinPrice = Guard.Optional(Guard.Number)(data.MinPrice),
-		MaxPrice = Guard.Optional(Guard.Number)(data.MaxPrice),
-		IncludeOffSale = Guard.Optional(Guard.Boolean)(data.IncludeOffSale),
-		SortType = data.SortType,
-		CreatorMode = data.CreatorMode,
-	}
-end
-
 export type HumanoidDescriptionAccessory = typeof(Instance.new("HumanoidDescription"):GetAccessories(true)[1])
 function GuardHumanoidDescriptionAccessory(accessory: unknown): HumanoidDescriptionAccessory
 	local data: any = accessory
@@ -112,6 +87,5 @@ end
 
 return {
 	GuardFeed = GuardFeed,
-	GuardSearchParams = GuardSearchParams,
 	GuardHumanoidDescriptionAccessory = GuardHumanoidDescriptionAccessory,
 }

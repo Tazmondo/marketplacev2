@@ -11,11 +11,12 @@ local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Future = require(ReplicatedStorage.Packages.Future)
 local UILoader = require(script.Parent.UILoader)
-
-local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local Device = require(ReplicatedStorage.Modules.Client.Device)
 local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
 local Signal = require(ReplicatedStorage.Packages.Signal)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
+
+local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
 type UseMode = "Wear" | "Select"
@@ -30,6 +31,7 @@ type SearchResult = {
 	Price: number?,
 	CreatorType: "User" | "Group",
 	AssetType: string?,
+	ItemRestrictions: { "Limited" | "LimitedUnique" | "Collectible" | "ThirteenPlus" },
 }
 
 type Category = "Clothing" | "Accessories" | "Wearing"
@@ -109,6 +111,25 @@ local searchPages: CatalogPages? = nil
 local currentlySearching = false
 local currentResults: { SearchResult } = {}
 
+type CreatorMode = "All" | "User" | "Group"
+local creatorModes: { CreatorMode } = { "All", "User", "Group" }
+
+-- State that can't be represented easily with just the UI
+local extraState = {
+	includeOffSale = false,
+	limiteds = false,
+	sort = Enum.CatalogSortType.Bestselling,
+	searchMode = 1,
+	creatorMode = 1,
+}
+
+local sortNames: { [Enum.CatalogSortType]: string? } = {
+	[Enum.CatalogSortType.MostFavorited] = "Most Favourited",
+	[Enum.CatalogSortType.PriceHighToLow] = "High - Low",
+	[Enum.CatalogSortType.PriceLowToHigh] = "Low - High",
+	[Enum.CatalogSortType.RecentlyCreated] = "Recent",
+}
+
 local studio = assert(workspace:FindFirstChild("Studio"), "Could not find studio in workspace.") :: Model
 local studioCamera =
 	assert(studio:FindFirstChild("StudioCamera"), "Studio did not have a StudioCamera part.") :: BasePart
@@ -116,6 +137,58 @@ studioCamera.Transparency = 1
 local studioStand = assert(studio:FindFirstChild("StudioStand"), "Studio did not have a stand part.") :: BasePart
 
 local gui = UILoader:GetCatalog().Catalog
+
+function CycleSort()
+	local items: { Enum.CatalogSortType } = Enum.CatalogSortType:GetEnumItems()
+
+	local currentIndex = assert(table.find(items, extraState.sort))
+	local newIndex = currentIndex + 1
+	if newIndex > #items then
+		newIndex = 1
+	end
+
+	local newSort = items[newIndex]
+	extraState.sort = newSort
+	gui.RightPane.Overlay.Filter.Search.Bottom.Filter.TextLabel.Text = sortNames[newSort] or newSort.Name
+
+	SearchCatalog()
+end
+
+function CycleCreator()
+	local newIndex = extraState.creatorMode + 1
+	if newIndex > #creatorModes then
+		newIndex = 1
+	end
+	extraState.creatorMode = newIndex
+	gui.RightPane.Overlay.Filter.Search.Top.Creator.Toggle.TextLabel.Text = creatorModes[newIndex]
+
+	SearchCatalog()
+end
+
+function ToggleIncludeOffSale()
+	extraState.includeOffSale = not extraState.includeOffSale
+
+	local newColour = if extraState.includeOffSale then Color3.fromRGB(0, 120, 244) else Color3.fromRGB(49, 49, 49)
+	local newTextColor = if extraState.includeOffSale
+		then Color3.fromRGB(255, 255, 255)
+		else Color3.fromRGB(178, 178, 178)
+
+	gui.RightPane.Overlay.Filter.Search.Bottom.OffSale.BackgroundColor3 = newColour
+	gui.RightPane.Overlay.Filter.Search.Bottom.OffSale.TextLabel.TextColor3 = newTextColor
+
+	SearchCatalog()
+end
+
+function ToggleLimiteds()
+	extraState.limiteds = not extraState.limiteds
+	local newColour = if extraState.limiteds then Color3.fromRGB(0, 120, 244) else Color3.fromRGB(49, 49, 49)
+	local newTextColor = if extraState.limiteds then Color3.fromRGB(255, 255, 255) else Color3.fromRGB(178, 178, 178)
+
+	gui.RightPane.Overlay.Filter.Search.Top.IsLimited.BackgroundColor3 = newColour
+	gui.RightPane.Overlay.Filter.Search.Top.IsLimited.TextLabel.TextColor3 = newTextColor
+
+	SearchCatalog()
+end
 
 function RefreshResults()
 	local list = gui.RightPane.Marketplace.Results.ListWrapper.List
@@ -134,6 +207,12 @@ function RefreshResults()
 		item:SetAttribute("Temporary", true)
 		item.Visible = true
 		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(result.Id)
+
+		local isLimited = TableUtil.Find(result.ItemRestrictions, function(restriction)
+			return restriction == "Limited" or restriction == "LimitedUnique" or restriction == "Collectible"
+		end) ~= nil
+
+		item.IsLimited.Visible = isLimited
 
 		if CartController:IsInCart(result.Id) then
 			item.Buy.Visible = true
@@ -203,6 +282,46 @@ function ReadNextPage()
 	end)
 end
 
+function GenerateSearchObject(): CatalogSearchParams
+	local overlay = gui.RightPane.Overlay
+
+	local paramsInstance = CatalogSearchParams.new()
+
+	local searchText = overlay.Search.Search.Search.Text
+	local creatorText = overlay.Filter.Search.Top.Creator.Text
+	local minPrice = tonumber(overlay.Filter.Search.Bottom.Min.Text)
+	local maxPrice = tonumber(overlay.Filter.Search.Bottom.Max.Text)
+
+	paramsInstance.SearchKeyword = searchText;
+	(paramsInstance :: any).CreatorName = creatorText
+
+	if minPrice then
+		paramsInstance.MinPrice = minPrice
+	end
+
+	if maxPrice then
+		paramsInstance.MaxPrice = maxPrice
+	end
+
+	(paramsInstance :: any).IncludeOffSale = extraState.includeOffSale;
+	(paramsInstance :: any).SalesTypeFilter = if extraState.limiteds
+		then Enum.SalesTypeFilter.Collectibles
+		else Enum.SalesTypeFilter.All
+
+	paramsInstance.SortType = extraState.sort
+
+	local currentAssetType: Enum.AvatarAssetType? = categories[currentMode][currentCategory][currentSubcategory]
+
+	if currentAssetType then
+		-- we can make this cast, as AvatarAssetType is actually a subset of AssetType
+		-- https://create.roblox.com/docs/reference/engine/enums/AssetType
+		-- https://create.roblox.com/docs/reference/engine/enums/AvatarAssetType
+		paramsInstance.AssetTypes = { (currentAssetType :: any) :: Enum.AssetType }
+	end
+
+	return paramsInstance
+end
+
 function SearchCatalog()
 	ClearResults()
 	if currentMode ~= "Marketplace" then
@@ -213,23 +332,9 @@ function SearchCatalog()
 	searchIdentifier = identifier
 	currentlySearching = true
 
-	local overlay = gui.RightPane.Overlay
-
-	-- types for this instance are incorrect
-	local paramsInstance: any = CatalogSearchParams.new()
-	paramsInstance.SearchKeyword = overlay.Search.Search.Search.Text
-
-	local currentAssetType: Enum.AvatarAssetType? = categories[currentMode][currentCategory][currentSubcategory]
-
-	if currentAssetType then
-		paramsInstance.AssetTypes = { currentAssetType }
-	end
-
-	print("Searching...")
-
 	task.spawn(function()
 		local success, pages = pcall(function()
-			return AvatarEditorService:SearchCatalog(paramsInstance)
+			return AvatarEditorService:SearchCatalog(GenerateSearchObject())
 		end)
 
 		if not success or identifier ~= searchIdentifier then
@@ -530,7 +635,7 @@ function HandleSearchUpdated()
 		task.cancel(delayedSearchTask)
 	end
 
-	delayedSearchTask = task.delay(1.5, function()
+	delayedSearchTask = task.delay(1, function()
 		SearchCatalog()
 	end)
 end
@@ -695,9 +800,34 @@ function CatalogUI:Initialize()
 
 	gui.RightPane.Overlay.Actions.Search.Activated:Connect(ToggleSearch)
 	gui.RightPane.Overlay.Actions.Filter.Activated:Connect(ToggleFilter)
+
 	gui.RightPane.Overlay.Search.Search.Search:GetPropertyChangedSignal("Text"):Connect(HandleSearchUpdated)
 	gui.RightPane.Overlay.Search.Search.Search.ReturnPressedFromOnScreenKeyboard:Connect(HandleSearched)
 	gui.RightPane.Overlay.Search.Search.Search.FocusLost:Connect(HandleSearched)
+
+	local function RenderOutline(textBox: TextBox & {
+		UIStroke: UIStroke,
+	})
+		textBox:GetPropertyChangedSignal("Text"):Connect(function()
+			textBox.UIStroke.Enabled = textBox.Text ~= ""
+		end)
+	end
+
+	gui.RightPane.Overlay.Filter.Visible = false
+	local filter = gui.RightPane.Overlay.Filter.Search
+
+	RenderOutline(filter.Bottom.Max)
+	RenderOutline(filter.Bottom.Min)
+	RenderOutline(filter.Top.Creator)
+
+	filter.Bottom.Filter.Activated:Connect(CycleSort)
+	filter.Bottom.OffSale.Activated:Connect(ToggleIncludeOffSale)
+	filter.Top.Creator.Toggle.Activated:Connect(CycleCreator)
+	filter.Top.IsLimited.Activated:Connect(ToggleLimiteds)
+
+	filter.Bottom.Max:GetPropertyChangedSignal("Text"):Connect(HandleSearchUpdated)
+	filter.Bottom.Min:GetPropertyChangedSignal("Text"):Connect(HandleSearchUpdated)
+	filter.Top.Creator:GetPropertyChangedSignal("Text"):Connect(HandleSearchUpdated)
 
 	gui.RightPane.Controls.Close.Activated:Connect(CatalogUI.Hide)
 	gui.RightPane.Controls.Reset.Activated:Connect(HandleReset)
