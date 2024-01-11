@@ -1,13 +1,34 @@
 -- Only servers to update player characters when the client requests it
 -- Honestly this might be a security concern? I think it's a Roblox issue though if someone can exploit by just wearing accessories
 
+local AvatarEditorService = game:GetService("AvatarEditorService")
 local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 
-local function ApplyToDescription(description: HumanoidDescription, accessories: { number })
+local accessoryOrder = {
+	[Enum.AccessoryType.LeftShoe] = 1,
+	[Enum.AccessoryType.RightShoe] = 1,
+	[Enum.AccessoryType.Shorts] = 2,
+	[Enum.AccessoryType.Pants] = 2,
+	[Enum.AccessoryType.DressSkirt] = 2,
+	[Enum.AccessoryType.Waist] = 3,
+	[Enum.AccessoryType.TShirt] = 4,
+	[Enum.AccessoryType.Jacket] = 4,
+	[Enum.AccessoryType.Shirt] = 4,
+	[Enum.AccessoryType.Sweater] = 4,
+	[Enum.AccessoryType.Back] = 4,
+	[Enum.AccessoryType.Front] = 4,
+	[Enum.AccessoryType.Neck] = 5,
+	[Enum.AccessoryType.Shoulder] = 5,
+	[Enum.AccessoryType.Hair] = 6,
+	[Enum.AccessoryType.Face] = 6,
+	[Enum.AccessoryType.Hat] = 6,
+}
+
+local function ApplyToDescription(description: HumanoidDescription, accessories: { AvatarEvents.Accessory })
 	-- Here, trying to add an accessory that is already equipped but to a different slot will error
 	-- So ensure that accessories that already exist are always added to the same slot.
 	local existingAccessories = description:GetAccessories(true)
@@ -19,17 +40,25 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 	local newAccessories = {}
 	local currentOrder = 1
 
-	for i, id in accessories do
-		local existingAccessory = existingAccessorySet[id]
+	for i, accessory in accessories do
+		local existingAccessory = existingAccessorySet[accessory.id]
 
 		if existingAccessory then
-			table.insert(newAccessories, existingAccessory)
-		else
 			table.insert(newAccessories, {
-				AssetId = id,
-				AccessoryType = Enum.AccessoryType.Face,
+				AssetId = existingAccessory.AssetId,
+				AccessoryType = existingAccessory.AccessoryType,
 				IsLayered = true,
-				Order = currentOrder,
+				Order = accessoryOrder[existingAccessory.AccessoryType] or 10,
+				Puffiness = existingAccessory.Puffiness,
+			})
+		else
+			local accessoryType = AvatarEditorService:GetAccessoryType(accessory.assetType)
+			table.insert(newAccessories, {
+				AssetId = accessory.id,
+				AccessoryType = accessoryType,
+				IsLayered = true,
+				Order = accessoryOrder[accessoryType] or 10,
+				Puffiness = 1,
 			})
 		end
 		currentOrder += 1
@@ -38,7 +67,7 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 	description:SetAccessories(newAccessories, true)
 end
 
-local function HandleUpdateAccessories(player: Player, accessories: { number })
+local function HandleUpdateAccessories(player: Player, accessories: { AvatarEvents.Accessory })
 	local character = player.Character
 	if not character then
 		return
@@ -55,7 +84,7 @@ local function HandleUpdateAccessories(player: Player, accessories: { number })
 	humanoid:ApplyDescription(description)
 end
 
-local function GenerateModel(player: Player, accessories: { number }): Model?
+local function GenerateModel(player: Player, accessories: { AvatarEvents.Accessory }): Model?
 	local character = player.Character
 	if not character then
 		return nil

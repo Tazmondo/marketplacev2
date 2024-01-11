@@ -9,6 +9,7 @@ export type Item = {
 	creator: string,
 	name: string,
 	assetId: number,
+	assetType: Enum.AvatarAssetType,
 	price: number?,
 	owned: boolean?,
 	limited: Limited?,

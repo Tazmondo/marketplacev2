@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
@@ -31,7 +32,9 @@ function UpdateCharacter()
 		return
 	end
 
-	AvatarEvents.ApplyDescription:FireServer(CartController:GetEquippedIds())
+	CartController:GetEquippedAccessories():After(function(accessories)
+		AvatarEvents.ApplyDescription:FireServer(accessories)
+	end)
 	CartController.CartUpdated:Fire(cartItems)
 end
 
@@ -44,6 +47,30 @@ function CartController:GetEquippedIds(): { number }
 			return item.id
 		end
 	)
+end
+
+function CartController:GetEquippedAccessories()
+	return Future.new(function(): { AvatarEvents.Accessory }
+		local function GetAccessory(id: number): AvatarEvents.Accessory?
+			local details = DataFetch.GetItemDetails(id):Await()
+			if not details then
+				return nil
+			end
+			return {
+				id = id,
+				assetType = details.assetType,
+			}
+		end
+
+		local function NotNil(item: any)
+			return item ~= nil
+		end
+
+		local ids = CartController:GetEquippedIds()
+		local accessories = TableUtil.Filter(TableUtil.Map(ids, GetAccessory), NotNil)
+
+		return accessories :: { AvatarEvents.Accessory }
+	end)
 end
 
 function CartController:RemoveFromCart(id: number)

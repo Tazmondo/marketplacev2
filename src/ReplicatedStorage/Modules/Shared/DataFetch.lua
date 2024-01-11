@@ -1,5 +1,6 @@
 local DataFetch = {}
 local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -26,6 +27,7 @@ type AssetProductInfo = {
 	TargetId: number,
 	ProductType: "User Product",
 	AssetId: number,
+	AssetTypeId: number,
 	IsNew: boolean,
 	IsLimited: boolean,
 	IsLimitedUnique: boolean,
@@ -36,6 +38,7 @@ type AssetProductInfo = {
 }
 
 local cachedItems: { [number]: Types.Item } = {}
+local cachedOwnedItems: { [Player]: { [number]: Types.Item } } = {}
 
 local validAssets: { [Enum.AvatarAssetType]: true? } = {
 	[Enum.AvatarAssetType.Hat] = true,
@@ -60,10 +63,27 @@ for validAsset, _ in validAssets do
 	validAssetNames[validAsset.Name] = true
 end
 
+local assetTypeIdMap = {}
+for i, enum in Enum.AvatarAssetType:GetEnumItems() :: { Enum.AvatarAssetType } do
+	assetTypeIdMap[enum.Value] = enum
+end
+
 function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
-	return Future.new(function(assetId)
-		if cachedItems[assetId] then
-			return cachedItems[assetId] :: Types.Item?
+	return Future.new(function(assetId): Types.Item?
+		if ownership == nil then
+			local cached = cachedItems[assetId]
+			if cached then
+				return cached
+			end
+		else
+			if not cachedOwnedItems[ownership] then
+				cachedOwnedItems[ownership] = {}
+			end
+
+			local cachedItem = cachedOwnedItems[ownership][assetId]
+			if cachedItem then
+				return cachedItem
+			end
 		end
 
 		local getInfoSuccess, details = pcall(function()
@@ -100,15 +120,21 @@ function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 			limited = "LimitedU"
 		end
 
+		local assetType = assetTypeIdMap[details.AssetTypeId]
+
 		local item: Types.Item = {
 			assetId = assetId,
 			name = details.Name,
+			assetType = assetType,
 			creator = details.Creator.Name or "Roblox",
 			price = price,
 			owned = if ownership then ownedSuccess and owned else nil,
 			limited = limited,
 		}
 
+		if ownership then
+			cachedOwnedItems[ownership][assetId] = item
+		end
 		cachedItems[assetId] = item
 
 		return item
@@ -144,5 +170,9 @@ function DataFetch.GetValidAssetArray()
 	end
 	return array
 end
+
+Players.PlayerRemoving:Connect(function(player)
+	cachedOwnedItems[player] = nil
+end)
 
 return DataFetch

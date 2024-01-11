@@ -264,14 +264,18 @@ function RenderInventory()
 		item.LayoutOrder = #cart - i -- so most recent additions are at the top
 		item.UIStroke.Enabled = cartItem.equipped
 
-		-- Toggle equip
 		item.Activated:Connect(function()
+			-- Toggle equip
 			if currentUseMode == "Wear" then
 				item.UIStroke.Enabled = not item.UIStroke.Enabled
 				CartController:ToggleEquipped(cartItem.id)
 			elseif currentUseMode == "Select" then
 				ItemSelected:Fire(cartItem.id)
 			end
+		end)
+
+		item.Buy.Activated:Connect(function()
+			PurchaseAssetEvent:Fire(cartItem.id)
 		end)
 
 		item.Parent = template.Parent
@@ -307,7 +311,6 @@ function SwitchSubCategory(newCategory: SubCategory)
 		return
 	end
 
-	print(currentSubcategory, newCategory)
 	-- Clear out unequipped items when switching tabs
 	if currentSubcategory == "Current" then
 		print("Clearing unequipped")
@@ -471,8 +474,8 @@ function HandleResultsScrolled()
 end
 
 local renderTrack = newproxy()
-function RenderPreviewPane(accessories: { number })
-	return Future.new(function(accessories: { number })
+function RenderPreviewPane(accessories: { AvatarEvents.Accessory })
+	return Future.new(function(accessories: { AvatarEvents.Accessory })
 		local tracker = newproxy()
 		renderTrack = tracker
 
@@ -704,7 +707,10 @@ function CatalogUI:Initialize()
 		:Connect(HandleResultsScrolled)
 
 	CartController.CartUpdated:Connect(function(items: { CartController.CartItem })
-		RenderPreviewPane(CartController:GetEquippedIds())
+		CartController:GetEquippedAccessories():After(function(accessories)
+			RenderPreviewPane(accessories)
+		end)
+
 		if currentSubcategory == "Current" then
 			RenderInventory()
 		end
