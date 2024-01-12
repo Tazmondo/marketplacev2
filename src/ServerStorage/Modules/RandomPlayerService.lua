@@ -16,7 +16,7 @@ local PLAYERLISTKEY = "BasicPlayerList"
 
 -- Actual limit is something like 333333, but just to be safe doing less.
 -- Also need to contend with the experience wide 25MB/min read and 4MB/min write limit.
-local MAXPLAYERS = 330000
+-- local MAXPLAYERS = 330000
 
 -- Store as lists because they take up less space in datastore, and allow for random indexing, but convert to maps for O(1) look-up times
 -- Comes at a cost to server memory and some processing time but overall it saves more time as the indexing saves a lot of iterations.
