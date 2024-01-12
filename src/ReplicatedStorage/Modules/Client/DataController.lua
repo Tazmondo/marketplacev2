@@ -25,6 +25,10 @@ function DataController:GetData()
 	end)
 end
 
+function DataController:UnwrapData()
+	return data
+end
+
 function DataController:Initialize()
 	ReplicateDataEvent:On(HandleReplicateData)
 end
