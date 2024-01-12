@@ -49,7 +49,6 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 				AccessoryType = existingAccessory.AccessoryType,
 				IsLayered = true,
 				Order = accessoryOrder[existingAccessory.AccessoryType] or 100,
-				Puffiness = existingAccessory.Puffiness,
 			})
 		else
 			local accessoryType = AvatarEditorService:GetAccessoryType(accessory.assetType)
@@ -58,7 +57,6 @@ local function ApplyToDescription(description: HumanoidDescription, accessories:
 				AccessoryType = accessoryType,
 				IsLayered = true,
 				Order = accessoryOrder[accessoryType] or 100,
-				Puffiness = 1,
 			})
 		end
 		currentOrder += 1
