@@ -11,16 +11,16 @@ local data: Data.Data?
 DataController.Updated = Signal()
 
 function HandleReplicateData(incomingData: Data.Data)
-	print("Received data!", incomingData)
 	data = incomingData
 	DataController.Updated:Fire(incomingData)
 end
 
 function DataController:GetData()
 	return Future.new(function()
-		while data == nil do
-			task.wait()
+		if data == nil then
+			return DataController.Updated:Wait()
 		end
+
 		return assert(data)
 	end)
 end
