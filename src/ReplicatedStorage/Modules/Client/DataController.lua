@@ -1,10 +1,10 @@
 local DataController = {}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
-
-local ReplicateDataEvent = require(ReplicatedStorage.Events.Data.ReplicateDataEvent):Client()
 
 local data: Data.Data?
 
@@ -30,7 +30,7 @@ function DataController:UnwrapData()
 end
 
 function DataController:Initialize()
-	ReplicateDataEvent:On(HandleReplicateData)
+	DataEvents.ReplicateData:SetClientListener(HandleReplicateData)
 end
 
 DataController:Initialize()

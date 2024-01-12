@@ -3,14 +3,13 @@ local DataService = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local Spawn = require(ReplicatedStorage.Packages.Spawn)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local ProfileService = require(script.Parent.ProfileService)
-
-local ReplicateDataEvent = require(ReplicatedStorage.Events.Data.ReplicateDataEvent):Server()
 
 DataService.PlayerRemoving = Signal()
 
@@ -42,7 +41,7 @@ function PlayerAdded(player: Player)
 
 		Data.Migrate(profile.Data)
 
-		ReplicateDataEvent:Fire(player, profile.Data)
+		DataEvents.ReplicateData:FireClient(player, profile.Data)
 
 		profile:ListenToRelease(function()
 			profiles[player] = nil
@@ -150,7 +149,7 @@ function DataService:WriteData(player: Player, transform: (Data.Data) -> ())
 		end
 
 		print("Updated!", data)
-		ReplicateDataEvent:Fire(player, data)
+		DataEvents.ReplicateData:FireClient(player, data)
 	end)
 end
 
