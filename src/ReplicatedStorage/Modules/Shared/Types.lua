@@ -51,6 +51,11 @@ export type NetworkShowcase = {
 	mode: ShowcaseMode,
 }
 
+export type Outfit = {
+	name: string,
+	description: HumanoidDescription,
+}
+
 export type LaunchData = {
 	ownerId: number,
 	GUID: string,

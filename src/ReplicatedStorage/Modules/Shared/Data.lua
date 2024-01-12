@@ -1,12 +1,19 @@
+local Data = {}
+
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local Config = require(script.Parent.Config)
-
 local Material = require(script.Parent.Material)
 local Types = require(script.Parent.Types)
-local Data = {}
+
+export type Outfit = {
+	name: string,
+	description: { number | string }, -- Outfits are serialized as an array of numbers and strings
+}
 
 export type VectorTable = {
 	x: number,
@@ -50,13 +57,15 @@ local showcaseTemplate: Showcase = {
 
 export type Data = {
 	showcases: { Showcase },
+	outfits: { Outfit },
 	version: number,
 	firstTime: boolean,
 }
 
 local dataTemplate: Data = {
 	showcases = {},
-	version = 7,
+	outfits = {},
+	version = 8,
 	firstTime = true,
 }
 Data.dataTemplate = dataTemplate
@@ -179,5 +188,122 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 		texture = texture,
 	}
 end
+
+local function SerializeAccessories(description: HumanoidDescription): string
+	local accessories = TableUtil.Map(description:GetAccessories(true), function(accessory)
+		return { accessory.AssetId, accessory.Order or 1, accessory.AccessoryType.Value }
+	end)
+
+	return HttpService:JSONEncode(accessories)
+end
+
+local function DeserializeAccessories(accessoryJson: string): { Types.HumanoidDescriptionAccessory }
+	local accessories = TableUtil.Map(HttpService:JSONDecode(accessoryJson), function(accessory)
+		local enum = TableUtil.Find(Enum.AccessoryType:GetEnumItems() :: { Enum.AccessoryType }, function(enum)
+			return enum.Value == accessory[3]
+		end)
+
+		if not enum then
+			warn("[DeserializeAccessories]: Enum not found, value:", accessory[3])
+			enum = Enum.AccessoryType.Face
+		end
+		assert(enum)
+
+		return {
+			AssetId = accessory[1],
+			Order = accessory[2],
+			AccessoryType = enum,
+			IsLayered = true,
+			Puffiness = nil, -- type solver wants me to set this for some reason
+		}
+	end)
+
+	return accessories
+end
+
+-- The reason I serialize and deserialize into an array is to save space on all the keys
+-- This drastically reduces the data used to store each outfit
+local function SerializeDescription(description: HumanoidDescription): { string | number }
+	return {
+		SerializeAccessories(description),
+		description.BodyTypeScale,
+		description.DepthScale,
+		description.Face,
+		description.GraphicTShirt,
+		description.Head,
+		description.HeadColor:ToHex(),
+		description.HeadScale,
+		description.HeightScale,
+		description.LeftArm,
+		description.LeftArmColor:ToHex(),
+		description.LeftLeg,
+		description.LeftLegColor:ToHex(),
+		description.Pants,
+		description.ProportionScale,
+		description.RightArm,
+		description.RightArmColor:ToHex(),
+		description.RightLeg,
+		description.RightLegColor:ToHex(),
+		description.Shirt,
+		description.Torso,
+		description.TorsoColor:ToHex(),
+		description.WidthScale,
+	}
+end
+
+local function DeserializeDescription(descriptionInfo: { any }): HumanoidDescription
+	local description = Instance.new("HumanoidDescription")
+
+	description:SetAccessories(DeserializeAccessories(descriptionInfo[1]), true)
+	description.BodyTypeScale = descriptionInfo[2]
+	description.DepthScale = descriptionInfo[3]
+	description.Face = descriptionInfo[4]
+	description.GraphicTShirt = descriptionInfo[5]
+	description.Head = descriptionInfo[6]
+	description.HeadColor = Color3.fromHex(descriptionInfo[7])
+	description.HeadScale = descriptionInfo[8]
+	description.HeightScale = descriptionInfo[9]
+	description.LeftArm = descriptionInfo[10]
+	description.LeftArmColor = Color3.fromHex(descriptionInfo[11])
+	description.LeftLeg = descriptionInfo[12]
+	description.LeftLegColor = Color3.fromHex(descriptionInfo[13])
+	description.Pants = descriptionInfo[14]
+	description.ProportionScale = descriptionInfo[15]
+	description.RightArm = descriptionInfo[16]
+	description.RightArmColor = Color3.fromHex(descriptionInfo[17])
+	description.RightLeg = descriptionInfo[18]
+	description.RightLegColor = Color3.fromHex(descriptionInfo[19])
+	description.Shirt = descriptionInfo[20]
+	description.Torso = descriptionInfo[21]
+	description.TorsoColor = Color3.fromHex(descriptionInfo[22])
+	description.WidthScale = descriptionInfo[23]
+
+	return description
+end
+
+function Data.FromDataOutfit(outfit: Outfit): Types.Outfit
+	return {
+		name = outfit.name,
+		description = DeserializeDescription(outfit.description),
+	}
+end
+
+function Data.ToDataOutfit(outfit: Types.Outfit): Outfit
+	return {
+		name = outfit.name,
+		description = SerializeDescription(outfit.description),
+	}
+end
+
+-- local function Test()
+-- 	local description = Players:GetHumanoidDescriptionFromUserId(68252170)
+-- 	description.Parent = ServerStorage
+-- 	local serialized = SerializeDescription(description)
+-- 	print(serialized, #HttpService:JSONEncode(serialized))
+-- 	local deserialized = DeserializeDescription(serialized)
+-- 	deserialized.Name = "deser"
+-- 	deserialized.Parent = ServerStorage
+-- end
+-- task.spawn(Test)
 
 return Data
