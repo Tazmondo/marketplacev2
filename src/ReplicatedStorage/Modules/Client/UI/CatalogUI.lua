@@ -1,4 +1,5 @@
 local CatalogUI = {}
+
 local AvatarEditorService = game:GetService("AvatarEditorService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,6 +18,9 @@ local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local DataController = require(ReplicatedStorage.Modules.Client.DataController)
+local Data = require(ReplicatedStorage.Modules.Shared.Data)
+local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 
 type UseMode = "Wear" | "Select"
@@ -24,7 +28,7 @@ type DisplayMode = "Marketplace" | "Inventory"
 
 type ClothingCategory = "Dresses & Skirts" | "Jackets" | "Shirts" | "Shorts" | "Pants" | "Sweaters" | "T-Shirts"
 type AccessoryCategory = "Back" | "Face" | "Front" | "Head" | "Hair" | "Neck" | "Waist" | "Shoulder"
-type SubCategory = ClothingCategory | AccessoryCategory | "Current" | "Outfits"
+type SubCategory = ClothingCategory | AccessoryCategory | "Wearing" | "Outfits"
 type SearchResult = {
 	Id: number,
 	Name: string,
@@ -58,7 +62,7 @@ local clothingOrder = {
 }
 
 local wearingOrder = {
-	Current = 1,
+	Wearing = 1,
 	Outfits = 2,
 }
 
@@ -86,7 +90,7 @@ local categories = {
 	},
 	Inventory = {
 		Wearing = {
-			Current = true,
+			Wearing = true,
 			Outfits = true,
 		},
 	},
@@ -151,7 +155,7 @@ function CycleSort()
 	extraState.sort = newSort
 	gui.RightPane.Overlay.Filter.Search.Bottom.Filter.TextLabel.Text = sortNames[newSort] or newSort.Name
 
-	SearchCatalog()
+	PopulateResults()
 end
 
 function CycleCreator()
@@ -162,7 +166,7 @@ function CycleCreator()
 	extraState.creatorMode = newIndex
 	gui.RightPane.Overlay.Filter.Search.Top.Creator.Toggle.TextLabel.Text = creatorModes[newIndex]
 
-	SearchCatalog()
+	PopulateResults()
 end
 
 function ToggleIncludeOffSale()
@@ -176,7 +180,7 @@ function ToggleIncludeOffSale()
 	gui.RightPane.Overlay.Filter.Search.Bottom.OffSale.BackgroundColor3 = newColour
 	gui.RightPane.Overlay.Filter.Search.Bottom.OffSale.TextLabel.TextColor3 = newTextColor
 
-	SearchCatalog()
+	PopulateResults()
 end
 
 function ToggleLimiteds()
@@ -187,7 +191,7 @@ function ToggleLimiteds()
 	gui.RightPane.Overlay.Filter.Search.Top.IsLimited.BackgroundColor3 = newColour
 	gui.RightPane.Overlay.Filter.Search.Top.IsLimited.TextLabel.TextColor3 = newTextColor
 
-	SearchCatalog()
+	PopulateResults()
 end
 
 function RefreshResults()
@@ -197,6 +201,8 @@ function RefreshResults()
 			child:Destroy()
 		end
 	end
+
+	list.NewOutfit.Visible = false
 
 	local template = list.ItemWrapper
 	template.Visible = false
@@ -346,13 +352,35 @@ function SearchCatalog()
 	end)
 end
 
-function RenderInventory()
+function RenderOutfits()
 	ClearResults()
-	if currentMode ~= "Inventory" then
+
+	local list = gui.RightPane.Marketplace.Results.ListWrapper.List
+
+	local data = DataController:UnwrapData()
+	if not data then
 		return
 	end
 
+	list.NewOutfit.Visible = true
+
+	local template = list.OutfitWrapper
+	template.Visible = false
+
+	for _, dataOutfit in data.outfits do
+		local outfit = Data.FromDataOutfit(dataOutfit)
+		local row = template:Clone()
+
+		row.Title.Visible = true
+		row.Title.Text = outfit.name
+	end
+end
+
+function RenderWearing()
+	ClearResults()
+
 	local list = gui.RightPane.Marketplace.Results.ListWrapper.List
+	list.NewOutfit.Visible = false
 
 	local template = list.ItemWrapper
 	template.Visible = false
@@ -403,11 +431,13 @@ function RenderInventory()
 	end
 end
 
-local function PopulateResults()
+function PopulateResults()
 	if currentMode == "Marketplace" then
 		SearchCatalog()
-	elseif currentSubcategory == "Current" then
-		RenderInventory()
+	elseif currentSubcategory == "Wearing" then
+		RenderWearing()
+	elseif currentSubcategory == "Outfits" then
+		RenderOutfits()
 	end
 end
 
@@ -417,7 +447,7 @@ function SwitchSubCategory(newCategory: SubCategory)
 	end
 
 	-- Clear out unequipped items when switching tabs
-	if currentSubcategory == "Current" then
+	if currentSubcategory == "Wearing" then
 		print("Clearing unequipped")
 		CartController:ClearUnequippedItems()
 	end
@@ -518,7 +548,7 @@ function SwitchCategory(newCategory: Category)
 	elseif newCategory == "Clothing" then
 		SwitchSubCategory("Jackets")
 	elseif newCategory == "Wearing" then
-		SwitchSubCategory("Current")
+		SwitchSubCategory("Wearing")
 	else
 		error(`Invalid category passed: {newCategory}`)
 	end
@@ -579,12 +609,13 @@ function HandleResultsScrolled()
 end
 
 local renderTrack = newproxy()
-function RenderPreviewPane(accessories: { AvatarEvents.Accessory })
-	return Future.new(function(accessories: { AvatarEvents.Accessory })
+function RenderPreviewPane(description: HumanoidDescription)
+	return Future.new(function(description: HumanoidDescription)
 		local tracker = newproxy()
 		renderTrack = tracker
 
-		local success, replicatedModel = AvatarEvents.GenerateModel:Call(accessories):Await()
+		local success, replicatedModel =
+			AvatarEvents.GenerateModel:Call(HumanoidDescription.Serialize(description)):Await()
 		if not success or not replicatedModel then
 			if not success then
 				warn(replicatedModel)
@@ -626,7 +657,7 @@ function RenderPreviewPane(accessories: { AvatarEvents.Accessory })
 		end
 
 		currentIdleTrack = newTrack
-	end, accessories)
+	end, description)
 end
 
 local delayedSearchTask: thread? = nil
@@ -636,7 +667,7 @@ function HandleSearchUpdated()
 	end
 
 	delayedSearchTask = task.delay(1, function()
-		SearchCatalog()
+		PopulateResults()
 	end)
 end
 
@@ -645,7 +676,7 @@ function HandleSearched()
 		task.cancel(delayedSearchTask)
 		delayedSearchTask = nil
 	end
-	SearchCatalog()
+	PopulateResults()
 end
 
 function ToggleSearch()
@@ -837,19 +868,19 @@ function CatalogUI:Initialize()
 		:Connect(HandleResultsScrolled)
 
 	CartController.CartUpdated:Connect(function(items: { CartController.CartItem })
-		CartController:GetEquippedAccessories():After(function(accessories)
-			RenderPreviewPane(accessories)
+		CartController:GetDescription():After(function(description)
+			RenderPreviewPane(description)
 		end)
 
-		if currentSubcategory == "Current" then
-			RenderInventory()
+		if currentSubcategory == "Wearing" then
+			RenderWearing()
 		end
 	end)
 
 	-- Do initial render
 	RenderCategories()
 	RenderSubcategories()
-	SearchCatalog()
+	PopulateResults()
 end
 
 CatalogUI:Initialize()

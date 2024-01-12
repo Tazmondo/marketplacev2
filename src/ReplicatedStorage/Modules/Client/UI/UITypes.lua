@@ -1113,18 +1113,29 @@ export type Catalog = ScreenGui & {
 					ListWrapper: Frame & {
 						UIPadding: UIPadding,
 						List: ScrollingFrame & {
-							UIGridLayout: UIGridLayout,
-							ItemWrapper: ImageButton & {
-								Owned: TextButton & {
+							OutfitWrapper: ImageButton & {
+								UICorner: UICorner,
+								UIStroke: UIStroke,
+								Title: TextButton & {
 									UICorner: UICorner,
 									UISizeConstraint: UISizeConstraint,
 									TextLabel: TextLabel,
 									UIListLayout: UIListLayout,
 								},
-								Edit: TextButton & {
-									UIListLayout: UIListLayout,
+								ImageFrame: Frame & {
+									Frame: Frame & {
+										UIListLayout: UIListLayout,
+										OutfitImage: ViewportFrame,
+									},
+								},
+							},
+							UIGridLayout: UIGridLayout,
+							ItemWrapper: ImageButton & {
+								Owned: TextLabel & {
 									UICorner: UICorner,
-									ImageLabel: ImageLabel,
+									UISizeConstraint: UISizeConstraint,
+									TextLabel: TextLabel,
+									UIListLayout: UIListLayout,
 								},
 								Title: TextButton & {
 									UICorner: UICorner,
@@ -1132,7 +1143,7 @@ export type Catalog = ScreenGui & {
 									TextLabel: TextLabel,
 									UIListLayout: UIListLayout,
 								},
-								IsLimited: TextButton & {
+								IsLimited: TextLabel & {
 									UIListLayout: UIListLayout,
 									UICorner: UICorner,
 									ImageLabel: ImageLabel,
@@ -1155,7 +1166,7 @@ export type Catalog = ScreenGui & {
 									ImageLabel: ImageLabel,
 								},
 							},
-							ItemButton: ImageButton & {
+							NewOutfit: ImageButton & {
 								ImageFrame: Frame & {
 									Frame: Frame & {
 										UIListLayout: UIListLayout,

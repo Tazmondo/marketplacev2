@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
+local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
@@ -32,8 +33,8 @@ function UpdateCharacter()
 		return
 	end
 
-	CartController:GetEquippedAccessories():After(function(accessories)
-		AvatarEvents.ApplyDescription:FireServer(accessories)
+	CartController:GetDescription():After(function(description)
+		AvatarEvents.ApplyDescription:FireServer(HumanoidDescription.Serialize(description))
 	end)
 	CartController.CartUpdated:Fire(cartItems)
 end
@@ -49,9 +50,9 @@ function CartController:GetEquippedIds(): { number }
 	)
 end
 
-function CartController:GetEquippedAccessories()
-	return Future.new(function(): { AvatarEvents.Accessory }
-		local function GetAccessory(id: number): AvatarEvents.Accessory?
+local function GetEquippedAccessories()
+	return Future.new(function(): { HumanoidDescription.Accessory }
+		local function GetAccessory(id: number): HumanoidDescription.Accessory?
 			local details = DataFetch.GetItemDetails(id):Await()
 			if not details then
 				return nil
@@ -69,7 +70,30 @@ function CartController:GetEquippedAccessories()
 		local ids = CartController:GetEquippedIds()
 		local accessories = TableUtil.Filter(TableUtil.Map(ids, GetAccessory), NotNil)
 
-		return accessories :: { AvatarEvents.Accessory }
+		return accessories :: { HumanoidDescription.Accessory }
+	end)
+end
+
+function CartController:GetDescription()
+	return Future.new(function(): HumanoidDescription
+		local description: HumanoidDescription
+
+		local player = Players.LocalPlayer
+		local character = player.Character
+		if character then
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				description = humanoid:GetAppliedDescription()
+			end
+		end
+
+		if not description then
+			description = Players:GetHumanoidDescriptionFromUserId(player.UserId)
+		end
+
+		HumanoidDescription.ApplyToDescription(description, GetEquippedAccessories():Await())
+
+		return description
 	end)
 end
 
