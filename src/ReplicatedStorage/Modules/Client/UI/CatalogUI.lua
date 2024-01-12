@@ -118,7 +118,7 @@ local creatorModes: { CreatorMode } = { "All", "User", "Group" }
 local extraState = {
 	includeOffSale = false,
 	limiteds = false,
-	sort = Enum.CatalogSortType.Bestselling,
+	sort = Enum.CatalogSortType.Relevance,
 	searchMode = 1,
 	creatorMode = 1,
 }
