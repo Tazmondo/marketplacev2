@@ -23,9 +23,11 @@ local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDes
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
+local Bin = require(ReplicatedStorage.Packages.Bin)
 
 type UseMode = "Wear" | "Select"
-type DisplayMode = "Marketplace" | "Inventory"
+type DisplayMode = "Marketplace" | "Inventory" | "OutfitPane"
+type Category = "Clothing" | "Accessories" | "Wearing"
 
 type ClothingCategory = "Dresses & Skirts" | "Jackets" | "Shirts" | "Shorts" | "Pants" | "Sweaters" | "T-Shirts"
 type AccessoryCategory = "Back" | "Face" | "Front" | "Head" | "Hair" | "Neck" | "Waist" | "Shoulder"
@@ -38,8 +40,6 @@ type SearchResult = {
 	AssetType: string?,
 	ItemRestrictions: { "Limited" | "LimitedUnique" | "Collectible" | "ThirteenPlus" },
 }
-
-type Category = "Clothing" | "Accessories" | "Wearing"
 
 local accessoryOrder = {
 	Hair = 1,
@@ -91,8 +91,8 @@ local categories = {
 	},
 	Inventory = {
 		Wearing = {
-			Wearing = true,
-			Outfits = true,
+			Wearing = newproxy(),
+			Outfits = newproxy(),
 		},
 	},
 }
@@ -353,6 +353,45 @@ function SearchCatalog()
 	end)
 end
 
+local function RenderOutfitToViewport(
+	viewport: ViewportFrame & { WorldModel: WorldModel },
+	description: HumanoidDescription.SerializedDescription
+)
+	return Future.new(
+		function(
+			viewport: ViewportFrame & { WorldModel: WorldModel },
+			description: HumanoidDescription.SerializedDescription
+		)
+			local success, outfitModelTemplate = AvatarEvents.GenerateModel:Call(description):Await()
+
+			if not success or not outfitModelTemplate or not viewport.Parent then
+				return
+			end
+
+			local existing = viewport.WorldModel:FindFirstChildOfClass("Model")
+			if existing then
+				existing:Destroy()
+			end
+
+			local outfitModel = outfitModelTemplate:Clone()
+
+			-- Camera offset from the centre of the character
+			local cameraOffset = (studioStand.CFrame + Vector3.new(0, 3.19, 0)):ToObjectSpace(studioCamera.CFrame)
+
+			local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
+			viewport.CurrentCamera = camera
+			camera.CameraType = Enum.CameraType.Scriptable
+			camera.FieldOfView = 20
+
+			outfitModel:PivotTo(CFrame.new())
+			outfitModel.Parent = viewport.WorldModel
+			camera.CFrame = outfitModel:GetPivot():ToWorldSpace(cameraOffset)
+		end,
+		viewport,
+		description
+	)
+end
+
 function RenderOutfits()
 	ClearResults()
 
@@ -379,29 +418,11 @@ function RenderOutfits()
 
 		row.Activated:Connect(function()
 			CartController:UseDescription(outfit.description)
+			-- CatalogUI:DisplayOutfit(outfit.description)
 		end)
 		row.Parent = template.Parent
 
-		AvatarEvents.GenerateModel:Call(dataOutfit.description):After(function(success, outfitModelTemplate)
-			if not success or not outfitModelTemplate or not row.Parent then
-				return
-			end
-			local outfitModel = outfitModelTemplate:Clone()
-
-			local viewport = row.ImageFrame.Frame.OutfitImage
-
-			-- Camera offset from the centre of the character
-			local cameraOffset = (studioStand.CFrame + Vector3.new(0, 3.19, 0)):ToObjectSpace(studioCamera.CFrame)
-
-			local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
-			viewport.CurrentCamera = camera
-			camera.CameraType = Enum.CameraType.Scriptable
-			camera.FieldOfView = 20
-
-			outfitModel:PivotTo(CFrame.new())
-			outfitModel.Parent = viewport.WorldModel
-			camera.CFrame = outfitModel:GetPivot():ToWorldSpace(cameraOffset)
-		end)
+		RenderOutfitToViewport(row.ImageFrame.Frame.OutfitImage, dataOutfit.description)
 	end
 end
 
@@ -613,6 +634,10 @@ function SwitchMode(newMode: DisplayMode)
 	elseif newMode == "Inventory" then
 		SwitchCategory("Wearing")
 		overlay.Visible = false
+	elseif newMode == "OutfitPane" then
+		return
+	else
+		error("Mode not registered!")
 	end
 
 	type Switcher = typeof(switcher.Inventory)
@@ -649,6 +674,135 @@ function HandleResultsScrolled()
 	end
 
 	ReadNextPage()
+end
+
+local outfitPaneTracker = newproxy()
+local outfitBinAdd, outfitBinRemove = Bin()
+function HideOutfitPreviewPage()
+	gui.RightPane.Marketplace.Visible = true
+	gui.RightPane.Switcher.Visible = true
+	gui.RightPane.Controls.Reset.Visible = true
+	gui.RightPane.Outfit.Visible = false
+
+	outfitPaneTracker = newproxy()
+	outfitBinRemove()
+end
+
+function RenderOutfitPreviewPage(outfit: HumanoidDescription)
+	return Future.new(function(outfit: HumanoidDescription)
+		local tracker = newproxy()
+		outfitPaneTracker = tracker
+		outfitBinRemove()
+
+		local outfitUI = gui.RightPane.Outfit
+
+		outfitUI.Visible = true
+		gui.RightPane.Switcher.Visible = false
+		gui.RightPane.Controls.Reset.Visible = false
+		gui.RightPane.Marketplace.Visible = false
+
+		local currentDescription = CartController:GetDescription():Await()
+		if outfitPaneTracker ~= tracker then
+			return
+		end
+
+		local partialDescription = HumanoidDescription.WithAccessories(currentDescription, outfit)
+
+		local currentButton = outfitUI.Previews.Current
+		local partialButton = outfitUI.Previews.Partial
+
+		-- If body parts don't change, we don't need this partial button
+		partialButton.Visible = not HumanoidDescription.Equal(partialDescription, outfit)
+
+		local fullButton = outfitUI.Previews.Full
+
+		currentButton.UIStroke.Enabled = true
+
+		RenderOutfitToViewport(
+			currentButton.ImageFrame.Frame.OutfitImage,
+			HumanoidDescription.Serialize(currentDescription)
+		)
+
+		RenderOutfitToViewport(
+			partialButton.ImageFrame.Frame.OutfitImage,
+			HumanoidDescription.Serialize(partialDescription)
+		)
+
+		RenderOutfitToViewport(fullButton.ImageFrame.Frame.OutfitImage, HumanoidDescription.Serialize(outfit))
+
+		local function ApplyOnClicked(button: GuiButton, description: HumanoidDescription)
+			outfitBinAdd(button.Activated:Connect(function()
+				CartController:UseDescription(description)
+			end))
+		end
+
+		ApplyOnClicked(currentButton, currentDescription)
+		ApplyOnClicked(partialButton, partialDescription)
+		ApplyOnClicked(fullButton, outfit)
+
+		local itemSet = {}
+		for i, accessory in currentDescription:GetAccessories(true) do
+			itemSet[accessory.AssetId] = true
+		end
+		for i, accessory in outfit:GetAccessories(true) do
+			itemSet[accessory.AssetId] = true
+		end
+
+		local items = {}
+		for id, _ in itemSet do
+			local details = DataFetch.GetItemDetails(id, Players.LocalPlayer):Await()
+			if details then
+				table.insert(items, details)
+			end
+		end
+
+		if outfitPaneTracker ~= tracker then
+			return
+		end
+
+		for i, itemElement in outfitUI.Wearing.ListWrapper.List:GetChildren() do
+			if itemElement:GetAttribute("Temporary") then
+				itemElement:Destroy()
+			end
+		end
+
+		local itemTemplate = gui.RightPane.Marketplace.Results.ListWrapper.List.ItemWrapper
+		for i, item in items do
+			local itemElement = itemTemplate:Clone()
+
+			itemElement.Visible = true
+			itemElement.Buy.Visible = true
+			itemElement.IsLimited.Visible = item.limited ~= nil
+			itemElement.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(item.assetId)
+			itemElement:SetAttribute("Temporary", true)
+			itemElement:SetAttribute("AssetId", item.assetId)
+
+			itemElement.Activated:Connect(function()
+				CartController:ToggleInCart(item.assetId)
+			end)
+
+			itemElement.Parent = outfitUI.Wearing.ListWrapper.List
+		end
+
+		local function RenderEquipped()
+			for i, itemElement in outfitUI.Wearing.ListWrapper.List:GetChildren() :: { typeof(itemTemplate) } do
+				if itemElement:GetAttribute("Temporary") then
+					itemElement.UIStroke.Enabled = CartController:IsInCart(itemElement:GetAttribute("AssetId"))
+				end
+			end
+
+			local updatedDescription = CartController:GetDescription():Await()
+			currentButton.UIStroke.Enabled = HumanoidDescription.Equal(currentDescription, updatedDescription)
+			partialButton.UIStroke.Enabled = HumanoidDescription.Equal(partialDescription, updatedDescription)
+			fullButton.UIStroke.Enabled = HumanoidDescription.Equal(outfit, updatedDescription)
+		end
+
+		RenderEquipped()
+		if outfitPaneTracker ~= tracker then
+			return
+		end
+		outfitBinAdd(CartController.CartUpdated:Connect(RenderEquipped))
+	end, outfit)
 end
 
 local renderTrack = newproxy()
@@ -756,13 +910,28 @@ end
 function CatalogUI:Hide()
 	-- Toggles visibility off
 	if gui.Visible then
+		if currentMode == "OutfitPane" then
+			HideOutfitPreviewPage()
+		end
+
 		CatalogUI:Display(currentMode, currentUseMode)
 	end
+end
+
+function CatalogUI:DisplayOutfit(outfit: HumanoidDescription)
+	CatalogUI:Display("OutfitPane", "Wear", false)
+	RenderOutfitPreviewPage(outfit)
 end
 
 function CatalogUI:Display(mode: DisplayMode, useMode: UseMode, previewDisabled: boolean?)
 	local cam = workspace.CurrentCamera
 	currentUseMode = useMode
+
+	if mode ~= "OutfitPane" then
+		gui.RightPane.Marketplace.Visible = true
+	else
+		gui.RightPane.Marketplace.Visible = false
+	end
 
 	if mode == currentMode and (previewDisabled == nil or (previewDisabled == not previewing)) then
 		local visible = not gui.Visible

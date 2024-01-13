@@ -1254,71 +1254,59 @@ export type Catalog = ScreenGui & {
 				UIPadding: UIPadding,
 				Divider: Frame,
 				Previews: Frame & {
-					Items: ImageButton & {
+					Partial: ImageButton & {
 						UICorner: UICorner,
 						UIStroke: UIStroke,
-						ImageFrame: Frame & {
-							IsLimited: Frame & {
-								UIAspectRatioConstraint: UIAspectRatioConstraint,
-								LimitedUGC: ImageButton,
-							},
-							Frame: Frame & {
-								UIListLayout: UIListLayout,
-								ItemImage: ImageLabel & {
-									UICorner: UICorner,
-								},
-							},
-						},
-						Label: TextButton & {
+						Title: TextButton & {
 							UICorner: UICorner,
 							UISizeConstraint: UISizeConstraint,
 							TextLabel: TextLabel,
 							UIListLayout: UIListLayout,
+						},
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								OutfitImage: ViewportFrame & {
+									WorldModel: WorldModel,
+								},
+							},
 						},
 					},
 					UIGridLayout: UIGridLayout,
-					ItemsBody: ImageButton & {
+					Full: ImageButton & {
 						UICorner: UICorner,
 						UIStroke: UIStroke,
-						ImageFrame: Frame & {
-							IsLimited: Frame & {
-								UIAspectRatioConstraint: UIAspectRatioConstraint,
-								LimitedUGC: ImageButton,
-							},
-							Frame: Frame & {
-								UIListLayout: UIListLayout,
-								ItemImage: ImageLabel & {
-									UICorner: UICorner,
-								},
-							},
-						},
-						Label: TextButton & {
+						Title: TextButton & {
 							UICorner: UICorner,
 							UISizeConstraint: UISizeConstraint,
 							TextLabel: TextLabel,
 							UIListLayout: UIListLayout,
+						},
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								OutfitImage: ViewportFrame & {
+									WorldModel: WorldModel,
+								},
+							},
 						},
 					},
 					Current: ImageButton & {
 						UICorner: UICorner,
 						UIStroke: UIStroke,
-						ImageFrame: Frame & {
-							IsLimited: Frame & {
-								UIAspectRatioConstraint: UIAspectRatioConstraint,
-								LimitedUGC: ImageButton,
-							},
-							Frame: Frame & {
-								UIListLayout: UIListLayout,
-								ItemImage: ImageLabel & {
-									UICorner: UICorner,
-								},
-							},
-						},
-						Label: TextButton & {
+						Title: TextButton & {
 							UICorner: UICorner,
 							UISizeConstraint: UISizeConstraint,
 							TextLabel: TextLabel,
 							UIListLayout: UIListLayout,
+						},
+						ImageFrame: Frame & {
+							Frame: Frame & {
+								UIListLayout: UIListLayout,
+								OutfitImage: ViewportFrame & {
+									WorldModel: WorldModel,
+								},
+							},
 						},
 					},
 				},

@@ -171,6 +171,22 @@ function HumanoidDescription.ApplyToDescription(description: HumanoidDescription
 	description:SetAccessories(newAccessories, true)
 end
 
+-- Returns the base humanoid description, with the accessories of the other description
+function HumanoidDescription.WithAccessories(
+	base: HumanoidDescription,
+	accessories: HumanoidDescription
+): HumanoidDescription
+	local newDescription = base:Clone()
+	newDescription:SetAccessories(accessories:GetAccessories(true), true)
+
+	return newDescription
+end
+
+function HumanoidDescription.Equal(desc1: HumanoidDescription, desc2: HumanoidDescription)
+	return HttpService:JSONEncode(HumanoidDescription.Serialize(desc1))
+		== HttpService:JSONEncode(HumanoidDescription.Serialize(desc2))
+end
+
 function HumanoidDescription.Guard(info: unknown)
 	HumanoidDescription.Deserialize(info :: any)
 	return info :: SerializedDescription
