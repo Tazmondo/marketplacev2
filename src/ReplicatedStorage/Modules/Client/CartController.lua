@@ -149,6 +149,7 @@ function CartController:Reset()
 		end
 
 		cartItems = {}
+		cartSet = {}
 
 		for i, accessory in description:GetAccessories(true) do
 			table.insert(cartItems, NewCartItem(accessory.AssetId))
@@ -157,6 +158,18 @@ function CartController:Reset()
 
 		UpdateCharacter()
 	end)
+end
+
+function CartController:UseDescription(description: HumanoidDescription)
+	cartItems = {}
+	cartSet = {}
+
+	for i, accessory in description:GetAccessories(true) do
+		table.insert(cartItems, { id = accessory.AssetId, equipped = true })
+		cartSet[accessory.AssetId] = true
+	end
+
+	UpdateCharacter()
 end
 
 function CartController:IsInCart(id: number)
@@ -192,6 +205,7 @@ local function InitialCharacterLoad(char: Model)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 
 	cartItems = {}
+	cartSet = {}
 
 	local description = humanoid:GetAppliedDescription()
 	for i, accessory in description:GetAccessories(true) do

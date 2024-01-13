@@ -377,6 +377,10 @@ function RenderOutfits()
 		row.Title.TextLabel.Text = outfit.name
 		row:SetAttribute("Temporary", true)
 
+		row.Activated:Connect(function()
+			CartController:UseDescription(outfit.description)
+		end)
+
 		row.Parent = template.Parent
 	end
 end
