@@ -56,12 +56,12 @@ local currentShowcase: Types.NetworkShowcase?
 -- Allows for comparison between stand objects.
 -- I would do this by comparing the tables are the same but luau type system doesn't like that?
 local standId = 0
-function GetNextStandId()
+local function GetNextStandId()
 	standId += 1
 	return standId
 end
 
-function SetDisplayVisibility(display: BasePart, isVisible: boolean)
+local function SetDisplayVisibility(display: BasePart, isVisible: boolean)
 	local light = display:FindFirstChild("PointLight") :: PointLight?
 	local attachment = display:FindFirstChild("Attachment")
 	local shine = if attachment then attachment:FindFirstChild("Shine") :: ParticleEmitter? else nil
@@ -85,11 +85,11 @@ function SetDisplayVisibility(display: BasePart, isVisible: boolean)
 	end
 end
 
-function GetAccessory(assetId: number, scale: number?)
+local function GetAccessory(assetId: number, scale: number?)
 	return Future.new(function(assetId: number, scale: number?)
 		local accessoryTemplate = accessoryReplication:WaitForChild(tostring(assetId), 5) :: Model?
 		if not accessoryTemplate then
-			warn("Failed to load accessory: ", assetId)
+			-- warn("Failed to load accessory: ", assetId)
 			return nil :: Model?
 		end
 
@@ -108,7 +108,7 @@ function GetAccessory(assetId: number, scale: number?)
 	end, assetId, scale)
 end
 
-function DestroyStand(stand: RenderedStand)
+local function DestroyStand(stand: RenderedStand)
 	stand.destroyed = true
 	if stand.renderModel then
 		stand.renderModel:Destroy()
@@ -123,17 +123,25 @@ function DestroyStand(stand: RenderedStand)
 	end
 end
 
-function ClearStands()
+local function ClearStands()
 	for position, stand in renderedStands do
 		DestroyStand(stand)
 	end
 end
 
-function UserRemovedItem(roundedPosition: Vector3)
-	HandleItemAdded(roundedPosition, nil)
+local function AddItem(roundedPosition: Vector3, assetId: number?)
+	UpdateShowcaseEvent:Fire({
+		type = "UpdateStand",
+		roundedPosition = roundedPosition,
+		assetId = assetId,
+	})
 end
 
-function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: BasePart })
+local function RemoveItem(roundedPosition: Vector3)
+	AddItem(roundedPosition, nil)
+end
+
+local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: BasePart })
 	local standMap: { [Vector3]: Types.Stand? } = {}
 	for i, stand in showcase.stands do
 		standMap[stand.roundedPosition] = stand
@@ -217,7 +225,7 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 				prompt.ObjectText = "Stand"
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					UserRemovedItem(roundedPosition)
+					RemoveItem(roundedPosition)
 				end)
 			else
 				SetDisplayVisibility(part, true)
@@ -227,7 +235,7 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 				prompt.Triggered:Connect(function()
 					local selectedItem = CatalogUI:SelectItem():Await()
 					if selectedItem then
-						HandleItemAdded(roundedPosition, selectedItem)
+						AddItem(roundedPosition, selectedItem)
 					end
 				end)
 			end
@@ -248,7 +256,7 @@ function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]:
 	end
 end
 
-function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
+local function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 	if not currentShowcase or not currentModel then
 		return
 	end
@@ -293,7 +301,7 @@ function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 	debug.profileend()
 end
 
-function HandleLoadShowcase(showcase: Types.NetworkShowcase)
+local function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 	print("Loading showcase", showcase)
 
 	if
@@ -342,7 +350,7 @@ function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 	end
 end
 
-function GetTweenedStandAlpha(alpha: number)
+local function GetTweenedStandAlpha(alpha: number)
 	if alpha >= 0.5 then
 		return 1 - TweenService:GetValue((2 * (alpha - 0.5)), Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 	else
@@ -350,7 +358,7 @@ function GetTweenedStandAlpha(alpha: number)
 	end
 end
 
-function RenderStepped(dt: number)
+local function RenderStepped(dt: number)
 	if not currentShowcase then
 		return
 	end
@@ -384,21 +392,10 @@ function RenderStepped(dt: number)
 	debug.profileend()
 end
 
-function HandleItemAdded(roundedPosition: Vector3, assetId: number?)
-	print("Adding item", roundedPosition, assetId)
-	UpdateShowcaseEvent:Fire({
-		type = "UpdateStand",
-		roundedPosition = roundedPosition,
-		assetId = assetId,
-	})
-end
-
 function ShowcaseController:Initialize()
 	LoadShowcaseEvent:On(HandleLoadShowcase)
 
 	RunService.RenderStepped:Connect(RenderStepped)
-
-	-- AddItemUI.Added:Connect(HandleItemAdded)
 end
 
 ShowcaseController:Initialize()
