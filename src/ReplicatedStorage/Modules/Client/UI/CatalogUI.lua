@@ -16,13 +16,13 @@ local Device = require(ReplicatedStorage.Modules.Client.Device)
 local Loaded = require(ReplicatedStorage.Modules.Client.Loaded)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
-
-local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
-local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
+
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
+local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 
 type UseMode = "Wear" | "Select"
 type DisplayMode = "Marketplace" | "Inventory"
@@ -380,8 +380,28 @@ function RenderOutfits()
 		row.Activated:Connect(function()
 			CartController:UseDescription(outfit.description)
 		end)
-
 		row.Parent = template.Parent
+
+		AvatarEvents.GenerateModel:Call(dataOutfit.description):After(function(success, outfitModelTemplate)
+			if not success or not outfitModelTemplate or not row.Parent then
+				return
+			end
+			local outfitModel = outfitModelTemplate:Clone()
+
+			local viewport = row.ImageFrame.Frame.OutfitImage
+
+			-- Camera offset from the centre of the character
+			local cameraOffset = (studioStand.CFrame + Vector3.new(0, 3.19, 0)):ToObjectSpace(studioCamera.CFrame)
+
+			local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
+			viewport.CurrentCamera = camera
+			camera.CameraType = Enum.CameraType.Scriptable
+			camera.FieldOfView = 20
+
+			outfitModel:PivotTo(CFrame.new())
+			outfitModel.Parent = viewport.WorldModel
+			camera.CFrame = outfitModel:GetPivot():ToWorldSpace(cameraOffset)
+		end)
 	end
 end
 

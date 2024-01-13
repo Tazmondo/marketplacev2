@@ -1125,7 +1125,9 @@ export type Catalog = ScreenGui & {
 								ImageFrame: Frame & {
 									Frame: Frame & {
 										UIListLayout: UIListLayout,
-										OutfitImage: ViewportFrame,
+										OutfitImage: ViewportFrame & {
+											WorldModel: WorldModel,
+										},
 									},
 								},
 							},
