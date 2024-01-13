@@ -8,8 +8,15 @@ local UILoader = require(script.Parent.UILoader)
 type Confirmation = {
 	Title: string,
 	Content: string,
-	Proceed: string?,
-	Cancel: string?,
+	Proceed: string,
+	Cancel: string,
+}
+
+type InputRequest = {
+	Title: string,
+	PlaceholderText: string,
+	Proceed: string,
+	Cancel: string,
 }
 
 ConfirmUI.Confirmations = {
@@ -17,7 +24,17 @@ ConfirmUI.Confirmations = {
 		Title = "Reset Avatar",
 		Content = "Resetting your avatar will remove all items added to your avatar",
 		Proceed = "Reset",
+		Cancel = "Cancel",
 	} :: Confirmation,
+}
+
+ConfirmUI.InputRequests = {
+	CreateOutfit = {
+		Title = "Create Outfit",
+		PlaceholderText = "Add a name...",
+		Proceed = "Create",
+		Cancel = "Cancel",
+	} :: InputRequest,
 }
 
 local confirmationFrame = UILoader:GetConfirm().Confirm
@@ -31,10 +48,13 @@ function ConfirmUI:Confirm(confirmation: Confirmation)
 		end
 		showing = true
 
+		confirmationFrame.Input.Visible = false
+		confirmationFrame.Body.Visible = true
+
 		confirmationFrame.Title.Text = confirmation.Title
 		confirmationFrame.Body.Text = confirmation.Content
-		confirmationFrame.Actions.PrimaryButton.TextLabel.Text = confirmation.Proceed or "Proceed"
-		confirmationFrame.Actions.SecondaryButton.TextLabel.Text = confirmation.Cancel or "Cancel"
+		confirmationFrame.Actions.PrimaryButton.TextLabel.Text = confirmation.Proceed
+		confirmationFrame.Actions.SecondaryButton.TextLabel.Text = confirmation.Cancel
 
 		confirmationFrame.Visible = true
 
@@ -42,6 +62,32 @@ function ConfirmUI:Confirm(confirmation: Confirmation)
 		showing = false
 		confirmationFrame.Visible = false
 		return result
+	end)
+end
+
+function ConfirmUI:RequestInput(inputRequest: InputRequest)
+	return Future.new(function(): string?
+		if showing then
+			return nil
+		end
+		showing = true
+
+		confirmationFrame.Input.Visible = true
+		confirmationFrame.Body.Visible = false
+		confirmationFrame.Input.TextInput.Text = ""
+
+		confirmationFrame.Title.Text = inputRequest.Title
+		confirmationFrame.Input.TextInput.PlaceholderText = inputRequest.PlaceholderText
+		confirmationFrame.Actions.PrimaryButton.TextLabel.Text = inputRequest.Proceed
+		confirmationFrame.Actions.SecondaryButton.TextLabel.Text = inputRequest.Cancel
+
+		confirmationFrame.Visible = true
+
+		local result = finishedSignal:Wait()
+		showing = false
+		confirmationFrame.Visible = false
+
+		return if result then confirmationFrame.Input.TextInput.Text else nil
 	end)
 end
 

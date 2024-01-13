@@ -1354,6 +1354,16 @@ export type Catalog = ScreenGui & {
 
 export type Confirm = ScreenGui & {
 	Confirm: Frame & {
+		Input: Frame & {
+			UICorner: UICorner,
+			TextInput: TextBox & {
+				UIListLayout: UIListLayout,
+				UIStroke: UIStroke,
+				UIPadding: UIPadding,
+				UICorner: UICorner,
+			},
+			UIListLayout: UIListLayout,
+		},
 		Title: TextLabel,
 		UIPadding: UIPadding,
 		UICorner: UICorner,

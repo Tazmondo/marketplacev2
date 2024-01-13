@@ -18,6 +18,7 @@ local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
+local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
@@ -371,8 +372,12 @@ function RenderOutfits()
 		local outfit = Data.FromDataOutfit(dataOutfit)
 		local row = template:Clone()
 
+		row.Visible = true
 		row.Title.Visible = true
-		row.Title.Text = outfit.name
+		row.Title.TextLabel.Text = outfit.name
+		row:SetAttribute("Temporary", true)
+
+		row.Parent = template.Parent
 	end
 end
 
@@ -439,6 +444,20 @@ function PopulateResults()
 	elseif currentSubcategory == "Outfits" then
 		RenderOutfits()
 	end
+end
+
+local function CreateNewOutfit()
+	return Future.new(function()
+		local outfitName = ConfirmUI:RequestInput(ConfirmUI.InputRequests.CreateOutfit):Await()
+		if not outfitName then
+			return
+		end
+
+		DataEvents.CreateOutfit:FireServer(
+			outfitName,
+			HumanoidDescription.Serialize(CartController:GetDescription():Await())
+		)
+	end)
 end
 
 function SwitchSubCategory(newCategory: SubCategory)
@@ -867,6 +886,8 @@ function CatalogUI:Initialize()
 		:GetPropertyChangedSignal("CanvasPosition")
 		:Connect(HandleResultsScrolled)
 
+	gui.RightPane.Marketplace.Results.ListWrapper.List.NewOutfit.Activated:Connect(CreateNewOutfit)
+
 	CartController.CartUpdated:Connect(function(items: { CartController.CartItem })
 		CartController:GetDescription():After(function(description)
 			RenderPreviewPane(description)
@@ -874,6 +895,12 @@ function CatalogUI:Initialize()
 
 		if currentSubcategory == "Wearing" then
 			RenderWearing()
+		end
+	end)
+
+	DataController.Updated:Connect(function()
+		if currentSubcategory == "Outfits" then
+			PopulateResults()
 		end
 	end)
 
