@@ -128,7 +128,7 @@ function DataService:ReadData(player: Player)
 	end)
 end
 
-function DataService:WriteData(player: Player, transform: (Data.Data) -> ())
+function DataService:WriteData(player: Player, mutate: (Data.Data) -> ())
 	return Future.new(function()
 		local data = DataService:ReadData(player):Await()
 		if not data then
@@ -140,7 +140,7 @@ function DataService:WriteData(player: Player, transform: (Data.Data) -> ())
 
 		local yielded = true
 		Spawn(function()
-			transform(data)
+			mutate(data)
 			yielded = false
 		end)
 
@@ -148,7 +148,6 @@ function DataService:WriteData(player: Player, transform: (Data.Data) -> ())
 			warn(debug.traceback("Data transform function yielded!"))
 		end
 
-		print("Updated!", data)
 		DataEvents.ReplicateData:FireClient(player, data)
 	end)
 end

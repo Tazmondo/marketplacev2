@@ -12,7 +12,7 @@ local Types = require(script.Parent.Types)
 
 export type Outfit = {
 	name: string,
-	description: { number | string }, -- Outfits are serialized as an array of numbers and strings
+	description: HumanoidDescription.SerializedDescription, -- Outfits are serialized as an array of numbers and strings
 }
 
 export type VectorTable = {

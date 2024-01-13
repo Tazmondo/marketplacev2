@@ -16,6 +16,8 @@ export type Accessory = {
 export type SerializedDescription = { string | number }
 
 local function SerializeAccessories(description: HumanoidDescription): string
+	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
+
 	local accessories = TableUtil.Map(description:GetAccessories(true), function(accessory)
 		return { accessory.AssetId, accessory.Order or 1, accessory.AccessoryType.Value }
 	end)
@@ -24,6 +26,8 @@ local function SerializeAccessories(description: HumanoidDescription): string
 end
 
 local function DeserializeAccessories(accessoryJson: string): { Types.HumanoidDescriptionAccessory }
+	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
+
 	local accessories = TableUtil.Map(HttpService:JSONDecode(accessoryJson), function(accessory)
 		local enum = TableUtil.Find(Enum.AccessoryType:GetEnumItems() :: { Enum.AccessoryType }, function(enum)
 			return enum.Value == accessory[3]
@@ -50,6 +54,7 @@ end
 -- The reason I serialize and deserialize into an array is to save space on all the keys
 -- This drastically reduces the data used to store each outfit
 function HumanoidDescription.Serialize(description: HumanoidDescription): SerializedDescription
+	-- BE VERY CAREFUL WHEN CHANGING THIS CODE!
 	return {
 		SerializeAccessories(description),
 		description.BodyTypeScale,
@@ -78,6 +83,7 @@ function HumanoidDescription.Serialize(description: HumanoidDescription): Serial
 end
 
 function HumanoidDescription.Deserialize(descriptionInfo: SerializedDescription): HumanoidDescription
+	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
 	local description = Instance.new("HumanoidDescription")
 	local descriptionInfo = descriptionInfo :: { any }
 
