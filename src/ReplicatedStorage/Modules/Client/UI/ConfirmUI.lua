@@ -72,22 +72,29 @@ function ConfirmUI:RequestInput(inputRequest: InputRequest)
 		end
 		showing = true
 
+		local textInput = confirmationFrame.Input.TextInput
+
 		confirmationFrame.Input.Visible = true
 		confirmationFrame.Body.Visible = false
 		confirmationFrame.Input.TextInput.Text = ""
 
 		confirmationFrame.Title.Text = inputRequest.Title
-		confirmationFrame.Input.TextInput.PlaceholderText = inputRequest.PlaceholderText
+		textInput.PlaceholderText = inputRequest.PlaceholderText
 		confirmationFrame.Actions.PrimaryButton.TextLabel.Text = inputRequest.Proceed
 		confirmationFrame.Actions.SecondaryButton.TextLabel.Text = inputRequest.Cancel
 
 		confirmationFrame.Visible = true
 
-		local result = finishedSignal:Wait()
-		showing = false
-		confirmationFrame.Visible = false
+		while true do
+			local result = finishedSignal:Wait()
+			if result and textInput.Text == "" then
+				continue
+			end
+			showing = false
+			confirmationFrame.Visible = false
 
-		return if result then confirmationFrame.Input.TextInput.Text else nil
+			return if result then textInput.Text else nil
+		end
 	end)
 end
 
