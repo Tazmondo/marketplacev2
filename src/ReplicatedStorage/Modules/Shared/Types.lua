@@ -1,5 +1,6 @@
 --!nolint LocalShadow
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 
@@ -20,6 +21,13 @@ export type Stand = {
 	roundedPosition: Vector3,
 }
 
+export type SerializedDescription = { string | number }
+
+export type OutfitStand = {
+	description: SerializedDescription?,
+	roundedPosition: Vector3,
+}
+
 export type Showcase = {
 	owner: number, -- UserId
 	layoutId: LayoutData.LayoutId,
@@ -31,6 +39,7 @@ export type Showcase = {
 	texture: string,
 	GUID: string,
 	stands: { Stand },
+	outfitStands: { OutfitStand },
 }
 
 export type ShowcaseMode = "View" | "Edit"
@@ -48,6 +57,7 @@ export type NetworkShowcase = {
 
 	-- This would be a table with vector3 keys but instance keys can't be sent across network boundaries
 	stands: { Stand },
+	outfitStands: { OutfitStand },
 	mode: ShowcaseMode,
 }
 

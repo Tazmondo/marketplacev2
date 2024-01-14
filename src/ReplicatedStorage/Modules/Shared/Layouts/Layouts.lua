@@ -4,11 +4,13 @@ local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local LayoutData = require(script.Parent.LayoutData)
 
+type PositionFunction = () -> { [Vector3]: boolean }
 export type Layout = {
 	id: LayoutData.LayoutId,
 	displayThumbId: number,
 	modelTemplate: Model,
-	getValidStandPositions: () -> { [Vector3]: boolean },
+	getValidStandPositions: PositionFunction,
+	getValidOutfitStandPositions: PositionFunction,
 	getNumberOfStands: () -> number,
 }
 
@@ -19,8 +21,9 @@ local savedLayouts: { [LayoutData.LayoutId]: Layout } = {}
 local Layouts = {}
 
 -- So this loop is only run once and when it's needed
-function GenerateValidPositionFunction(model: Model): () -> { [Vector3]: boolean }
+function GenerateValidPositionFunctions(model: Model): (PositionFunction, PositionFunction)
 	local validPositions
+	local validOutfitPositions
 
 	return function()
 		if validPositions then
@@ -30,19 +33,38 @@ function GenerateValidPositionFunction(model: Model): () -> { [Vector3]: boolean
 
 		local cframe = model:GetPivot()
 		for i, descendant in model:GetDescendants() do
-			if descendant:IsA("BasePart") and descendant:HasTag(Config.StandTag) then
+			if descendant:HasTag(Config.StandTag) then
+				assert(descendant:IsA("BasePart"), "Stand was tagged but was not a basepart.")
+
 				local roundedPosition = Util.RoundedVector(cframe:PointToObjectSpace(descendant.Position))
 				validPositions[roundedPosition] = true
 			end
 		end
 
 		return validPositions
+	end, function()
+		if validOutfitPositions then
+			return validOutfitPositions
+		end
+		validOutfitPositions = {}
+		local cframe = model:GetPivot()
+		for i, descendant in model:GetDescendants() do
+			if descendant:HasTag(Config.OutfitStandTag) then
+				assert(descendant:IsA("Model"), "Outfit Stand was tagged but was not a model.")
+
+				local roundedPosition = Util.RoundedVector(cframe:PointToObjectSpace(descendant:GetPivot().Position))
+				validOutfitPositions[roundedPosition] = true
+			end
+		end
+
+		return validOutfitPositions
 	end
 end
 
 -- Only run once per layout and only when needed
-function GenerateNumberOfStandsFunction(generatePositions: () -> { [Vector3]: boolean })
+function GenerateNumberOfStandsFunction(...: PositionFunction): () -> number
 	local positionAmount
+	local positionFunctions = { ... }
 
 	return function()
 		if positionAmount then
@@ -50,8 +72,10 @@ function GenerateNumberOfStandsFunction(generatePositions: () -> { [Vector3]: bo
 		end
 
 		positionAmount = 0
-		for position, _ in generatePositions() do
-			positionAmount += 1
+		for _, func in positionFunctions do
+			for position, _ in func() do
+				positionAmount += 1
+			end
 		end
 
 		return positionAmount
@@ -91,14 +115,15 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 	local image = gui:FindFirstChildOfClass("ImageLabel")
 	assert(image, `ShopLogo did not have an imagelabel in {id}`)
 
-	local validPositionFunction = GenerateValidPositionFunction(model)
-	local standAmountFunction = GenerateNumberOfStandsFunction(validPositionFunction)
+	local validPositionFunction, validOutfitPositionFunction = GenerateValidPositionFunctions(model)
+	local standAmountFunction = GenerateNumberOfStandsFunction(validPositionFunction, validOutfitPositionFunction)
 
 	savedLayouts[id] = TableUtil.Lock({
 		id = id,
 		displayThumbId = thumbId,
 		modelTemplate = model,
-		getValidStandPositions = GenerateValidPositionFunction(model),
+		getValidStandPositions = validPositionFunction,
+		getValidOutfitStandPositions = validOutfitPositionFunction,
 		getNumberOfStands = standAmountFunction,
 	})
 end

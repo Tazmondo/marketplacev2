@@ -34,6 +34,7 @@ local DefaultShowcase: Types.Showcase = {
 	owner = 68252170,
 	layoutId = Layouts:GetDefaultLayoutId(),
 	stands = {},
+	outfitStands = {},
 	GUID = HttpService:GenerateGUID(false),
 	primaryColor = Config.DefaultPrimaryColor,
 	accentColor = Config.DefaultAccentColor,

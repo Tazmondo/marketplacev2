@@ -19,10 +19,10 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
-
 local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
-local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
+local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Bin = require(ReplicatedStorage.Packages.Bin)
 
 type UseMode = "Wear" | "Select"
@@ -98,7 +98,9 @@ local categories = {
 }
 
 CatalogUI.VisibilityUpdated = Signal()
+
 local ItemSelected: Signal.Signal<number> = Signal()
+local OutfitSelected: Signal.Signal<HumanoidDescription> = Signal()
 
 local previewing = false
 
@@ -355,16 +357,13 @@ end
 
 local function RenderOutfitToViewport(
 	viewport: ViewportFrame & { WorldModel: WorldModel },
-	description: HumanoidDescription.SerializedDescription
+	description: Types.SerializedDescription
 )
 	return Future.new(
-		function(
-			viewport: ViewportFrame & { WorldModel: WorldModel },
-			description: HumanoidDescription.SerializedDescription
-		)
-			local success, outfitModelTemplate = AvatarEvents.GenerateModel:Call(description):Await()
+		function(viewport: ViewportFrame & { WorldModel: WorldModel }, description: Types.SerializedDescription)
+			local outfitModelTemplate = CharacterCache:LoadWithDescription(description):Await()
 
-			if not success or not outfitModelTemplate or not viewport.Parent then
+			if not outfitModelTemplate or not viewport.Parent then
 				return
 			end
 
@@ -417,8 +416,11 @@ function RenderOutfits()
 		row:SetAttribute("Temporary", true)
 
 		row.Activated:Connect(function()
-			CartController:UseDescription(outfit.description)
-			-- CatalogUI:DisplayOutfit(outfit.description)
+			if currentUseMode == "Wear" then
+				CartController:UseDescription(outfit.description)
+			else
+				OutfitSelected:Fire(outfit.description)
+			end
 		end)
 		row.Parent = template.Parent
 
@@ -811,14 +813,9 @@ function RenderPreviewPane(description: HumanoidDescription)
 		local tracker = newproxy()
 		renderTrack = tracker
 
-		local success, replicatedModel =
-			AvatarEvents.GenerateModel:Call(HumanoidDescription.Serialize(description)):Await()
-		if not success or not replicatedModel then
-			if not success then
-				warn(replicatedModel)
-			else
-				warn("Received nil character model from server.")
-			end
+		local replicatedModel = CharacterCache:LoadWithDescription(description):Await()
+		if not replicatedModel then
+			warn("Received nil character model from server.")
 			return
 		end
 
@@ -1011,6 +1008,44 @@ function CatalogUI:SelectItem()
 			CatalogUI:Hide()
 
 			return selectedItem
+		else
+			return nil
+		end
+	end)
+end
+
+function CatalogUI:SelectOutfit()
+	return Future.new(function(): HumanoidDescription?
+		local tracker = newproxy()
+		selectTracker = tracker
+		CatalogUI:Hide()
+
+		CatalogUI:Display("Inventory", "Select", true)
+		SwitchSubCategory("Outfits")
+
+		local selectedOutfit: HumanoidDescription? = nil
+		local parentThread = coroutine.running()
+		local selectedThread: thread
+		local visibilityThread: thread
+
+		selectedThread = task.spawn(function()
+			selectedOutfit = OutfitSelected:Wait()
+			task.cancel(visibilityThread)
+			coroutine.resume(parentThread)
+		end)
+
+		visibilityThread = task.spawn(function()
+			gui:GetPropertyChangedSignal("Visible"):Wait()
+			task.cancel(selectedThread)
+			coroutine.resume(parentThread)
+		end)
+
+		coroutine.yield()
+
+		if selectTracker == tracker then
+			CatalogUI:Hide()
+
+			return selectedOutfit
 		else
 			return nil
 		end

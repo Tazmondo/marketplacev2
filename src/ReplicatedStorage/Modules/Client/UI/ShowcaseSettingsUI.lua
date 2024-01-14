@@ -2,13 +2,12 @@ local ShopSettingsUI = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local UILoader = require(script.Parent.UILoader)
-
-local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent):Client()
 
 local gui = UILoader:GetMain().ShopSettings
 
@@ -30,8 +29,7 @@ function Save()
 
 	local logoId = tonumber(gui.Frame.Logo.TextBox.Text)
 
-	UpdateShowcaseEvent:Fire({
-		type = "UpdateSettings",
+	ShowcaseEvents.UpdateSettings:FireServer({
 		name = name,
 		primaryColor = activeShowcase.primaryColor,
 		accentColor = activeShowcase.accentColor,

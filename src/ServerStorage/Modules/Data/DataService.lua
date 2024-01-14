@@ -5,7 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
-local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local Spawn = require(ReplicatedStorage.Packages.Spawn)
@@ -153,7 +153,7 @@ function DataService:WriteData(player: Player, mutate: (Data.Data) -> ())
 	end)
 end
 
-local function HandleNewOutfit(player: Player, name: string, serDescription: HumanoidDescription.SerializedDescription)
+local function HandleNewOutfit(player: Player, name: string, serDescription: Types.SerializedDescription)
 	local data = DataService:ReadData(player):Await()
 	if not data then
 		return

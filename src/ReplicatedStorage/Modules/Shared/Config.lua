@@ -22,6 +22,8 @@ end
 
 local Config = {
 	StandTag = "DisplayStandSpot",
+	OutfitStandTag = "OutfitDisplayStandSpot",
+
 	NoBobTag = "NoBob",
 	NoSpinTag = "NoSpin",
 	ScaleTag = "Scale",

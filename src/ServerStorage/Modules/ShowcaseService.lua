@@ -6,18 +6,19 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 
+local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
 local DataService = require(script.Parent.Data.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
+local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
+local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
-local UpdateShowcaseEventTypes = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
-local UpdateShowcaseEvent = UpdateShowcaseEventTypes:Server()
 local UpdateVisiblePlayersEvent =
 	require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateVisiblePlayersEvent):Server()
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
@@ -28,6 +29,7 @@ local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired
 
 type ActiveShowcase = {
 	stands: { Types.Stand },
+	outfitStands: { Types.OutfitStand },
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
 	mode: Types.ShowcaseMode,
@@ -131,6 +133,7 @@ end
 function ToNetworkShowcase(showcase: ActiveShowcase): Types.NetworkShowcase
 	return {
 		stands = showcase.stands,
+		outfitStands = showcase.outfitStands,
 		layoutId = showcase.layout.id,
 		mode = showcase.mode,
 		owner = showcase.owner,
@@ -216,10 +219,10 @@ function SaveShowcase(showcase: ActiveShowcase)
 
 	-- Filter out stands that are invalid or lack an asset id
 	-- Invalid stands can be caused when switching layouts - the old stands may not have valid positions anymore.
-	local filteredStands: { Data.Stand } = {}
 	local validPositions = showcase.layout.getValidStandPositions()
+	local filteredStands: { Data.Stand } = {}
 
-	for part, stand in showcase.stands do
+	for _, stand in showcase.stands do
 		if stand.assetId and validPositions[stand.roundedPosition] then
 			table.insert(filteredStands, {
 				assetId = stand.assetId,
@@ -228,8 +231,21 @@ function SaveShowcase(showcase: ActiveShowcase)
 		end
 	end
 
+	local validOutfitPositions = showcase.layout.getValidOutfitStandPositions()
+
+	local filteredOutfitStands: { Data.OutfitStand } = {}
+	for _, stand in showcase.outfitStands do
+		if stand.description and validOutfitPositions[stand.roundedPosition] then
+			table.insert(filteredOutfitStands, {
+				description = stand.description,
+				roundedPosition = Data.VectorToTable(stand.roundedPosition),
+			})
+		end
+	end
+
 	local newShowcase: Data.Showcase = {
 		stands = filteredStands,
+		outfitStands = filteredOutfitStands,
 		layoutId = showcase.layout.id,
 		GUID = showcase.GUID,
 		name = showcase.name,
@@ -271,6 +287,33 @@ function PopulateLayoutStands(savedStands: { Types.Stand }, standPositions: { [V
 	return outputStands
 end
 
+function PopulateLayoutOutfitStands(
+	savedStands: { Types.OutfitStand },
+	standPositions: { [Vector3]: boolean }
+): { Types.OutfitStand }
+	local savedStandMap = {}
+
+	for i, stand in savedStands do
+		savedStandMap[stand.roundedPosition] = stand
+	end
+
+	local outputStands = {}
+
+	for position, _ in standPositions do
+		local stand = savedStandMap[position]
+		if stand then
+			table.insert(outputStands, stand)
+		else
+			table.insert(outputStands, {
+				description = nil,
+				roundedPosition = position,
+			})
+		end
+	end
+
+	return outputStands
+end
+
 function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.ShowcaseMode)
 	-- Check for already existing showcase with the same GUID, but only for viewing. Showcases in edit mode should
 	-- Be kept entirely separate because the mode is stored within the showcase data itself, and not on a per-player basis.
@@ -285,9 +328,11 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 	-- Every physical part should have a registered stand
 	-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
 	local stands = PopulateLayoutStands(showcase.stands, layout.getValidStandPositions())
+	local outfitStands = PopulateLayoutOutfitStands(showcase.outfitStands, layout.getValidOutfitStandPositions())
 
 	local place: ActiveShowcase = {
 		stands = stands,
+		outfitStands = outfitStands,
 		layout = layout,
 		owner = showcase.owner,
 		playersPresent = {},
@@ -334,6 +379,7 @@ function HandleCreatePlace(player: Player)
 		name = `{player.Name}'s Shop`,
 		layoutId = Layouts:GetDefaultLayoutId(),
 		stands = {},
+		outfitStands = {},
 		GUID = HttpService:GenerateGUID(false),
 		owner = player.UserId,
 		primaryColor = Config.DefaultPrimaryColor,
@@ -370,102 +416,163 @@ function HandleEditShowcase(player: Player, GUID: string)
 	ShowcaseService:EnterPlayerShowcase(player, place)
 end
 
-function HandleUpdateShowcase(player: Player, update: UpdateShowcaseEventTypes.Update)
+local function GetEditableShowcase(player: Player): ActiveShowcase?
 	local showcase = playerShowcases[player]
 	if not showcase then
-		warn(player, "Tried to update a showcase without being present in it.")
+		return nil
+	end
+
+	if showcase.mode ~= "Edit" then
+		warn(player, "Tried to update a showcase that was not in edit mode.")
+		return nil
+	end
+
+	return showcase
+end
+
+function HandleUpdateStand(player: Player, roundedPosition: Vector3, assetId: number?)
+	local showcase = GetEditableShowcase(player)
+	if not showcase then
+		return
+	end
+
+	if not showcase.layout.getValidStandPositions()[roundedPosition] then
+		warn("Updated with an invalid position:", roundedPosition)
+		return
+	end
+
+	local stand = TableUtil.Find(showcase.stands, function(stand)
+		return stand.roundedPosition == roundedPosition
+	end)
+
+	if not stand then
+		warn("Could not find stand when updating:", roundedPosition)
+		return
+	end
+
+	if stand.assetId == assetId then
+		-- Asset did not change
+		return
+	end
+
+	stand.assetId = assetId
+	if assetId then
+		ReplicateAsset(assetId)
+	end
+
+	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+	SaveShowcase(showcase)
+end
+
+local function HandleUpdateOutfitStand(
+	player: Player,
+	roundedPosition: Vector3,
+	description: Types.SerializedDescription?
+)
+	local showcase = GetEditableShowcase(player)
+	if not showcase then
+		return
+	end
+
+	if not showcase.layout.getValidOutfitStandPositions()[roundedPosition] then
+		warn("Updated with an invalid position:", roundedPosition)
+		return
+	end
+
+	local stand = TableUtil.Find(showcase.outfitStands, function(stand)
+		return stand.roundedPosition == roundedPosition
+	end)
+
+	if not stand then
+		warn("Could not find stand when updating:", roundedPosition)
+		return
+	end
+
+	if HumanoidDescription.Equal(stand.description, description) then
+		-- Asset did not change
+		return
+	end
+
+	stand.description = description
+
+	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+	SaveShowcase(showcase)
+end
+
+local function HandleUpdateShowcaseSettings(player: Player, settings: ShowcaseEvents.UpdateSettings)
+	local showcase = GetEditableShowcase(player)
+	if not showcase then
 		return
 	end
 
 	local updateTime = os.clock()
 	showcase.lastUpdate = updateTime
 
-	if showcase.mode ~= "Edit" then
-		warn(player, "Tried to update a showcase that was not in edit mode.")
+	local primaryColorExists = Config.PrimaryColors[settings.primaryColor:ToHex()]
+	if not primaryColorExists then
+		warn("Invalid primary color sent:", settings.primaryColor)
 		return
 	end
 
-	if update.type == "UpdateStand" then
-		if not showcase.layout.getValidStandPositions()[update.roundedPosition] then
-			warn("Updated with an invalid position:", update.roundedPosition)
-			return
-		end
+	local accentColorExists = Config.AccentColors[settings.accentColor:ToHex()]
+	if not accentColorExists then
+		warn("Invalid accent color sent:", settings.accentColor)
+		return
+	end
 
-		local stand = TableUtil.Find(showcase.stands, function(stand)
-			return stand.roundedPosition == update.roundedPosition
+	local textureExists = Material:TextureExists(settings.texture)
+	if not textureExists then
+		warn("Invalid texture sent:", settings.texture)
+		return
+	end
+
+	if showcase.name ~= settings.name then
+		-- Yields
+		local success, result = pcall(function()
+			return TextService:FilterStringAsync(
+					settings.name,
+					player.UserId,
+					Enum.TextFilterContext.PublicChat
+				) :: TextFilterResult
 		end)
 
-		if not stand then
-			warn("Could not find stand when updating:", update.roundedPosition)
+		if not success then
+			-- Unable to filter, assume it's bad
+			-- This should really never happen
+			warn("TextService filter was unsuccessful!")
 			return
 		end
 
-		if stand.assetId == update.assetId then
-			-- Asset did not change
+		-- Yields
+		local filteredName = result:GetNonChatStringForBroadcastAsync()
+
+		-- Eliminates race conditions caused by updating name quickly
+		if showcase.lastUpdate ~= updateTime then
 			return
 		end
 
-		stand.assetId = update.assetId
-		if update.assetId then
-			ReplicateAsset(update.assetId)
-		end
-	elseif update.type == "UpdateSettings" then
-		local primaryColorExists = Config.PrimaryColors[update.primaryColor:ToHex()]
-		if not primaryColorExists then
-			warn("Invalid primary color sent:", update.primaryColor)
-			return
-		end
-
-		local accentColorExists = Config.AccentColors[update.accentColor:ToHex()]
-		if not accentColorExists then
-			warn("Invalid accent color sent:", update.accentColor)
-			return
-		end
-
-		local textureExists = Material:TextureExists(update.texture)
-		if not textureExists then
-			warn("Invalid texture sent:", update.texture)
-			return
-		end
-
-		if showcase.name ~= update.name then
-			-- Yields
-			local success, result = pcall(function()
-				return TextService:FilterStringAsync(
-						update.name,
-						player.UserId,
-						Enum.TextFilterContext.PublicChat
-					) :: TextFilterResult
-			end)
-
-			if not success then
-				-- Unable to filter, assume it's bad
-				-- This should really never happen
-				warn("TextService filter was unsuccessful!")
-				return
-			end
-
-			-- Yields
-			local filteredName = result:GetNonChatStringForBroadcastAsync()
-
-			-- Eliminates race conditions caused by updating name quickly
-			if showcase.lastUpdate ~= updateTime then
-				return
-			end
-
-			showcase.name = Util.LimitString(filteredName, Config.MaxPlaceNameLength)
-		end
-
-		showcase.primaryColor = update.primaryColor
-		showcase.accentColor = update.accentColor
-		showcase.thumbId = update.thumbId
-		showcase.logoId = update.logoId
-		showcase.texture = update.texture
-	elseif update.type == "UpdateLayout" then
-		local newLayout = Layouts:GetLayout(update.layoutId)
-		showcase.layout = newLayout
-		showcase.stands = PopulateLayoutStands(showcase.stands, newLayout.getValidStandPositions())
+		showcase.name = Util.LimitString(filteredName, Config.MaxPlaceNameLength)
 	end
+
+	showcase.primaryColor = settings.primaryColor
+	showcase.accentColor = settings.accentColor
+	showcase.thumbId = settings.thumbId
+	showcase.logoId = settings.logoId
+	showcase.texture = settings.texture
+
+	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+	SaveShowcase(showcase)
+end
+
+local function HandleUpdateShowcaseLayout(player: Player, layoutId: LayoutData.LayoutId)
+	local showcase = GetEditableShowcase(player)
+	if not showcase then
+		return
+	end
+	local newLayout = Layouts:GetLayout(layoutId)
+	showcase.layout = newLayout
+	showcase.stands = PopulateLayoutStands(showcase.stands, newLayout.getValidStandPositions())
+	showcase.outfitStands = PopulateLayoutOutfitStands(showcase.outfitStands, newLayout.getValidOutfitStandPositions())
 
 	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
 	SaveShowcase(showcase)
@@ -500,9 +607,15 @@ end
 function ShowcaseService:Initialize()
 	CreateShowcaseEvent:On(HandleCreatePlace)
 	EditShowcaseEvent:On(HandleEditShowcase)
-	UpdateShowcaseEvent:On(HandleUpdateShowcase)
 	DeleteShowcaseEvent:On(HandleDeleteShowcase)
 	PurchaseAssetEvent:On(HandlePurchaseAsset)
+
+	ShowcaseEvents.UpdateStand:SetServerListener(HandleUpdateStand)
+	ShowcaseEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
+	ShowcaseEvents.UpdateSettings:SetServerListener(HandleUpdateShowcaseSettings)
+	ShowcaseEvents.UpdateLayout:SetServerListener(function(player, id)
+		HandleUpdateShowcaseLayout(player, id :: LayoutData.LayoutId)
+	end)
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 end

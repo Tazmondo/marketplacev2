@@ -6,8 +6,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 
-local function HandleUpdateAccessories(player: Player, serDescription: HumanoidDescription.SerializedDescription)
+local function HandleUpdateAccessories(player: Player, serDescription: Types.SerializedDescription)
 	local description = HumanoidDescription.Deserialize(serDescription)
 
 	local character = player.Character
@@ -23,7 +24,7 @@ local function HandleUpdateAccessories(player: Player, serDescription: HumanoidD
 	humanoid:ApplyDescription(description)
 end
 
-local function GenerateModel(player: Player, serDescription: HumanoidDescription.SerializedDescription): Model?
+local function GenerateModel(player: Player, serDescription: Types.SerializedDescription): Model?
 	local description = HumanoidDescription.Deserialize(serDescription)
 
 	local character = player.Character

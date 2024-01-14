@@ -13,8 +13,6 @@ export type Accessory = {
 	assetType: Enum.AvatarAssetType,
 }
 
-export type SerializedDescription = { string | number }
-
 local function SerializeAccessories(description: HumanoidDescription): string
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
 
@@ -53,7 +51,7 @@ end
 
 -- The reason I serialize and deserialize into an array is to save space on all the keys
 -- This drastically reduces the data used to store each outfit
-function HumanoidDescription.Serialize(description: HumanoidDescription): SerializedDescription
+function HumanoidDescription.Serialize(description: HumanoidDescription): Types.SerializedDescription
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE!
 	return {
 		SerializeAccessories(description),
@@ -79,10 +77,11 @@ function HumanoidDescription.Serialize(description: HumanoidDescription): Serial
 		description.Torso,
 		description.TorsoColor:ToHex(),
 		description.WidthScale,
+		description.IdleAnimation,
 	}
 end
 
-function HumanoidDescription.Deserialize(descriptionInfo: SerializedDescription): HumanoidDescription
+function HumanoidDescription.Deserialize(descriptionInfo: Types.SerializedDescription): HumanoidDescription
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
 	local description = Instance.new("HumanoidDescription")
 	local descriptionInfo = descriptionInfo :: { any }
@@ -110,6 +109,7 @@ function HumanoidDescription.Deserialize(descriptionInfo: SerializedDescription)
 	description.Torso = descriptionInfo[21]
 	description.TorsoColor = Color3.fromHex(descriptionInfo[22])
 	description.WidthScale = descriptionInfo[23]
+	description.IdleAnimation = descriptionInfo[24] or 0
 
 	return description
 end
@@ -182,14 +182,33 @@ function HumanoidDescription.WithAccessories(
 	return newDescription
 end
 
-function HumanoidDescription.Equal(desc1: HumanoidDescription, desc2: HumanoidDescription)
-	return HttpService:JSONEncode(HumanoidDescription.Serialize(desc1))
-		== HttpService:JSONEncode(HumanoidDescription.Serialize(desc2))
+function HumanoidDescription.Equal(
+	desc1: HumanoidDescription | Types.SerializedDescription | nil,
+	desc2: HumanoidDescription | Types.SerializedDescription | nil
+)
+	if desc1 == nil and desc2 == nil then
+		return true
+	elseif desc1 == nil or desc2 == nil then
+		return false
+	end
+
+	local stringDesc1 = HumanoidDescription.Stringify(desc1)
+	local stringDesc2 = HumanoidDescription.Stringify(desc2)
+
+	return stringDesc1 == stringDesc2
+end
+
+function HumanoidDescription.Stringify(description: Types.SerializedDescription | HumanoidDescription)
+	if typeof(description) == "Instance" then
+		return HttpService:JSONEncode(HumanoidDescription.Serialize(description))
+	else
+		return HttpService:JSONEncode(description)
+	end
 end
 
 function HumanoidDescription.Guard(info: unknown)
 	HumanoidDescription.Deserialize(info :: any)
-	return info :: SerializedDescription
+	return info :: Types.SerializedDescription
 end
 
 return HumanoidDescription

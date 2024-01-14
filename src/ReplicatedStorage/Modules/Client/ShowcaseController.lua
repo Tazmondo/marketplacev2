@@ -5,11 +5,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
+local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
 local CatalogUI = require(ReplicatedStorage.Modules.Client.UI.CatalogUI)
 local CartController = require(script.Parent.CartController)
+local CharacterCache = require(script.Parent.CharacterCache)
 local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
 local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
@@ -17,7 +20,6 @@ local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
 
-local UpdateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.UpdateShowcaseEvent):Client()
 local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Client()
 
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
@@ -49,7 +51,26 @@ type RenderedStand = {
 	destroyed: boolean,
 }
 
+type RenderedOutfit = {
+	standId: number,
+	CFrame: CFrame,
+	placeholderModel: Model,
+	prompt: ProximityPrompt,
+	roundedPosition: Vector3,
+
+	description: Types.SerializedDescription?,
+	outfitModel: Model?,
+
+	-- Since fetching the model is asynchronous, we need this in case a stand is destroyed
+	-- Before the model is fetched, so the code knows not to parent the model
+	destroyed: boolean,
+}
+
+-- Subtract from the placeholder pivot to get the ground position
+local OUTFIT_VERTICAL_OFFSET = 3.7162
+
 local renderedStands: { [Vector3]: RenderedStand } = {}
+local renderedOutfitStands: { [Vector3]: RenderedOutfit } = {}
 local currentModel: Model? = nil
 local currentShowcase: Types.NetworkShowcase?
 
@@ -61,26 +82,41 @@ local function GetNextStandId()
 	return standId
 end
 
-local function SetDisplayVisibility(display: BasePart, isVisible: boolean)
-	local light = display:FindFirstChild("PointLight") :: PointLight?
-	local attachment = display:FindFirstChild("Attachment")
-	local shine = if attachment then attachment:FindFirstChild("Shine") :: ParticleEmitter? else nil
+local function SetDisplayVisibility(display: BasePart | Model, isVisible: boolean)
+	if display:IsA("BasePart") then
+		local light = display:FindFirstChild("PointLight") :: PointLight?
+		local attachment = display:FindFirstChild("Attachment")
+		local shine = if attachment then attachment:FindFirstChild("Shine") :: ParticleEmitter? else nil
 
-	if isVisible then
-		display.Transparency = 0.8
-		if light then
-			light.Enabled = true
-		end
-		if shine then
-			shine.Enabled = true
+		if isVisible then
+			display.Transparency = 0.8
+			if light then
+				light.Enabled = true
+			end
+			if shine then
+				shine.Enabled = true
+			end
+		else
+			display.Transparency = 1
+			if light then
+				light.Enabled = false
+			end
+			if shine then
+				shine.Enabled = false
+			end
 		end
 	else
-		display.Transparency = 1
-		if light then
-			light.Enabled = false
-		end
-		if shine then
-			shine.Enabled = false
+		-- display is a model
+		local TRANSPARENCY_ATTRIBUTE = "SHOWCASE_DEFAULT_TRANSPARENCY"
+		for i, part in display:GetDescendants() do
+			if part:IsA("BasePart") then
+				local defaultTransparency = part:GetAttribute(TRANSPARENCY_ATTRIBUTE)
+				if not defaultTransparency then
+					defaultTransparency = part.Transparency
+					part:SetAttribute(TRANSPARENCY_ATTRIBUTE, defaultTransparency)
+				end
+				part.Transparency = if isVisible then defaultTransparency else 1
+			end
 		end
 	end
 end
@@ -119,7 +155,21 @@ local function DestroyStand(stand: RenderedStand)
 	if renderedStands[stand.roundedPosition].standId == stand.standId then
 		renderedStands[stand.roundedPosition] = nil
 	else
-		warn("Destroyed old stand at a position", renderedStands[stand.roundedPosition].standId, stand.standId)
+		warn("Destroyed old stand at a position")
+	end
+end
+
+local function DestroyOutfitStand(stand: RenderedOutfit)
+	stand.destroyed = true
+	if stand.outfitModel then
+		stand.outfitModel:Destroy()
+	end
+
+	stand.prompt:Destroy()
+	if renderedOutfitStands[stand.roundedPosition].standId == stand.standId then
+		renderedStands[stand.roundedPosition] = nil
+	else
+		warn("Destroyed old outfit stand at a position")
 	end
 end
 
@@ -127,18 +177,118 @@ local function ClearStands()
 	for position, stand in renderedStands do
 		DestroyStand(stand)
 	end
+	for position, stand in renderedOutfitStands do
+		DestroyOutfitStand(stand)
+	end
 end
 
-local function AddItem(roundedPosition: Vector3, assetId: number?)
-	UpdateShowcaseEvent:Fire({
-		type = "UpdateStand",
-		roundedPosition = roundedPosition,
-		assetId = assetId,
-	})
-end
+local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: Model })
+	local standMap: { [Vector3]: Types.OutfitStand? } = {}
+	for i, stand in showcase.outfitStands do
+		standMap[stand.roundedPosition] = stand
+	end
 
-local function RemoveItem(roundedPosition: Vector3)
-	AddItem(roundedPosition, nil)
+	for roundedPosition, model in positionMap do
+		local modelPart = model:FindFirstChild("LowerTorso")
+		assert(modelPart, "Outfit placeholder did not have a lowertorso (for the prompt to go in)")
+
+		local stand = standMap[roundedPosition]
+		local existingStand = renderedOutfitStands[roundedPosition]
+		if existingStand then
+			local existingDescription = existingStand.description
+			local newDescription = if stand then stand.description else nil
+
+			if HumanoidDescription.Equal(existingDescription, newDescription) then
+				continue
+			else
+				DestroyOutfitStand(existingStand)
+			end
+		end
+
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.RequiresLineOfSight = false
+		prompt.UIOffset = Config.StandProximityOffset
+		prompt.Parent = modelPart
+
+		local renderedStand: RenderedOutfit = {
+			CFrame = model:GetPivot(),
+			standId = GetNextStandId(),
+			placeholderModel = model,
+			prompt = prompt,
+			roundedPosition = roundedPosition,
+
+			description = if stand then stand.description else nil,
+
+			destroyed = false,
+		}
+		renderedOutfitStands[roundedPosition] = renderedStand
+
+		if stand and stand.description then
+			CharacterCache:LoadWithDescription(stand.description):After(function(outfit)
+				if not outfit then
+					return
+				end
+
+				if renderedStand.destroyed then
+					outfit:Destroy()
+					return
+				end
+
+				outfit.Name = ""
+				SetDisplayVisibility(model, false)
+
+				local humanoid = outfit:FindFirstChildOfClass("Humanoid") :: Humanoid
+				local HRP = humanoid.RootPart :: BasePart
+				HRP.Anchored = true
+
+				local animate = outfit:FindFirstChild("Animate")
+				if animate then
+					animate:Destroy()
+				end
+
+				-- Subtract the offset to get to ground level, then add hipheight and HRP size to position so feet are touching the ground
+				local targetCFrame = renderedStand.CFrame
+					+ Vector3.new(0, humanoid.HipHeight + (HRP.Size.Y / 2) - OUTFIT_VERTICAL_OFFSET, 0)
+
+				outfit:PivotTo(targetCFrame)
+				renderedStand.outfitModel = outfit
+
+				outfit.Parent = renderedAccessoryFolder
+			end)
+		end
+
+		if showcase.mode == "Edit" then
+			if stand and stand.description then
+				prompt.ActionText = "Remove Outfit"
+				prompt.ObjectText = "Stand"
+				prompt.Triggered:Connect(function()
+					ShowcaseEvents.UpdateOutfitStand:FireServer(roundedPosition, nil)
+				end)
+			else
+				SetDisplayVisibility(model, true)
+				prompt.ActionText = "Add Outfit"
+				prompt.ObjectText = "Stand"
+				prompt.Triggered:Connect(function()
+					local outfit = CatalogUI:SelectOutfit():Await()
+					if outfit then
+						ShowcaseEvents.UpdateOutfitStand:FireServer(
+							roundedPosition,
+							HumanoidDescription.Serialize(outfit)
+						)
+					end
+				end)
+			end
+		else
+			SetDisplayVisibility(model, false)
+			if stand and stand.description then
+				prompt.ActionText = ""
+				prompt.ObjectText = ""
+				prompt.Triggered:Connect(function()
+					CartController:UseDescription(HumanoidDescription.Deserialize(stand.description))
+				end)
+			end
+		end
+	end
 end
 
 local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: BasePart })
@@ -184,6 +334,7 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 
 			destroyed = false,
 		}
+		renderedStands[roundedPosition] = renderedStand
 
 		if stand and stand.assetId then
 			GetAccessory(stand.assetId, standScale):After(function(model)
@@ -225,7 +376,7 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 				prompt.ObjectText = "Stand"
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					RemoveItem(roundedPosition)
+					ShowcaseEvents.UpdateStand:FireServer(roundedPosition, nil)
 				end)
 			else
 				SetDisplayVisibility(part, true)
@@ -235,7 +386,7 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 				prompt.Triggered:Connect(function()
 					local selectedItem = CatalogUI:SelectItem():Await()
 					if selectedItem then
-						AddItem(roundedPosition, selectedItem)
+						ShowcaseEvents.UpdateStand:FireServer(roundedPosition, selectedItem)
 					end
 				end)
 			end
@@ -251,8 +402,6 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 				end)
 			end
 		end
-
-		renderedStands[roundedPosition] = renderedStand
 	end
 end
 
@@ -333,14 +482,23 @@ local function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 	if showcase then
 		LoadShowcaseAppearance(showcase)
 
-		local positionMap: { [Vector3]: BasePart } = {}
+		local positionMap = {}
+		local outfitPositionMap = {}
+
 		for i, descendant in currentModel:GetDescendants() do
-			if descendant:IsA("BasePart") and descendant:HasTag(Config.StandTag) then
+			if descendant:HasTag(Config.StandTag) then
+				assert(descendant:IsA("BasePart"), "Non-part tagged as stand.")
 				local position = Util.RoundedVector(currentModel:GetPivot():PointToObjectSpace(descendant.Position))
 				positionMap[position] = descendant
+			elseif descendant:HasTag(Config.OutfitStandTag) then
+				assert(descendant:IsA("Model"), "Non-model tagged as outfit stand.")
+				local position =
+					Util.RoundedVector(currentModel:GetPivot():PointToObjectSpace(descendant:GetPivot().Position))
+				outfitPositionMap[position] = descendant
 			end
 		end
 		CreateStands(showcase, positionMap)
+		CreateOutfitStands(showcase, outfitPositionMap)
 
 		if showcase.mode == "Edit" then
 			ShowcaseEditUI:Display(showcase)
