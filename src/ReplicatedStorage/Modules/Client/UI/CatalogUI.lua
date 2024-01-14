@@ -750,14 +750,6 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 			itemSet[accessory.AssetId] = true
 		end
 
-		local items = {}
-		for id, _ in itemSet do
-			local details = DataFetch.GetItemDetails(id, Players.LocalPlayer):Await()
-			if details then
-				table.insert(items, details)
-			end
-		end
-
 		if outfitPaneTracker ~= tracker then
 			return
 		end
@@ -769,21 +761,31 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 		end
 
 		local itemTemplate = gui.RightPane.Marketplace.Results.ListWrapper.List.ItemWrapper
-		for i, item in items do
+		for id, _ in itemSet do
 			local itemElement = itemTemplate:Clone()
 
 			itemElement.Visible = true
-			itemElement.Buy.Visible = true
-			itemElement.IsLimited.Visible = item.limited ~= nil
-			itemElement.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(item.assetId)
+			itemElement.Buy.Visible = false
+			itemElement.Owned.Visible = false
 			itemElement:SetAttribute("Temporary", true)
-			itemElement:SetAttribute("AssetId", item.assetId)
+			itemElement:SetAttribute("AssetId", id)
+			itemElement.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
 
 			itemElement.Activated:Connect(function()
-				CartController:ToggleInCart(item.assetId)
+				CartController:ToggleInCart(id)
 			end)
 
 			itemElement.Parent = outfitUI.Wearing.ListWrapper.List
+
+			DataFetch.GetItemDetails(id, Players.LocalPlayer):After(function(details)
+				if not details or itemElement.Parent == nil then
+					return
+				end
+
+				itemElement.IsLimited.Visible = details.limited ~= nil
+				itemElement.Buy.Visible = not details.owned
+				itemElement.Owned.Visible = details.owned or false
+			end)
 		end
 
 		local function RenderEquipped()

@@ -284,7 +284,7 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 				prompt.ActionText = ""
 				prompt.ObjectText = ""
 				prompt.Triggered:Connect(function()
-					CartController:UseDescription(HumanoidDescription.Deserialize(stand.description))
+					CatalogUI:DisplayOutfit(HumanoidDescription.Deserialize(stand.description))
 				end)
 			end
 		end
