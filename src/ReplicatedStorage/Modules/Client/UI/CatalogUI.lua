@@ -413,6 +413,18 @@ function RenderOutfits()
 		row.Visible = true
 		row.Title.Visible = true
 		row.Title.TextLabel.Text = outfit.name
+
+		local function Equipped(stroke: UIStroke, base: HumanoidDescription)
+			local description = CartController:GetDescription():Await()
+			stroke.Enabled = HumanoidDescription.Equal(description, base)
+		end
+
+		task.spawn(Equipped, row.UIStroke, outfit.description)
+		local conn = CartController.CartUpdated:Connect(function()
+			Equipped(row.UIStroke, outfit.description)
+		end)
+		row.Destroying:Once(conn)
+
 		row:SetAttribute("Temporary", true)
 
 		row.Activated:Connect(function()
