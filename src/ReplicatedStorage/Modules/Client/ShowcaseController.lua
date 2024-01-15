@@ -241,6 +241,8 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 				local HRP = humanoid.RootPart :: BasePart
 				HRP.Anchored = true
 
+				outfit:ScaleTo(Config.DefaultOutfitScale)
+
 				local animate = outfit:FindFirstChild("Animate")
 				if animate then
 					animate:Destroy()
