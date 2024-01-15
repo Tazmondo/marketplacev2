@@ -28,7 +28,7 @@ ConfirmUI.Confirmations = {
 	} :: Confirmation,
 	DeleteOutfit = {
 		Title = "Delete Outfit",
-		Content = "Delete this outfit?",
+		Content = "Are you sure you want to delete this outfit? You will not be able to access it anymore.",
 		Proceed = "Delete",
 		Cancel = "Cancel",
 	},
