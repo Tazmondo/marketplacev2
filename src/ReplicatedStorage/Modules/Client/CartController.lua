@@ -17,6 +17,7 @@ export type CartItem = {
 -- O(1) lookup time but also ordered
 local cartItems: { CartItem } = {}
 local cartSet: { [number]: true? } = {}
+local cachedDescription: HumanoidDescription? = nil
 
 CartController.CartUpdated = Signal()
 
@@ -25,29 +26,6 @@ local function NewCartItem(id: number)
 		id = id,
 		equipped = true,
 	}
-end
-
-function UpdateCharacter()
-	local character = Players.LocalPlayer.Character
-	if not character then
-		return
-	end
-
-	CartController:GetDescription():After(function(description)
-		AvatarEvents.ApplyDescription:FireServer(HumanoidDescription.Serialize(description))
-	end)
-	CartController.CartUpdated:Fire(cartItems)
-end
-
-function CartController:GetEquippedIds(): { number }
-	return TableUtil.Map(
-		TableUtil.Filter(cartItems, function(item)
-			return item.equipped == true
-		end),
-		function(item)
-			return item.id
-		end
-	)
 end
 
 local function GetEquippedAccessories()
@@ -74,7 +52,7 @@ local function GetEquippedAccessories()
 	end)
 end
 
-function CartController:GetDescription()
+local function GetDescription()
 	return Future.new(function(): HumanoidDescription
 		local description: HumanoidDescription
 
@@ -94,6 +72,36 @@ function CartController:GetDescription()
 		HumanoidDescription.ApplyToDescription(description, GetEquippedAccessories():Await())
 
 		return description
+	end)
+end
+
+function UpdateCharacter()
+	local character = Players.LocalPlayer.Character
+	if not character then
+		return
+	end
+
+	GetDescription():After(function(description)
+		AvatarEvents.ApplyDescription:FireServer(HumanoidDescription.Serialize(description))
+		cachedDescription = description
+	end)
+	CartController.CartUpdated:Fire(cartItems)
+end
+
+function CartController:GetEquippedIds(): { number }
+	return TableUtil.Map(
+		TableUtil.Filter(cartItems, function(item)
+			return item.equipped == true
+		end),
+		function(item)
+			return item.id
+		end
+	)
+end
+
+function CartController:GetDescription()
+	return Future.new(function()
+		return cachedDescription or GetDescription():Await()
 	end)
 end
 
