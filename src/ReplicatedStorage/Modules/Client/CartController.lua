@@ -17,7 +17,7 @@ export type CartItem = {
 -- O(1) lookup time but also ordered
 local cartItems: { CartItem } = {}
 local cartSet: { [number]: true? } = {}
-local cachedDescription: HumanoidDescription? = nil
+local cachedDescription: Future.Future<HumanoidDescription>? = nil
 
 CartController.CartUpdated = Signal()
 
@@ -81,9 +81,11 @@ function UpdateCharacter()
 		return
 	end
 
-	GetDescription():After(function(description)
+	local descriptionFuture = GetDescription()
+	cachedDescription = descriptionFuture
+
+	descriptionFuture:After(function(description)
 		AvatarEvents.ApplyDescription:FireServer(HumanoidDescription.Serialize(description))
-		cachedDescription = description
 	end)
 	CartController.CartUpdated:Fire(cartItems)
 end
@@ -101,7 +103,7 @@ end
 
 function CartController:GetDescription()
 	return Future.new(function()
-		return cachedDescription or GetDescription():Await()
+		return if cachedDescription then cachedDescription:Await() else GetDescription():Await()
 	end)
 end
 

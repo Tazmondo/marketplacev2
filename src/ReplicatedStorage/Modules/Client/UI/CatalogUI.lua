@@ -868,7 +868,7 @@ function RenderPreviewPane(description: HumanoidDescription)
 		replicatedModel:Destroy()
 		model.Name = "CharacterModel"
 
-		local existingModel = studio:FindFirstChild("CharacterModel")
+		local existingModel = studio:FindFirstChild(model.Name)
 		if existingModel then
 			existingModel:Destroy()
 		end
@@ -876,6 +876,13 @@ function RenderPreviewPane(description: HumanoidDescription)
 		local HRP = model:FindFirstChild("HumanoidRootPart") :: BasePart
 		local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 		local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+
+		-- Silences "exception while signaling: Must be a LuaSourceContainer" error
+		local animateScript = model:FindFirstChild("Animate") :: LocalScript?
+		if animateScript then
+			animateScript.Enabled = false -- just destroying didn't work, need to disable first.
+			animateScript:Destroy()
+		end
 
 		-- Allow accessories to attach
 		model:PivotTo(studioStand.CFrame + Vector3.new(0, humanoid.HipHeight + (HRP.Size.Y / 2), 0))

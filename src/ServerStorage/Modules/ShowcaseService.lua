@@ -74,7 +74,6 @@ function ReplicateAsset(assetId: number)
 
 			local accessory = playerModel:FindFirstChildOfClass("Accessory")
 			if not accessory then
-				warn(`Failed to fetch accessory for {assetId}`)
 				return
 			end
 			local meshPart = accessory:FindFirstChildOfClass("MeshPart")
