@@ -243,9 +243,11 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 
 				outfit:ScaleTo(Config.DefaultOutfitScale)
 
-				local animate = outfit:FindFirstChild("Animate")
-				if animate then
-					animate:Destroy()
+				-- Silences "exception while signaling: Must be a LuaSourceContainer" error
+				local animateScript = model:FindFirstChild("Animate") :: LocalScript?
+				if animateScript then
+					animateScript.Enabled = false -- just destroying didn't work, need to disable first.
+					animateScript:Destroy()
 				end
 
 				-- Subtract the offset to get to ground level, then add hipheight and HRP size to position so feet are touching the ground
