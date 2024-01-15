@@ -380,7 +380,7 @@ local function RenderOutfitToViewport(
 			local camera = viewport.CurrentCamera or Instance.new("Camera", viewport)
 			viewport.CurrentCamera = camera
 			camera.CameraType = Enum.CameraType.Scriptable
-			camera.FieldOfView = 20
+			camera.FieldOfView = 16
 
 			outfitModel:PivotTo(CFrame.new())
 			outfitModel.Parent = viewport.WorldModel
