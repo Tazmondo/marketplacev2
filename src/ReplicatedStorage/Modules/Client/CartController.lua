@@ -184,6 +184,13 @@ function CartController:IsInCart(id: number)
 	return cartSet[id] == true
 end
 
+function CartController:IsEquipped(id: number): boolean
+	return CartController:IsInCart(id)
+		and TableUtil.Find(cartItems, function(item)
+			return item.id == id and item.equipped
+		end) ~= nil
+end
+
 function CartController:ToggleEquipped(id: number, force: boolean?)
 	local cartItem = TableUtil.Find(cartItems, function(item)
 		return item.id == id

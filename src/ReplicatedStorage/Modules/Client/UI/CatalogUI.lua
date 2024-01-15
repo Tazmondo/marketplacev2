@@ -492,7 +492,7 @@ function RenderWearing()
 
 			local owned = if details then (details.owned or false) else false
 			item.Owned.Visible = owned
-			item.Buy.Visible = not owned
+			item.Buy.Visible = not owned and CartController:IsEquipped(cartItem.id)
 
 			if not details then
 				return
@@ -803,15 +803,22 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 				end
 
 				itemElement.IsLimited.Visible = details.limited ~= nil
-				itemElement.Buy.Visible = not details.owned
+				itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id)
 				itemElement.Owned.Visible = details.owned or false
+				itemElement:SetAttribute("Owned", details.owned)
 			end)
 		end
 
 		local function RenderEquipped()
 			for i, itemElement in outfitUI.Wearing.ListWrapper.List:GetChildren() :: { typeof(itemTemplate) } do
 				if itemElement:GetAttribute("Temporary") then
-					itemElement.UIStroke.Enabled = CartController:IsInCart(itemElement:GetAttribute("AssetId"))
+					local inCart = CartController:IsInCart(itemElement:GetAttribute("AssetId"))
+					local owned = itemElement:GetAttribute("Owned")
+
+					itemElement.UIStroke.Enabled = inCart
+					if owned ~= nil then
+						itemElement.Buy.Visible = not owned and inCart
+					end
 				end
 			end
 
