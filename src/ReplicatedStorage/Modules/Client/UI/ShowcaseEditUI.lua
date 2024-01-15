@@ -228,7 +228,7 @@ function PopulateLayoutFrame()
 			SwitchLayout(layout.id)
 		end)
 
-		if id == Layouts:GetDefaultLayoutId() then
+		if id == Config.DefaultLayout then
 			newLayout.LayoutOrder = -1
 		end
 

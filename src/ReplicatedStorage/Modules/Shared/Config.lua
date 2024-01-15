@@ -3,6 +3,7 @@ local StarterGui = game:GetService("StarterGui")
 
 local Types = require(script.Parent.Types)
 local UITypes = require(ReplicatedStorage.Modules.Client.UI.UITypes)
+local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 
 local colorPickers = (StarterGui:FindFirstChild("Main") :: UITypes.Main).ControllerEdit
 
@@ -51,6 +52,7 @@ local Config = {
 
 	DefaultPrimaryColor = Color3.fromRGB(215, 197, 154),
 	DefaultAccentColor = Color3.fromRGB(215, 197, 154),
+	DefaultLayout = "Shop 5" :: LayoutData.LayoutId,
 	DefaultShopThumbnail = 15664989981,
 
 	DefaultFeed = "Random" :: Types.FeedType,

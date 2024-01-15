@@ -82,7 +82,7 @@ function GenerateNumberOfStandsFunction(...: PositionFunction): () -> number
 	end
 end
 
-function Layouts:LayoutIdExists(id: string)
+function Layouts:LayoutIdExists(id: string): boolean
 	return savedLayouts[id :: LayoutData.LayoutId] ~= nil
 end
 
@@ -128,12 +128,10 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 	})
 end
 
-function Layouts:GetDefaultLayoutId(): LayoutData.LayoutId
-	return "Shop 1"
-end
-
 for layout: LayoutData.LayoutId, thumbnail in LayoutData.layoutData do
 	SetupLayout(layout, thumbnail)
 end
+
+assert(Layouts:LayoutIdExists(Config.DefaultLayout), `Default layout {Config.DefaultLayout} is not a valid layout.`)
 
 return Layouts

@@ -377,7 +377,7 @@ function HandleCreatePlace(player: Player)
 
 	local newShowcase: Types.Showcase = {
 		name = `{player.Name}'s Shop`,
-		layoutId = Layouts:GetDefaultLayoutId(),
+		layoutId = Config.DefaultLayout,
 		stands = {},
 		outfitStands = {},
 		GUID = HttpService:GenerateGUID(false),

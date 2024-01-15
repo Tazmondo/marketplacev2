@@ -10,7 +10,6 @@ local DataService = require(ServerStorage.Modules.Data.DataService)
 local ShowcaseService = require(ServerStorage.Modules.ShowcaseService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
-local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
@@ -32,7 +31,7 @@ end
 local DefaultShowcase: Types.Showcase = {
 	name = "Untitled Shop",
 	owner = 68252170,
-	layoutId = Layouts:GetDefaultLayoutId(),
+	layoutId = Config.DefaultLayout,
 	stands = {},
 	outfitStands = {},
 	GUID = HttpService:GenerateGUID(false),

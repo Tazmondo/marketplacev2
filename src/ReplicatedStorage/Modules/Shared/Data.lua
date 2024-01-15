@@ -54,7 +54,7 @@ export type Showcase = {
 local showcaseTemplate: Showcase = {
 	name = "Untitled Shop",
 	thumbId = Config.DefaultShopThumbnail,
-	layoutId = Layouts:GetDefaultLayoutId(),
+	layoutId = Config.DefaultLayout,
 	GUID = HttpService:GenerateGUID(false),
 	stands = {},
 	outfitStands = {},
@@ -204,7 +204,7 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 
 	local layoutId: LayoutData.LayoutId = if Layouts:LayoutIdExists(showcase.layoutId)
 		then showcase.layoutId :: LayoutData.LayoutId
-		else Layouts:GetDefaultLayoutId()
+		else Config.DefaultLayout
 
 	local texture: string = if Material:TextureExists(showcase.texture) then showcase.texture else Material:GetDefault()
 
