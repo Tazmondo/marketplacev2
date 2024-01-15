@@ -36,6 +36,10 @@ type SearchResult = {
 	Id: number,
 	Name: string,
 	Price: number?,
+	LowestPrice: number?,
+	LowestResalePrice: number?,
+	UnitsAvailableForConsumption: number?,
+	HasResellers: boolean?,
 	CreatorType: "User" | "Group",
 	AssetType: string?,
 	ItemRestrictions: { "Limited" | "LimitedUnique" | "Collectible" | "ThirteenPlus" },
@@ -225,7 +229,11 @@ function RefreshResults()
 
 		if CartController:IsInCart(result.Id) then
 			item.Buy.Visible = true
-			item.Buy.TextLabel.Text = tostring(result.Price)
+			item.Buy.TextLabel.Text = tostring(
+				if result.HasResellers and result.LowestResalePrice
+					then result.LowestResalePrice
+					else result.LowestPrice or result.Price or 0
+			)
 			item.Buy.Activated:Connect(function()
 				PurchaseAssetEvent:Fire(result.Id)
 			end)
@@ -493,6 +501,7 @@ function RenderWearing()
 			local owned = if details then (details.owned or false) else false
 			item.Owned.Visible = owned
 			item.Buy.Visible = not owned and CartController:IsEquipped(cartItem.id)
+			item.Buy.TextLabel.Text = if details and details.price then tostring(details.price) else "N/A"
 
 			if not details then
 				return
@@ -804,6 +813,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 
 				itemElement.IsLimited.Visible = details.limited ~= nil
 				itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id)
+				itemElement.Buy.TextLabel.Text = if details.price then tostring(details.price) else "N/A"
 				itemElement.Owned.Visible = details.owned or false
 				itemElement:SetAttribute("Owned", details.owned)
 			end)
