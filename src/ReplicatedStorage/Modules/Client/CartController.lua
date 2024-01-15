@@ -18,6 +18,7 @@ export type CartItem = {
 local cartItems: { CartItem } = {}
 local cartSet: { [number]: true? } = {}
 local cachedDescription: Future.Future<HumanoidDescription>? = nil
+local bodyParts = table.clone(HumanoidDescription.defaultBodyParts)
 
 CartController.CartUpdated = Signal()
 
@@ -70,6 +71,7 @@ local function GetDescription()
 		end
 
 		HumanoidDescription.ApplyToDescription(description, GetEquippedAccessories():Await())
+		HumanoidDescription.ApplyBodyParts(description, bodyParts)
 
 		return description
 	end)
@@ -179,6 +181,8 @@ function CartController:UseDescription(description: HumanoidDescription)
 		cartSet[accessory.AssetId] = true
 	end
 
+	bodyParts = HumanoidDescription.ExtractBodyParts(description)
+
 	UpdateCharacter()
 end
 
@@ -229,6 +233,8 @@ local function InitialCharacterLoad(char: Model)
 		table.insert(cartItems, NewCartItem(accessory.AssetId))
 		cartSet[accessory.AssetId] = true
 	end
+
+	bodyParts = HumanoidDescription.ExtractBodyParts(description)
 
 	CartController.CartUpdated:Fire(cartItems)
 end

@@ -13,6 +13,34 @@ export type Accessory = {
 	assetType: Enum.AvatarAssetType,
 }
 
+HumanoidDescription.defaultBodyParts = {
+	Face = 0,
+	Head = 0,
+	RightArm = 0,
+	RightLeg = 0,
+	LeftLeg = 0,
+	LeftArm = 0,
+	Torso = 0,
+	HeadColor = Color3.fromRGB(234, 184, 146),
+	RightArmColor = Color3.fromRGB(234, 184, 146),
+	LeftArmColor = Color3.fromRGB(234, 184, 146),
+	LeftLegColor = Color3.fromRGB(234, 184, 146),
+	RightLegColor = Color3.fromRGB(234, 184, 146),
+	TorsoColor = Color3.fromRGB(234, 184, 146),
+	BodyTypeScale = 0.3,
+	DepthScale = 1,
+	HeadScale = 1,
+	HeightScale = 1,
+	ProportionScale = 1,
+	WidthScale = 1,
+	GraphicTShirt = 0,
+	Shirt = 0,
+	Pants = 0,
+}
+TableUtil.Lock(HumanoidDescription.defaultBodyParts)
+
+export type BodyParts = typeof(HumanoidDescription.defaultBodyParts)
+
 local function SerializeAccessories(description: HumanoidDescription): string
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
 
@@ -171,6 +199,33 @@ function HumanoidDescription.ApplyToDescription(description: HumanoidDescription
 	description:SetAccessories(newAccessories, true)
 end
 
+function HumanoidDescription.ApplyBodyParts(description: HumanoidDescription, bodyParts: BodyParts)
+	description.Face = bodyParts.Face
+	description.Head = bodyParts.Head
+	description.RightArm = bodyParts.RightArm
+	description.RightLeg = bodyParts.RightLeg
+	description.LeftLeg = bodyParts.LeftLeg
+	description.LeftArm = bodyParts.LeftArm
+	description.Torso = bodyParts.Torso
+	description.HeadColor = bodyParts.HeadColor
+	description.RightArmColor = bodyParts.RightArmColor
+	description.LeftArmColor = bodyParts.LeftArmColor
+	description.LeftLegColor = bodyParts.LeftLegColor
+	description.RightLegColor = bodyParts.RightLegColor
+	description.TorsoColor = bodyParts.TorsoColor
+
+	description.BodyTypeScale = bodyParts.BodyTypeScale
+	description.DepthScale = bodyParts.DepthScale
+	description.HeadScale = bodyParts.HeadScale
+	description.HeightScale = bodyParts.HeightScale
+	description.ProportionScale = bodyParts.ProportionScale
+	description.WidthScale = bodyParts.WidthScale
+
+	description.GraphicTShirt = bodyParts.GraphicTShirt
+	description.Pants = bodyParts.Pants
+	description.Shirt = bodyParts.Shirt
+end
+
 -- Returns the base humanoid description, with the accessories of the other description
 function HumanoidDescription.WithAccessories(
 	base: HumanoidDescription,
@@ -196,6 +251,37 @@ function HumanoidDescription.Equal(
 	local stringDesc2 = HumanoidDescription.Stringify(desc2)
 
 	return stringDesc1 == stringDesc2
+end
+
+function HumanoidDescription.ExtractBodyParts(description: HumanoidDescription): BodyParts
+	local newParts = {
+		Face = description.Face,
+		Head = description.Head,
+		RightArm = description.RightArm,
+		RightLeg = description.RightLeg,
+		LeftLeg = description.LeftLeg,
+		LeftArm = description.LeftArm,
+		Torso = description.Torso,
+		HeadColor = description.HeadColor,
+		RightArmColor = description.RightArmColor,
+		LeftArmColor = description.LeftArmColor,
+		LeftLegColor = description.LeftLegColor,
+		RightLegColor = description.RightLegColor,
+		TorsoColor = description.TorsoColor,
+
+		BodyTypeScale = description.BodyTypeScale,
+		DepthScale = description.DepthScale,
+		HeadScale = description.HeadScale,
+		HeightScale = description.HeightScale,
+		ProportionScale = description.ProportionScale,
+		WidthScale = description.WidthScale,
+
+		GraphicTShirt = description.GraphicTShirt,
+		Pants = description.Pants,
+		Shirt = description.Shirt,
+	}
+
+	return newParts
 end
 
 function HumanoidDescription.Stringify(description: Types.SerializedDescription | HumanoidDescription)
