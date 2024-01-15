@@ -192,6 +192,9 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 		local modelPart = model:FindFirstChild("LowerTorso")
 		assert(modelPart, "Outfit placeholder did not have a lowertorso (for the prompt to go in)")
 
+		local standScale = model:GetScale()
+		local halvedScale = ((standScale - 1) * 0.5) + 1
+
 		local stand = standMap[roundedPosition]
 		local existingStand = renderedOutfitStands[roundedPosition]
 		if existingStand then
@@ -241,7 +244,7 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 				local HRP = humanoid.RootPart :: BasePart
 				HRP.Anchored = true
 
-				outfit:ScaleTo(Config.DefaultOutfitScale)
+				outfit:ScaleTo(standScale)
 
 				-- Silences "exception while signaling: Must be a LuaSourceContainer" error
 				local animateScript = model:FindFirstChild("Animate") :: LocalScript?
@@ -252,7 +255,7 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 
 				-- Subtract the offset to get to ground level, then add hipheight and HRP size to position so feet are touching the ground
 				local targetCFrame = renderedStand.CFrame
-					+ Vector3.new(0, humanoid.HipHeight + (HRP.Size.Y / 2) - OUTFIT_VERTICAL_OFFSET, 0)
+					+ Vector3.new(0, humanoid.HipHeight + (HRP.Size.Y / 2) - (OUTFIT_VERTICAL_OFFSET * halvedScale), 0)
 
 				outfit:PivotTo(targetCFrame)
 				renderedStand.outfitModel = outfit
