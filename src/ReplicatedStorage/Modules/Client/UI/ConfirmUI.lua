@@ -26,6 +26,12 @@ ConfirmUI.Confirmations = {
 		Proceed = "Reset",
 		Cancel = "Cancel",
 	} :: Confirmation,
+	DeleteOutfit = {
+		Title = "Delete Outfit",
+		Content = "Delete this outfit?",
+		Proceed = "Delete",
+		Cancel = "Cancel",
+	},
 }
 
 ConfirmUI.InputRequests = {

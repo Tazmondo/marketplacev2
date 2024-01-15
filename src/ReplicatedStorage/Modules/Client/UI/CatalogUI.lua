@@ -434,6 +434,14 @@ function RenderOutfits()
 				OutfitSelected:Fire(outfit.description)
 			end
 		end)
+
+		row.Delete.Activated:Connect(function()
+			local confirmed = ConfirmUI:Confirm(ConfirmUI.Confirmations.DeleteOutfit):Await()
+			if confirmed then
+				DataEvents.DeleteOutfit:FireServer(dataOutfit.name, dataOutfit.description)
+			end
+		end)
+
 		row.Parent = template.Parent
 
 		RenderOutfitToViewport(row.ImageFrame.Frame.OutfitImage, dataOutfit.description)

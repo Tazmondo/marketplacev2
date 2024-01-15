@@ -1114,8 +1114,11 @@ export type Catalog = ScreenGui & {
 						UIPadding: UIPadding,
 						List: ScrollingFrame & {
 							OutfitWrapper: ImageButton & {
-								UICorner: UICorner,
-								UIStroke: UIStroke,
+								Delete: TextButton & {
+									UIListLayout: UIListLayout,
+									UICorner: UICorner,
+									ImageLabel: ImageLabel,
+								},
 								Title: TextButton & {
 									UICorner: UICorner,
 									UISizeConstraint: UISizeConstraint,
@@ -1130,6 +1133,8 @@ export type Catalog = ScreenGui & {
 										},
 									},
 								},
+								UIStroke: UIStroke,
+								UICorner: UICorner,
 							},
 							UIGridLayout: UIGridLayout,
 							ItemWrapper: ImageButton & {

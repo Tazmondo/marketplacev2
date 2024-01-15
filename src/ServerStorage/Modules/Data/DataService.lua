@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
+local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
@@ -154,17 +155,24 @@ function DataService:WriteData(player: Player, mutate: (Data.Data) -> ())
 end
 
 local function HandleNewOutfit(player: Player, name: string, serDescription: Types.SerializedDescription)
-	local data = DataService:ReadData(player):Await()
-	if not data then
-		return
-	end
-
 	local newOutfit: Data.Outfit = {
 		name = name,
 		description = serDescription,
 	}
 	DataService:WriteData(player, function(data)
 		table.insert(data.outfits, newOutfit)
+	end)
+end
+
+local function HandleDeleteOutfit(player: Player, name: string, serDescription: Types.SerializedDescription)
+	DataService:WriteData(player, function(data)
+		local _, outfitIndex = TableUtil.Find(data.outfits, function(outfit)
+			return outfit.name == name and HumanoidDescription.Equal(outfit.description, serDescription)
+		end)
+
+		if outfitIndex then
+			table.remove(data.outfits, outfitIndex)
+		end
 	end)
 end
 
@@ -177,6 +185,7 @@ function DataService:Initialize()
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 
 	DataEvents.CreateOutfit:SetServerListener(HandleNewOutfit)
+	DataEvents.DeleteOutfit:SetServerListener(HandleDeleteOutfit)
 end
 
 DataService:Initialize()

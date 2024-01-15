@@ -12,4 +12,8 @@ return {
 	CreateOutfit = Red.SharedEvent("Data_CreateOutfit", function(name, serDescription)
 		return Guard.String(name), HumanoidDescription.Guard(serDescription)
 	end),
+
+	DeleteOutfit = Red.SharedEvent("Data_DeleteOutfit", function(name, serDescription)
+		return Guard.String(name), HumanoidDescription.Guard(serDescription)
+	end),
 }
