@@ -167,7 +167,7 @@ local function DestroyOutfitStand(stand: RenderedOutfit)
 
 	stand.prompt:Destroy()
 	if renderedOutfitStands[stand.roundedPosition].standId == stand.standId then
-		renderedStands[stand.roundedPosition] = nil
+		renderedOutfitStands[stand.roundedPosition] = nil
 	else
 		warn("Destroyed old outfit stand at a position")
 	end
