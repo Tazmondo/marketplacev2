@@ -35,6 +35,10 @@ export type OutfitStand = {
 	description: Types.SerializedDescription,
 	roundedPosition: VectorTable,
 }
+local outfitStandTemplate = {
+	description = HumanoidDescription.Serialize(Instance.new("HumanoidDescription")),
+	roundedPosition = { x = 0, y = 0, z = 0 },
+}
 
 export type Showcase = {
 	name: string,
@@ -111,6 +115,14 @@ function Data.Migrate(data: Data)
 
 		for i, stand in showcase.stands do
 			for k, v in pairs(standTemplate) do
+				if not stand[k] then
+					stand[k] = v
+				end
+			end
+		end
+
+		for i, stand in showcase.outfitStands do
+			for k, v in pairs(outfitStandTemplate) do
 				if not stand[k] then
 					stand[k] = v
 				end
