@@ -997,10 +997,6 @@ end
 function CatalogUI:Hide()
 	-- Toggles visibility off
 	if gui.Visible then
-		if currentMode == "OutfitPane" then
-			HideOutfitPreviewPage()
-		end
-
 		CatalogUI:Display(currentMode, currentUseMode)
 	end
 end
@@ -1011,6 +1007,10 @@ function CatalogUI:DisplayOutfit(outfit: HumanoidDescription)
 end
 
 function CatalogUI:Display(mode: DisplayMode, useMode: UseMode, previewDisabled: boolean?)
+	if currentMode == "OutfitPane" then
+		HideOutfitPreviewPage()
+	end
+
 	local cam = workspace.CurrentCamera
 	currentUseMode = useMode
 
