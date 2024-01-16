@@ -497,42 +497,49 @@ function RenderWearing()
 	local template = list.ItemWrapper
 	template.Visible = false
 
-	local cart = CartController:GetCart()
+	local cart = CartController:GetCartItems()
 
-	for i, cartItem in cart do
+	for i, cartItem in ipairs(cart) do
+		local id = cartItem.id
+		local equipped = cartItem.equipped
+
 		local item = template:Clone()
 
-		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(cartItem.id)
+		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
 
 		item.Visible = true
 		item:SetAttribute("Temporary", true)
-		item.LayoutOrder = #cart - i -- so most recent additions are at the top
-		item.UIStroke.Enabled = cartItem.equipped
+		item.LayoutOrder = (if cartItem.bodyPart then 1000 else 0) + #cart - i -- so most recent additions are at the top, and body parts are at the bottom
+		item.UIStroke.Enabled = equipped
 
 		item.Activated:Connect(function()
 			-- Toggle equip
 			if currentUseMode == "Wear" then
 				item.UIStroke.Enabled = not item.UIStroke.Enabled
-				CartController:ToggleEquipped(cartItem.id)
-			elseif currentUseMode == "Select" then
-				ItemSelected:Fire(cartItem.id)
+				if not cartItem.bodyPart then
+					CartController:ToggleEquipped(id)
+				elseif cartItem.bodyPart then
+					CartController:EquipBodyPart(cartItem.bodyPart, if item.UIStroke.Enabled then id else nil)
+				end
+			elseif currentUseMode == "Select" and not cartItem.bodyPart then
+				ItemSelected:Fire(id)
 			end
 		end)
 
 		item.Buy.Activated:Connect(function()
-			PurchaseAssetEvent:Fire(cartItem.id)
+			PurchaseAssetEvent:Fire(id)
 		end)
 
 		item.Parent = template.Parent
 
-		DataFetch.GetItemDetails(cartItem.id, Players.LocalPlayer):After(function(details)
+		DataFetch.GetItemDetails(id, Players.LocalPlayer):After(function(details)
 			if item.Parent == nil then
 				return
 			end
 
 			local owned = if details then (details.owned or false) else false
 			item.Owned.Visible = owned
-			item.Buy.Visible = not owned and CartController:IsEquipped(cartItem.id)
+			item.Buy.Visible = not owned and CartController:IsEquipped(id)
 			item.Buy.TextLabel.Text = if details and details.price then tostring(details.price) else "N/A"
 
 			if not details then

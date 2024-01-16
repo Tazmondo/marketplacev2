@@ -12,23 +12,24 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 export type CartItem = {
 	id: number,
 	equipped: boolean,
+	bodyPart: Enum.BodyPart?,
 }
 
 -- O(1) lookup time but also ordered
 local cartItems: { CartItem } = {}
 local cartSet: { [number]: true? } = {}
 local cachedDescription: Future.Future<HumanoidDescription>? = nil
-local bodyParts = table.clone(HumanoidDescription.defaultBodyParts)
+local bodyDescriptionTable = table.clone(HumanoidDescription.defaultBodyParts)
 
 local lastEquippedPackage: number? = nil
 
-
 CartController.CartUpdated = Signal()
 
-local function NewCartItem(id: number)
+local function NewCartItem(id: number, bodyPart: Enum.BodyPart?)
 	return {
 		id = id,
 		equipped = true,
+		bodyPart = bodyPart,
 	}
 end
 
@@ -49,7 +50,13 @@ local function GetEquippedAccessories()
 			return item ~= nil
 		end
 
-		local ids = CartController:GetEquippedIds()
+		local validItems = TableUtil.Filter(cartItems, function(item)
+			return item.bodyPart == nil and item.equipped
+		end)
+		local ids = TableUtil.Map(validItems, function(item)
+			return item.id
+		end)
+
 		local accessories = TableUtil.Filter(TableUtil.Map(ids, GetAccessory), NotNil)
 
 		return accessories :: { HumanoidDescription.Accessory }
@@ -74,7 +81,7 @@ local function GetDescription()
 		end
 
 		HumanoidDescription.ApplyToDescription(description, GetEquippedAccessories():Await())
-		HumanoidDescription.ApplyBodyParts(description, bodyParts)
+		HumanoidDescription.ApplyBodyParts(description, bodyDescriptionTable)
 
 		return description
 	end)
@@ -93,17 +100,6 @@ function UpdateCharacter()
 		AvatarEvents.ApplyDescription:FireServer(HumanoidDescription.Serialize(description))
 	end)
 	CartController.CartUpdated:Fire(cartItems)
-end
-
-function CartController:GetEquippedIds(): { number }
-	return TableUtil.Map(
-		TableUtil.Filter(cartItems, function(item)
-			return item.equipped == true
-		end),
-		function(item)
-			return item.id
-		end
-	)
 end
 
 function CartController:GetDescription()
@@ -150,6 +146,34 @@ function CartController:ToggleInCart(id: number)
 	UpdateCharacter()
 end
 
+function CartController:EquipBodyPart(bodyPart: Enum.BodyPart, id: number?)
+	print(bodyPart, bodyPart.Name, id, cartItems)
+
+	if id then
+		local existingId = TableUtil.Find(cartItems, function(item)
+			return item.id == id
+		end)
+
+		bodyDescriptionTable[bodyPart.Name] = id
+		if not existingId then
+			table.insert(cartItems, NewCartItem(id, bodyPart))
+			cartSet[id] = true
+		else
+			existingId.equipped = true
+		end
+	else
+		local existingId = TableUtil.Find(cartItems, function(item)
+			return item.bodyPart == bodyPart and item.equipped
+		end)
+		assert(existingId, "Tried to unequip without being equipped")
+		bodyDescriptionTable[bodyPart.Name] = 0
+		existingId.equipped = false
+	end
+
+	lastEquippedPackage = nil
+	UpdateCharacter()
+end
+
 function CartController:EquipPackage(bundleId: number)
 	return Future.new(function()
 		lastEquippedPackage = bundleId
@@ -159,16 +183,40 @@ function CartController:EquipPackage(bundleId: number)
 			return
 		end
 
-		for bodyPart, id in pairs(bundleData) do
-			bodyParts[bodyPart] = id
+		for _, item in cartItems do
+			if item.bodyPart and bundleData[item.bodyPart.Name] then
+				item.equipped = false
+			end
+		end
+
+		for bodyPartName, id in pairs(bundleData) do
+			local bodyPart: Enum.BodyPart = assert(
+				TableUtil.Find(Enum.BodyPart:GetEnumItems(), function(item)
+					return item.Name == bodyPartName
+				end),
+				`Body part did not exist {bodyPartName}`
+			)
+
+			local existingItem = TableUtil.Find(cartItems, function(item)
+				return item.id == id
+			end)
+			if existingItem then
+				existingItem.equipped = true
+			else
+				table.insert(cartItems, NewCartItem(id, bodyPart))
+				cartSet[id] = true
+			end
+			bodyDescriptionTable[bodyPartName] = id
 		end
 
 		UpdateCharacter()
 	end)
 end
 
-function CartController:GetCart()
-	return table.clone(cartItems)
+function CartController:GetCartItems()
+	local output = table.clone(cartItems)
+
+	return output
 end
 
 function CartController:Reset()
@@ -201,14 +249,22 @@ function CartController:UseDescription(description: HumanoidDescription)
 		cartSet[accessory.AssetId] = true
 	end
 
-	bodyParts = HumanoidDescription.ExtractBodyParts(description)
+	bodyDescriptionTable = HumanoidDescription.ExtractBodyParts(description)
+	for _, part in Enum.BodyPart:GetEnumItems() :: { Enum.BodyPart } do
+		local id = bodyDescriptionTable[part.Name]
+		if id ~= 0 then
+			table.insert(cartItems, NewCartItem(id, part))
+			cartSet[id] = true
+		end
+	end
+
 	lastEquippedPackage = nil
 
 	UpdateCharacter()
 end
 
 function CartController:IsInCart(id: number)
-	return cartSet[id] == true or lastEquippedPackage == id or (table.find(bodyParts, id) ~= nil)
+	return cartSet[id] == true or lastEquippedPackage == id
 end
 
 function CartController:IsEquipped(id: number): boolean
@@ -255,7 +311,14 @@ local function InitialCharacterLoad(char: Model)
 		cartSet[accessory.AssetId] = true
 	end
 
-	bodyParts = HumanoidDescription.ExtractBodyParts(description)
+	bodyDescriptionTable = HumanoidDescription.ExtractBodyParts(description)
+	for _, part in Enum.BodyPart:GetEnumItems() :: { Enum.BodyPart } do
+		local id = bodyDescriptionTable[part.Name]
+		if id ~= 0 then
+			table.insert(cartItems, NewCartItem(id, part))
+			cartSet[id] = true
+		end
+	end
 
 	CartController.CartUpdated:Fire(cartItems)
 end
