@@ -183,11 +183,18 @@ function CartController:EquipPackage(bundleId: number)
 			return
 		end
 
-		for _, item in cartItems do
-			if item.bodyPart and bundleData[item.bodyPart.Name] then
-				item.equipped = false
+		-- for _, item in cartItems do
+		-- 	if item.bodyPart and bundleData[item.bodyPart.Name] then
+		-- 		item.equipped = false
+		-- 	end
+		-- end
+
+		cartItems = TableUtil.Filter(cartItems, function(item)
+			if item.bodyPart then
+				return not bundleData[item.bodyPart.Name]
 			end
-		end
+			return true
+		end)
 
 		for bodyPartName, id in pairs(bundleData) do
 			local bodyPart: Enum.BodyPart = assert(
