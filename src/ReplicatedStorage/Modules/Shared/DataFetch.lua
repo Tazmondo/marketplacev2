@@ -3,9 +3,9 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Util = require(script.Parent.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
-local Types = require(script.Parent.Types)
 
 type AssetProductInfo = {
 	Name: string,
@@ -38,8 +38,46 @@ type AssetProductInfo = {
 	MinimumMembershipLevel: number,
 }
 
-local cachedItems: { [number]: Types.Item } = {}
-local cachedOwnedItems: { [Player]: { [number]: Types.Item } } = {}
+type BundleProductInfo = {
+	BundleType: "BodyParts",
+	Name: string,
+	Description: string,
+	Id: number,
+	Items: {
+		{
+			Id: number,
+			Name: string,
+			Type: "Asset" | "UserOutfit",
+		}
+	},
+}
+
+export type Limited = "Limited" | "LimitedU" | "UGC"
+
+export type Item = {
+	creator: string,
+	name: string,
+	assetId: number,
+	assetType: Enum.AvatarAssetType,
+	price: number?,
+	owned: boolean?,
+	limited: Limited?,
+}
+
+export type BundleBodyParts = {
+	LeftLeg: number?,
+	LeftArm: number?,
+	RightArm: number?,
+	RightLeg: number?,
+	Torso: number?,
+	Head: number?,
+}
+
+local cachedItems: { [number]: Item } = {}
+local cachedOwnedItems: { [Player]: { [number]: Item } } = {}
+
+local cachedBundles: { [number]: BundleProductInfo } = {}
+local cachedBundleBodyParts: { [number]: BundleBodyParts } = {}
 
 local validAssets: { [Enum.AvatarAssetType]: true? } = {
 	[Enum.AvatarAssetType.Hat] = true,
@@ -57,6 +95,21 @@ local validAssets: { [Enum.AvatarAssetType]: true? } = {
 	[Enum.AvatarAssetType.SweaterAccessory] = true,
 	[Enum.AvatarAssetType.ShortsAccessory] = true,
 	[Enum.AvatarAssetType.DressSkirtAccessory] = true,
+	[Enum.AvatarAssetType.LeftArm] = true,
+	[Enum.AvatarAssetType.RightArm] = true,
+	[Enum.AvatarAssetType.LeftLeg] = true,
+	[Enum.AvatarAssetType.RightLeg] = true,
+	[Enum.AvatarAssetType.Head] = true,
+	[Enum.AvatarAssetType.Torso] = true,
+}
+
+local validBodyParts = {
+	[Enum.AvatarAssetType.LeftArm] = true,
+	[Enum.AvatarAssetType.RightArm] = true,
+	[Enum.AvatarAssetType.LeftLeg] = true,
+	[Enum.AvatarAssetType.RightLeg] = true,
+	[Enum.AvatarAssetType.Head] = true,
+	[Enum.AvatarAssetType.Torso] = true,
 }
 
 local validAssetNames: { [string]: true? } = {}
@@ -69,10 +122,41 @@ for i, enum in Enum.AvatarAssetType:GetEnumItems() :: { Enum.AvatarAssetType } d
 	assetTypeIdMap[enum.Value] = enum
 end
 
+-- local function GenerateBatcher<T>(avatarItemType: Enum.AvatarItemType, typer: T)
+-- 	local batch = {}
+-- 	local delay = 0.2
+-- 	local fetchedSignal: Signal.Signal<{ T }>?
+
+-- 	local function Fetch(signal: Signal.Signal<{ T }>)
+-- 		fetchedSignal = nil
+-- 		local fetchBatch = batch
+-- 		batch = {}
+
+-- 		signal:Fire(AvatarEditorService:GetBatchItemDetails(fetchBatch, avatarItemType))
+-- 	end
+
+-- 	local function Get(id: number): T
+-- 		table.insert(batch, id)
+-- 		if not fetchedSignal then
+-- 			local newSignal = Signal()
+-- 			fetchedSignal = newSignal
+
+-- 			task.delay(delay, Fetch, newSignal)
+-- 		end
+-- 		assert(fetchedSignal, "")
+-- 		-- Index of this addition
+-- 		local index = #batch
+
+-- 		return fetchedSignal:Wait()[index]
+-- 	end
+
+-- 	return Get
+-- end
+
 function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
-	return Future.new(function(assetId): Types.Item?
-			local cached = cachedItems[assetId]
-			if cached then
+	return Future.new(function(assetId): Item?
+		local cached = cachedItems[assetId]
+		if cached then
 			if ownership == nil then
 				return cached
 			end
@@ -121,7 +205,7 @@ function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 			elseif details.IsPublicDomain then 0 -- Item is free
 			else details.PriceInRobux
 
-		local limited: Types.Limited? = nil
+		local limited: Limited? = nil
 		if details.CollectiblesItemDetails then
 			limited = "UGC"
 		elseif details.IsLimited then
@@ -132,7 +216,7 @@ function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 
 		local assetType = assetTypeIdMap[details.AssetTypeId]
 
-		local item: Types.Item = {
+		local item: Item = {
 			assetId = assetId,
 			name = details.Name,
 			assetType = assetType,
@@ -179,6 +263,71 @@ function DataFetch.GetValidAssetArray()
 		table.insert(array, asset)
 	end
 	return array
+end
+
+function DataFetch.GetBundle(bundleId: number)
+	return Future.new(function(bundleId: number): BundleProductInfo?
+		local cached = cachedBundles[bundleId]
+		if cached then
+			return cached
+		end
+
+		local success, details = pcall(function(bundleId)
+			return MarketplaceService:GetProductInfo(bundleId, Enum.InfoType.Bundle) :: BundleProductInfo
+		end, bundleId)
+
+		if not success then
+			warn(details)
+			return nil
+		end
+
+		cachedBundles[bundleId] = details
+
+		return details
+	end, bundleId)
+end
+
+function DataFetch.GetBundleBodyParts(bundleId: number)
+	return Future.new(function(): BundleBodyParts?
+		local cached = cachedBundleBodyParts[bundleId]
+		if cached then
+			return cached
+		end
+
+		local details = DataFetch.GetBundle(bundleId):Await()
+		if not details then
+			return nil
+		end
+
+		local itemFutures = TableUtil.Map(details.Items, function(item)
+			if item.Type ~= "Asset" then
+				return Future.new(function(): Item?
+					return nil
+				end)
+			end
+
+			return DataFetch.GetItemDetails(item.Id)
+		end)
+
+		local items = Util.AwaitAllFutures(itemFutures):Await()
+
+		local outputParts = {}
+
+		for i, item in items do
+			assert(item, "Item was nil.")
+			if item.assetType == Enum.AvatarAssetType.DynamicHead then
+				item.assetType = Enum.AvatarAssetType.Head
+			end
+
+			if validBodyParts[item.assetType] then
+				outputParts[item.assetType.Name] = item.assetId
+			end
+		end
+
+		cachedBundleBodyParts[bundleId] = outputParts
+
+		return outputParts
+	end)
 end
 
 Players.PlayerRemoving:Connect(function(player)

@@ -255,11 +255,20 @@ function RefreshResults()
 		end
 
 		item.Activated:Connect(function()
-			if currentUseMode == "Wear" then
-				CartController:ToggleInCart(result.Id)
-				RefreshResults()
-			elseif currentUseMode == "Select" then
-				ItemSelected:Fire(result.Id)
+			if result.ItemType == "Asset" then
+				if currentUseMode == "Wear" then
+					CartController:ToggleInCart(result.Id)
+					RefreshResults()
+				elseif currentUseMode == "Select" then
+					ItemSelected:Fire(result.Id)
+				end
+			elseif result.ItemType == "Bundle" then
+				if currentUseMode == "Wear" then
+					CartController:EquipPackage(result.Id)
+					RefreshResults()
+				else
+					-- Don't do anything when use mode is select
+				end
 			end
 		end)
 

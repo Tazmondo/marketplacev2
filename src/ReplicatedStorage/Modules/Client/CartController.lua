@@ -20,6 +20,9 @@ local cartSet: { [number]: true? } = {}
 local cachedDescription: Future.Future<HumanoidDescription>? = nil
 local bodyParts = table.clone(HumanoidDescription.defaultBodyParts)
 
+local lastEquippedPackage: number? = nil
+
+
 CartController.CartUpdated = Signal()
 
 local function NewCartItem(id: number)
@@ -147,6 +150,23 @@ function CartController:ToggleInCart(id: number)
 	UpdateCharacter()
 end
 
+function CartController:EquipPackage(bundleId: number)
+	return Future.new(function()
+		lastEquippedPackage = bundleId
+
+		local bundleData = DataFetch.GetBundleBodyParts(bundleId):Await()
+		if not bundleData then
+			return
+		end
+
+		for bodyPart, id in pairs(bundleData) do
+			bodyParts[bodyPart] = id
+		end
+
+		UpdateCharacter()
+	end)
+end
+
 function CartController:GetCart()
 	return table.clone(cartItems)
 end
@@ -182,12 +202,13 @@ function CartController:UseDescription(description: HumanoidDescription)
 	end
 
 	bodyParts = HumanoidDescription.ExtractBodyParts(description)
+	lastEquippedPackage = nil
 
 	UpdateCharacter()
 end
 
 function CartController:IsInCart(id: number)
-	return cartSet[id] == true
+	return cartSet[id] == true or lastEquippedPackage == id or (table.find(bodyParts, id) ~= nil)
 end
 
 function CartController:IsEquipped(id: number): boolean

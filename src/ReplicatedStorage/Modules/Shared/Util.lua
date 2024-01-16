@@ -160,4 +160,15 @@ function Util.ToFuture<T..., U...>(func: (T...) -> U...): (T...) -> Future.Futur
 		return Future.new(func, ...)
 	end
 end
+
+function Util.AwaitAllFutures<K, V>(t: { [K]: Future.Future<V> }): Future.Future<{ [K]: V }>
+	return Future.new(function(t: { [K]: Future.Future<V> }): { [K]: V }
+		local newTable: any = table.create(#t)
+		for k, future in t do
+			newTable[k] = future:Await()
+		end
+		return newTable
+	end, t)
+end
+
 return Util
