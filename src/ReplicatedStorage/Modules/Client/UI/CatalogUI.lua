@@ -27,14 +27,15 @@ local Bin = require(ReplicatedStorage.Packages.Bin)
 
 type UseMode = "Wear" | "Select"
 type DisplayMode = "Marketplace" | "Inventory" | "OutfitPane"
-type Category = "Clothing" | "Accessories" | "Wearing"
+type Category = "Clothing" | "Accessories" | "Characters" | "Wearing"
 
 type ClothingCategory = "Dresses & Skirts" | "Jackets" | "Shirts" | "Shorts" | "Pants" | "Sweaters" | "T-Shirts"
 type AccessoryCategory = "Back" | "Face" | "Front" | "Head" | "Hair" | "Neck" | "Waist" | "Shoulder"
-type SubCategory = ClothingCategory | AccessoryCategory | "Wearing" | "Outfits"
+type SubCategory = ClothingCategory | AccessoryCategory | "Wearing" | "Outfits" | "Characters"
 type SearchResult = {
 	Id: number,
 	Name: string,
+	ItemType: "Bundle" | "Asset",
 	Price: number?,
 	LowestPrice: number?,
 	LowestResalePrice: number?,
@@ -43,6 +44,7 @@ type SearchResult = {
 	CreatorType: "User" | "Group",
 	AssetType: string?,
 	ItemRestrictions: { "Limited" | "LimitedUnique" | "Collectible" | "ThirteenPlus" },
+	BundleType: "BodyParts" | nil,
 }
 
 local accessoryOrder = {
@@ -71,6 +73,10 @@ local wearingOrder = {
 	Outfits = 2,
 }
 
+local charactersOrder = {
+	Characters = 1,
+}
+
 local categories = {
 	Marketplace = {
 		Clothing = {
@@ -91,6 +97,9 @@ local categories = {
 			Neck = Enum.AvatarAssetType.NeckAccessory,
 			Waist = Enum.AvatarAssetType.WaistAccessory,
 			Shoulder = Enum.AvatarAssetType.ShoulderAccessory,
+		},
+		Characters = {
+			Characters = newproxy(),
 		},
 	},
 	Inventory = {
@@ -219,7 +228,9 @@ function RefreshResults()
 		item.Name = "item"
 		item:SetAttribute("Temporary", true)
 		item.Visible = true
-		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(result.Id)
+		item.ImageFrame.Frame.ItemImage.Image = if result.ItemType == "Asset"
+			then Thumbs.GetAsset(result.Id)
+			else Thumbs.GetBundle(result.Id)
 
 		local isLimited = TableUtil.Find(result.ItemRestrictions, function(restriction)
 			return restriction == "Limited" or restriction == "LimitedUnique" or restriction == "Collectible"
@@ -279,10 +290,15 @@ function ProcessPage()
 
 	local items = searchPages:GetCurrentPage() :: { SearchResult }
 	for i, item in items do
-		if item.AssetType and DataFetch.IsAssetTypeValid(item.AssetType) then
+		if
+			(item.ItemType == "Asset" and item.AssetType and DataFetch.IsAssetTypeValid(item.AssetType))
+			or item.ItemType == "Bundle"
+		then
 			table.insert(filteredItems, item)
 		end
 	end
+
+	print("Searched: ", #filteredItems, items)
 
 	AddSearchResults(filteredItems)
 end
@@ -327,13 +343,18 @@ function GenerateSearchObject(): CatalogSearchParams
 
 	paramsInstance.SortType = extraState.sort
 
-	local currentAssetType: Enum.AvatarAssetType? = categories[currentMode][currentCategory][currentSubcategory]
+	if currentCategory == "Characters" then
+		print("Bundle");
+		(paramsInstance :: any).BundleTypes = { Enum.BundleType.BodyParts }
+	else
+		local currentAssetType: Enum.AvatarAssetType? = categories[currentMode][currentCategory][currentSubcategory]
 
-	if currentAssetType then
-		-- we can make this cast, as AvatarAssetType is actually a subset of AssetType
-		-- https://create.roblox.com/docs/reference/engine/enums/AssetType
-		-- https://create.roblox.com/docs/reference/engine/enums/AvatarAssetType
-		paramsInstance.AssetTypes = { (currentAssetType :: any) :: Enum.AssetType }
+		if currentAssetType then
+			-- we can make this cast, as AvatarAssetType is actually a subset of AssetType
+			-- https://create.roblox.com/docs/reference/engine/enums/AssetType
+			-- https://create.roblox.com/docs/reference/engine/enums/AvatarAssetType
+			paramsInstance.AssetTypes = { (currentAssetType :: any) :: Enum.AssetType }
+		end
 	end
 
 	return paramsInstance
@@ -344,6 +365,7 @@ function SearchCatalog()
 	if currentMode ~= "Marketplace" then
 		return
 	end
+	print("Searching catalog")
 
 	local identifier = newproxy()
 	searchIdentifier = identifier
@@ -355,6 +377,7 @@ function SearchCatalog()
 		end)
 
 		if not success or identifier ~= searchIdentifier then
+			warn(pages)
 			return
 		end
 		searchPages = pages
@@ -580,7 +603,10 @@ function RenderSubcategories()
 		end
 
 		header.LayoutOrder = assert(
-			clothingOrder[subCategory] or accessoryOrder[subCategory] or wearingOrder[subCategory],
+			clothingOrder[subCategory]
+				or accessoryOrder[subCategory]
+				or wearingOrder[subCategory]
+				or charactersOrder[subCategory],
 			`No order found for: {subCategory}`
 		)
 
@@ -642,6 +668,8 @@ function SwitchCategory(newCategory: Category)
 		SwitchSubCategory("Hair")
 	elseif newCategory == "Clothing" then
 		SwitchSubCategory("Jackets")
+	elseif newCategory == "Characters" then
+		SwitchSubCategory("Characters")
 	elseif newCategory == "Wearing" then
 		SwitchSubCategory("Wearing")
 	else
