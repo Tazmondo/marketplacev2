@@ -54,8 +54,8 @@ function ShowcaseNavigationUI:Display()
 	end)
 
 	if currentIndex <= 1 then
-		gui.Back.ImageTransparency = 1
-		gui.Back.BackgroundTransparency = 1
+		gui.Back.ImageTransparency = 0
+		gui.Back.BackgroundTransparency = 0
 		gui.Back.Active = false
 	else
 		gui.Back.Active = true
@@ -65,8 +65,8 @@ function ShowcaseNavigationUI:Display()
 
 	if currentIndex == #currentFeed.showcases then
 		gui.Forward.Active = false
-		gui.Forward.ImageTransparency = 1
-		gui.Forward.BackgroundTransparency = 1
+		gui.Forward.ImageTransparency = 0
+		gui.Forward.BackgroundTransparency = 0
 	else
 		gui.Forward.Active = true
 		gui.Forward.ImageTransparency = 0
