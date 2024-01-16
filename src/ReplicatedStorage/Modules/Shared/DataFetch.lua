@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Future = require(ReplicatedStorage.Packages.Future)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local Types = require(script.Parent.Types)
 
 type AssetProductInfo = {
@@ -70,20 +71,29 @@ end
 
 function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 	return Future.new(function(assetId): Types.Item?
-		if ownership == nil then
 			local cached = cachedItems[assetId]
 			if cached then
+			if ownership == nil then
 				return cached
 			end
-		else
+
 			if not cachedOwnedItems[ownership] then
 				cachedOwnedItems[ownership] = {}
 			end
 
-			local cachedItem = cachedOwnedItems[ownership][assetId]
-			if cachedItem then
-				return cachedItem
+			local cachedOwnedItem = cachedOwnedItems[ownership][assetId]
+			if cachedOwnedItem then
+				return cachedOwnedItem
 			end
+
+			local ownedSuccess, owned = pcall(function()
+				return MarketplaceService:PlayerOwnsAsset(ownership, assetId)
+			end)
+
+			local newItem = TableUtil.Copy(cached, true)
+			newItem.owned = ownedSuccess and owned
+			cachedOwnedItems[ownership][assetId] = newItem
+			return newItem
 		end
 
 		local getInfoSuccess, details = pcall(function()
