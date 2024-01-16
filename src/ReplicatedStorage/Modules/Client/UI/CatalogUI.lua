@@ -1,6 +1,7 @@
 local CatalogUI = {}
 
 local AvatarEditorService = game:GetService("AvatarEditorService")
+local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
@@ -19,8 +20,8 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
-local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Client()
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
+local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Bin = require(ReplicatedStorage.Packages.Bin)
@@ -246,7 +247,11 @@ function RefreshResults()
 					else result.LowestPrice or result.Price or 0
 			)
 			item.Buy.Activated:Connect(function()
-				PurchaseAssetEvent:Fire(result.Id)
+				if result.ItemType == "Asset" then
+					PurchaseEvents.Asset:FireServer(result.Id)
+				elseif result.ItemType == "Bundle" then
+					MarketplaceService:PromptBundlePurchase(Players.LocalPlayer, result.Id)
+				end
 			end)
 			item.UIStroke.Enabled = true
 		else
@@ -527,7 +532,7 @@ function RenderWearing()
 		end)
 
 		item.Buy.Activated:Connect(function()
-			PurchaseAssetEvent:Fire(id)
+			PurchaseEvents.Asset:FireServer(id)
 		end)
 
 		item.Parent = template.Parent
@@ -539,8 +544,13 @@ function RenderWearing()
 
 			local owned = if details then (details.owned or false) else false
 			item.Owned.Visible = owned
-			item.Buy.Visible = not owned and CartController:IsEquipped(id)
-			item.Buy.TextLabel.Text = if details and details.price then tostring(details.price) else "N/A"
+
+			local price = if details and details.price then tostring(details.price) else nil
+			item.Buy.Visible = not owned and CartController:IsEquipped(id) and price ~= nil
+
+			if price then
+				item.Buy.TextLabel.Text = price
+			end
 
 			if not details then
 				return
@@ -856,7 +866,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 				end
 
 				itemElement.IsLimited.Visible = details.limited ~= nil
-				itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id)
+				itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id) and details.price ~= nil
 				itemElement.Buy.TextLabel.Text = if details.price then tostring(details.price) else "N/A"
 				itemElement.Owned.Visible = details.owned or false
 				itemElement:SetAttribute("Owned", details.owned)

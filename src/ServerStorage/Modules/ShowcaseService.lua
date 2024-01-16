@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 
+local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
 local DataService = require(script.Parent.Data.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
@@ -25,7 +26,6 @@ local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
 local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Server()
 local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Server()
-local PurchaseAssetEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.PurchaseAssetEvent):Server()
 
 type ActiveShowcase = {
 	stands: { Types.Stand },
@@ -590,12 +590,12 @@ function HandleDeleteShowcase(player: Player, guid: string)
 	end)
 end
 
-function HandlePurchaseAsset(player: Player, assetId: number)
+local function HandlePurchaseAsset(player: Player, assetId: number)
 	-- When we get exclusive deals we will need to secure this so users can't buy the exclusive assets.
 	MarketplaceService:PromptPurchase(player, assetId)
 end
 
-function PlayerRemoving(player: Player)
+local function PlayerRemoving(player: Player)
 	local currentPlace = playerShowcases[player]
 	if currentPlace then
 		playerShowcases[player] = nil
@@ -607,7 +607,7 @@ function ShowcaseService:Initialize()
 	CreateShowcaseEvent:On(HandleCreatePlace)
 	EditShowcaseEvent:On(HandleEditShowcase)
 	DeleteShowcaseEvent:On(HandleDeleteShowcase)
-	PurchaseAssetEvent:On(HandlePurchaseAsset)
+	PurchaseEvents.Asset:SetServerListener(HandlePurchaseAsset)
 
 	ShowcaseEvents.UpdateStand:SetServerListener(HandleUpdateStand)
 	ShowcaseEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
