@@ -155,19 +155,36 @@ function Util.CreateYieldDebounce<T..., U...>(func: (T...) -> U...): (T...) -> U
 	end
 end
 
-function Util.ToFuture<T..., U...>(func: (T...) -> U...): (T...) -> Future.Future<U...>
+type Future<T...> = Future.Future<T...>
+
+function Util.ToFuture<T..., U...>(func: (T...) -> U...): (T...) -> Future<U...>
 	return function(...)
 		return Future.new(func, ...)
 	end
 end
 
-function Util.AwaitAllFutures<K, V>(t: { [K]: Future.Future<V> }): Future.Future<{ [K]: V }>
-	return Future.new(function(t: { [K]: Future.Future<V> }): { [K]: V }
-		local newTable: any = table.create(#t)
+-- Only works for futures with one value
+function Util.AwaitAllFutures<K, V>(t: { [K]: Future<V> }): Future<{ [K]: V }>
+	return Future.new(function(t: { [K]: Future<V> }): { [K]: V }
+		local futureValues: any = table.create(#t)
 		for k, future in t do
-			newTable[k] = future:Await()
+			futureValues[k] = future:Await()
 		end
-		return newTable
+		return futureValues
+	end, t)
+end
+
+-- Works for futures that return multiple values, but returns a closure instead of the value as you cannot type a packed tuple
+function Util.AwaitAllFuturesTupled<K, V...>(t: { [K]: Future<V...> }): Future<{ [K]: () -> V... }>
+	return Future.new(function(t: { [K]: Future<V...> }): { [K]: () -> V... }
+		local futureValues: any = table.create(#t)
+		for k, future in t do
+			local values = table.pack(future:Await())
+			futureValues[k] = function()
+				return unpack(values)
+			end
+		end
+		return futureValues
 	end, t)
 end
 
