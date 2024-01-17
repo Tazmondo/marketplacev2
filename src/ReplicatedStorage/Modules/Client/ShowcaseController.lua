@@ -211,7 +211,6 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.RequiresLineOfSight = false
 		prompt.UIOffset = Config.StandProximityOffset
-		prompt.Parent = modelPart
 
 		local renderedStand: RenderedOutfit = {
 			CFrame = model:GetPivot(),
@@ -227,6 +226,8 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 		renderedOutfitStands[roundedPosition] = renderedStand
 
 		if stand and stand.description then
+			prompt.Parent = modelPart
+
 			CharacterCache:LoadWithDescription(stand.description):After(function(outfit)
 				if not outfit then
 					return
