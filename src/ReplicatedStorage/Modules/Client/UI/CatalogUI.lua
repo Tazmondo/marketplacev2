@@ -825,12 +825,22 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 		ApplyOnClicked(partialButton, partialDescription)
 		ApplyOnClicked(fullButton, outfit)
 
-		local itemSet = {}
+		local itemSet: { string | Enum.BodyPart } = {}
 		for i, accessory in currentDescription:GetAccessories(true) do
-			itemSet[accessory.AssetId] = true
+			itemSet[accessory.AssetId] = "Accessory"
 		end
 		for i, accessory in outfit:GetAccessories(true) do
-			itemSet[accessory.AssetId] = true
+			itemSet[accessory.AssetId] = "Accessory"
+		end
+		for i, partEnum in Enum.BodyPart:GetEnumItems() :: { Enum.BodyPart } do
+			local currentId = (currentDescription :: any)[partEnum.Name]
+			local outfitId = (outfit :: any)[partEnum.Name]
+			if currentId ~= 0 then
+				itemSet[currentId] = partEnum
+			end
+			if outfitId ~= 0 then
+				itemSet[outfitId] = partEnum
+			end
 		end
 
 		if outfitPaneTracker ~= tracker then
@@ -844,7 +854,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 		end
 
 		local itemTemplate = gui.RightPane.Marketplace.Results.ListWrapper.List.ItemWrapper
-		for id, _ in itemSet do
+		for id, itemType in itemSet do
 			local itemElement = itemTemplate:Clone()
 
 			itemElement.Visible = true
@@ -852,10 +862,22 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 			itemElement.Owned.Visible = false
 			itemElement:SetAttribute("Temporary", true)
 			itemElement:SetAttribute("AssetId", id)
+			itemElement:SetAttribute("Accessory", typeof(itemType) == "string")
 			itemElement.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
 
+			itemElement.LayoutOrder = if typeof(itemType) == "string" then 0 else 1000
+
 			itemElement.Activated:Connect(function()
-				CartController:ToggleInCart(id)
+				if itemType == "Accessory" then
+					CartController:ToggleInCart(id)
+				else
+					assert(typeof(itemType) == "EnumItem")
+					if itemElement.UIStroke.Enabled then
+						CartController:EquipBodyPart(itemType, nil)
+					else
+						CartController:EquipBodyPart(itemType, id)
+					end
+				end
 			end)
 
 			itemElement.Parent = outfitUI.Wearing.ListWrapper.List
@@ -866,22 +888,25 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 				end
 
 				itemElement.IsLimited.Visible = details.limited ~= nil
-				itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id) and details.price ~= nil
-				itemElement.Buy.TextLabel.Text = if details.price then tostring(details.price) else "N/A"
+				if itemType == "Accessory" then
+					itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id) and details.price ~= nil
+					itemElement.Buy.TextLabel.Text = if details.price then tostring(details.price) else "N/A"
+				end
 				itemElement.Owned.Visible = details.owned or false
 				itemElement:SetAttribute("Owned", details.owned)
 			end)
 		end
 
 		local function RenderEquipped()
+			print(CartController:GetCartItems())
 			for i, itemElement in outfitUI.Wearing.ListWrapper.List:GetChildren() :: { typeof(itemTemplate) } do
 				if itemElement:GetAttribute("Temporary") then
-					local inCart = CartController:IsInCart(itemElement:GetAttribute("AssetId"))
+					local inCart = CartController:IsEquipped(itemElement:GetAttribute("AssetId"))
 					local owned = itemElement:GetAttribute("Owned")
 
 					itemElement.UIStroke.Enabled = inCart
 					if owned ~= nil then
-						itemElement.Buy.Visible = not owned and inCart
+						itemElement.Buy.Visible = not owned and inCart and itemElement:GetAttribute("Accessory")
 					end
 				end
 			end

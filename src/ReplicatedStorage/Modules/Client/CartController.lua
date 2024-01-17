@@ -147,19 +147,22 @@ function CartController:ToggleInCart(id: number)
 end
 
 function CartController:EquipBodyPart(bodyPart: Enum.BodyPart, id: number?)
-	print(bodyPart, bodyPart.Name, id, cartItems)
-
 	if id then
-		local existingId = TableUtil.Find(cartItems, function(item)
-			return item.id == id
+		local existingPart = TableUtil.Find(cartItems, function(item)
+			return item.bodyPart == bodyPart
 		end)
+		local identical = existingPart and existingPart.id == id
 
 		bodyDescriptionTable[bodyPart.Name] = id
-		if not existingId then
+		if not identical then
 			table.insert(cartItems, NewCartItem(id, bodyPart))
 			cartSet[id] = true
-		else
-			existingId.equipped = true
+		end
+
+		for i, item in cartItems do
+			if item.bodyPart == bodyPart then
+				item.equipped = item.id == id
+			end
 		end
 	else
 		local existingId = TableUtil.Find(cartItems, function(item)
