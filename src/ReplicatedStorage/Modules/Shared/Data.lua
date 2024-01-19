@@ -52,6 +52,7 @@ export type Showcase = {
 	texture: string,
 
 	GUID: string,
+	shareCode: string?,
 	stands: { Stand },
 	outfitStands: { OutfitStand },
 }
@@ -181,6 +182,7 @@ function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
 		accentColor = showcase.accentColor:ToHex(),
 		texture = showcase.texture,
 		GUID = showcase.GUID,
+		shareCode = showcase.shareCode,
 		stands = stands,
 		outfitStands = outfitStands,
 		logoId = showcase.logoId,
@@ -222,6 +224,7 @@ function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showc
 
 	return {
 		GUID = showcase.GUID,
+		shareCode = showcase.shareCode,
 		layoutId = layoutId,
 		owner = ownerId,
 		stands = stands,

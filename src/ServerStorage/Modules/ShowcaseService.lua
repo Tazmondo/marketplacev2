@@ -44,6 +44,7 @@ type ActiveShowcase = {
 	texture: string,
 	logoId: number?,
 	GUID: string,
+	shareCode: string?,
 	thumbId: number,
 }
 
@@ -138,6 +139,7 @@ function ToNetworkShowcase(showcase: ActiveShowcase): Types.NetworkShowcase
 		owner = showcase.owner,
 		name = showcase.name,
 		GUID = showcase.GUID,
+		shareCode = showcase.shareCode,
 		primaryColor = showcase.primaryColor,
 		accentColor = showcase.accentColor,
 		texture = showcase.texture,
@@ -247,6 +249,7 @@ function SaveShowcase(showcase: ActiveShowcase)
 		outfitStands = filteredOutfitStands,
 		layoutId = showcase.layout.id,
 		GUID = showcase.GUID,
+		shareCode = showcase.shareCode,
 		name = showcase.name,
 		primaryColor = showcase.primaryColor:ToHex(),
 		accentColor = showcase.accentColor:ToHex(),
@@ -337,6 +340,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 		playersPresent = {},
 		mode = mode,
 		GUID = showcase.GUID,
+		shareCode = showcase.shareCode,
 		name = showcase.name,
 		primaryColor = showcase.primaryColor,
 		accentColor = showcase.accentColor,
