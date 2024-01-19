@@ -26,7 +26,7 @@ export type Showcase = {
 	accentColor: Color3,
 	texture: string,
 	GUID: string,
-	shareCode: string?,
+	shareCode: number?,
 	stands: { Stand },
 	outfitStands: { OutfitStand },
 }
@@ -43,7 +43,7 @@ export type NetworkShowcase = {
 	accentColor: Color3,
 	texture: string,
 	GUID: string,
-	shareCode: string?,
+	shareCode: number?,
 
 	-- This would be a table with vector3 keys but instance keys can't be sent across network boundaries
 	stands: { Stand },

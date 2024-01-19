@@ -203,7 +203,7 @@
 
 local SETTINGS = {
 
-	AutoSaveProfiles = 30, -- Seconds (This value may vary - ProfileService will split the auto save load evenly in the given time)
+	AutoSaveProfiles = 60, -- Seconds (This value may vary - ProfileService will split the auto save load evenly in the given time)
 	RobloxWriteCooldown = 7, -- Seconds between successive DataStore calls for the same key
 	ForceLoadMaxSteps = 8, -- Steps taken before ForceLoad request steals the active session for a profile
 	AssumeDeadSessionLock = 30 * 60, -- (seconds) If a profile hasn't been updated for 30 minutes, assume the session lock is dead
@@ -349,7 +349,7 @@ export type Profile<Data, MetaTags, RobloxMetaData> = {
 
 	--- This is the GlobalUpdates object tied to this specific Profile. It exposes GlobalUpdates methods for update
 	--- processing.
-	GlobalUpdates: GlobalUpdates,
+	GlobalUpdates: ProfileGlobalUpdates,
 
 	--- Returns true while the profile is session-locked and saving of changes to Profile.Data is guaranteed.
 	IsActive: (self: Profile<Data, MetaTags, RobloxMetaData>) -> boolean,

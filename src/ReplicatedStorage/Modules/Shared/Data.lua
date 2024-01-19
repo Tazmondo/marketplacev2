@@ -52,7 +52,7 @@ export type Showcase = {
 	texture: string,
 
 	GUID: string,
-	shareCode: string?,
+	shareCode: number?,
 	stands: { Stand },
 	outfitStands: { OutfitStand },
 }

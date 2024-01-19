@@ -44,7 +44,7 @@ type ActiveShowcase = {
 	texture: string,
 	logoId: number?,
 	GUID: string,
-	shareCode: string?,
+	shareCode: number?,
 	thumbId: number,
 }
 
