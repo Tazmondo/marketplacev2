@@ -260,6 +260,34 @@ export type ProfileService = {
 	) -> ProfileStore<Data, MetaTags, RobloxMetaData>,
 }
 
+type UpdateData = { [any]: any }
+type UpdateIdThenData = { any }
+
+export type ProfileGlobalUpdates = {
+	GetActiveUpdates: (self: ProfileGlobalUpdates) -> { UpdateIdThenData },
+	GetLockedUpdates: (self: ProfileGlobalUpdates) -> { UpdateIdThenData },
+
+	ListenToNewActiveUpdate: (
+		self: ProfileGlobalUpdates,
+		(updateId: number, updateData: UpdateData) -> ()
+	) -> RBXScriptConnection,
+	ListenToNewLockedUpdate: (
+		self: ProfileGlobalUpdates,
+		(updateId: number, updateData: UpdateData) -> ()
+	) -> RBXScriptConnection,
+	LockActiveUpdate: (self: ProfileGlobalUpdates, updateId: number) -> (),
+	ClearLockedUpdate: (self: ProfileGlobalUpdates, updateId: number) -> (),
+}
+
+export type GlobalUpdates = {
+	GetActiveUpdates: (self: GlobalUpdates) -> { UpdateIdThenData },
+	GetLockedUpdates: (self: GlobalUpdates) -> { UpdateIdThenData },
+
+	AddActiveUpdate: (self: GlobalUpdates, updateData: UpdateData) -> (),
+	ChangeActiveUpdate: (self: GlobalUpdates, updateId: number, newData: UpdateData) -> (),
+	ClearActiveUpdate: (self: GlobalUpdates, updateId: number) -> (),
+}
+
 export type ProfileStore<Data, MetaTags, RobloxMetaData> = {
 	LoadProfileAsync: (
 		self: ProfileStore<Data, MetaTags, RobloxMetaData>,
@@ -270,7 +298,7 @@ export type ProfileStore<Data, MetaTags, RobloxMetaData> = {
 	GlobalUpdateProfileAsync: (
 		self: ProfileStore<Data, MetaTags, RobloxMetaData>,
 		profileKey: string,
-		updateHandler: (globalUpdates: GlobalUpdates) -> any
+		updateHandler: (globalUpdates: GlobalUpdates) -> ()
 	) -> GlobalUpdates | nil,
 
 	ViewProfileAsync: (
@@ -278,10 +306,6 @@ export type ProfileStore<Data, MetaTags, RobloxMetaData> = {
 		profileKey: string,
 		version: string | nil
 	) -> Profile<Data, MetaTags, RobloxMetaData> | nil,
-}
-
-export type GlobalUpdates = {
-	-- TODO
 }
 
 export type Profile<Data, MetaTags, RobloxMetaData> = {
