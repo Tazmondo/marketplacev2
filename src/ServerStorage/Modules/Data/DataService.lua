@@ -58,20 +58,6 @@ local function UpdateShareCode(data: Data.Data, code: number, owner: number, gui
 		return
 	end
 
-	task.spawn(function()
-		local tries = 0
-		repeat
-			local success = pcall(function()
-				ShareCodeStore:SetAsync(tostring(code), {
-					owner = owner,
-					guid = guid,
-				})
-			end)
-			tries += 1
-			task.wait(2 ^ tries)
-		until success == true
-	end)
-
 	showcase.shareCode = code
 end
 
@@ -153,6 +139,20 @@ function FetchOfflineData(userId: number)
 		local profile = ProfileStore:ViewProfileAsync(GetKey(userId))
 		if profile then
 			Data.Migrate(profile.Data)
+
+			-- Apply pending global updates when viewing the profile.
+			-- 	This allows sharecodes to be up to date when viewing a profile even if the owner has not logged on.
+			for _, update in profile.GlobalUpdates:GetActiveUpdates() do
+				local data = update[2]
+
+				ProcessGlobalUpdate(profile, data)
+			end
+			for _, update in profile.GlobalUpdates:GetLockedUpdates() do
+				local data = update[2]
+
+				ProcessGlobalUpdate(profile, data)
+			end
+
 			return profile.Data
 		end
 
@@ -276,8 +276,37 @@ function DataService:GenerateNextShareCode(player: Player, targetId: number, gui
 			end)
 		end
 
+		task.spawn(function()
+			local tries = 0
+			repeat
+				local success = pcall(function()
+					ShareCodeStore:SetAsync(tostring(nextNumber), {
+						owner = targetId,
+						guid = guid,
+					})
+				end)
+				tries += 1
+				task.wait(2 ^ tries)
+			until success == true
+		end)
+
 		return nextNumber
 	end, player)
+end
+
+function DataService:GetShareCodeData(code: number)
+	return Future.new(function(): (number?, string?)
+		local success, codeData = pcall(function()
+			return ShareCodeStore:GetAsync(tostring(code))
+		end)
+		if not success or not codeData then
+			return nil
+		end
+
+		local owner: number = codeData.owner
+		local guid: string = codeData.guid
+		return owner, guid
+	end)
 end
 
 local function HandleNewOutfit(player: Player, name: string, serDescription: Types.SerializedDescription)
