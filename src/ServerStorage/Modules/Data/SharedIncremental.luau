@@ -22,7 +22,7 @@ local function _FetchNext(key: string)
 		local success, value = pcall(function()
 			return datastore:UpdateAsync(key, function(oldKey: number?): number
 				if not oldKey then
-					return 0
+					return 1
 				else
 					return oldKey + 1
 				end

@@ -229,13 +229,9 @@ function DataService:WriteData(player: Player, mutate: (Data.Data) -> ())
 	end)
 end
 
-local shareCodeRateLimit = Util.RateLimit(1, 10)
+local shareCodeRateLimit = Util.RateLimit(1, 6)
 function DataService:GenerateNextShareCode(player: Player, targetId: number, guid: string)
 	return Future.new(function(player: Player): number?
-		if not shareCodeRateLimit(player) then
-			return nil
-		end
-
 		local data = DataService:ReadOfflineData(targetId):Await()
 		if not data then
 			return
@@ -250,6 +246,11 @@ function DataService:GenerateNextShareCode(player: Player, targetId: number, gui
 
 		if showcase.shareCode then
 			return showcase.shareCode
+		end
+
+		-- Don't need to rate limit before this point, as the offline data gets cached.
+		if not shareCodeRateLimit(player) then
+			return nil
 		end
 
 		local nextNumber = SharedIncremental:FetchNext():Await()

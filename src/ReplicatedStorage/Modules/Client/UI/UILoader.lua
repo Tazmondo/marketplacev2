@@ -11,7 +11,11 @@ local UITypes = require(script.Parent.UITypes)
 
 local PlayerGui = Players.LocalPlayer.PlayerGui
 
+local UINames = {}
+
 function GetUI(uiName: string)
+	table.insert(UINames, uiName)
+
 	if PlayerGui:FindFirstChild(uiName) then
 		return PlayerGui[uiName]
 	else
@@ -53,7 +57,7 @@ function UILoader:Initialize()
 	-- Delete the extra UI that the server adds when the character loads
 	PlayerGui.ChildAdded:Connect(function(instance)
 		-- Need to check the name too as roblox parents other guis to playergui, e.g. proximity prompts
-		if instance:IsA("ScreenGui") and StarterGui:FindFirstChild(instance.Name) then
+		if instance:IsA("ScreenGui") and table.find(UINames, instance.Name) then
 			print("Destroying cloned gui:", instance.Name)
 			instance:Destroy()
 		end

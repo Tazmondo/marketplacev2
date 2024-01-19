@@ -81,7 +81,7 @@ local DebounceGetNextShowcase = Util.ToFuture(Util.CreateYieldDebounce(_GetNextS
 --- Also ensures there is only one feed fetch operation ongoing at a time
 
 function RandomFeed.GetFeed(desiredLength: number?)
-	return Future.new(function()
+	return Future.new(function(): { Types.Showcase }?
 		if not desiredLength or desiredLength <= #cachedFeed then
 			return cachedFeed
 		end
@@ -90,7 +90,11 @@ function RandomFeed.GetFeed(desiredLength: number?)
 			local nextShowcase = DebounceGetNextShowcase():Await()
 			if not nextShowcase then
 				-- No more showcases to generate
-				return cachedFeed
+				if #cachedFeed > 0 then
+					return cachedFeed
+				else
+					return nil
+				end
 			end
 		end
 

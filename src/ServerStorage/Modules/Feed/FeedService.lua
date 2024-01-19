@@ -124,7 +124,7 @@ function PlayerAdded(player: Player)
 				showcases = { TableUtil.Copy(DefaultShowcase, true) }
 			end
 		elseif Config.DefaultFeed == "Random" then
-			showcases = RandomFeed.GetFeed(1):Await()
+			showcases = RandomFeed.GetFeed(1):Await() or { TableUtil.Copy(DefaultShowcase, true) }
 		end
 	end
 
