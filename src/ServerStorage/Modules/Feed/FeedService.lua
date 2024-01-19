@@ -268,6 +268,47 @@ function FeedService:Initialize()
 	end)
 	FeedEvents.User:SetCallback(HandleUserFeed)
 
+	-- TODO: Remove me
+	local rateLimit = Util.RateLimit(2, 6)
+	FeedEvents.LoadShowcaseWithId:SetServerListener(function(player, shareCode)
+		if not rateLimit(player) then
+			return
+		end
+
+		local owner, guid = DataService:GetShareCodeData(shareCode):Await()
+		if not owner or not guid then
+			return
+		end
+
+		local ownerData = DataService:ReadOfflineData(owner):Await()
+		if not ownerData then
+			return nil
+		end
+
+		local dataShowcase = TableUtil.Find(ownerData.showcases, function(showcase)
+			return showcase.GUID == guid
+		end)
+
+		if not dataShowcase then
+			return nil
+		end
+
+		local showcase = Data.FromDataShowcase(dataShowcase, owner)
+
+		local feed = feedData[player]
+		if not feed then
+			return false
+		end
+
+		feed.viewedUser = owner
+		feed.showcases = { showcase }
+
+		FeedEvents.Update:FireClient(player, feed)
+
+		local activeShowcase = ShowcaseService:GetShowcase(showcase, "View")
+		ShowcaseService:EnterPlayerShowcase(player, activeShowcase)
+	end)
+
 	RandomFeed.Extended:Connect(HandleRandomFeedUpdated)
 end
 

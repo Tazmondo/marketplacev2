@@ -21,4 +21,9 @@ return {
 	end, function(success)
 		return Guard.Boolean(success)
 	end),
+
+	-- TODO: Remove me
+	LoadShowcaseWithId = Red.SharedEvent("Showcase_LoadShowcaseWithId", function(shareCode)
+		return Guard.Number(shareCode)
+	end),
 }

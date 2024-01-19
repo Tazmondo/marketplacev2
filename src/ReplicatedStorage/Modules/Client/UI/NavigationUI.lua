@@ -7,6 +7,7 @@ local FeedEvents = require(ReplicatedStorage.Events.FeedEvents)
 local Device = require(ReplicatedStorage.Modules.Client.Device)
 local CatalogUI = require(script.Parent.CatalogUI)
 local FeedController = require(ReplicatedStorage.Modules.Client.FeedController)
+local Base36 = require(ReplicatedStorage.Modules.Shared.Base36)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local ProfileUI = require(script.Parent.ProfileUI)
@@ -79,29 +80,42 @@ local function ToggleSearchVisibility(force: boolean?)
 	feedUI.ActionButton.ImageButton.CloseIcon.Visible = visible
 end
 
-function UserSearch()
+-- function UserSearch()
+-- 	local enteredText = feedUI.Search.Creator.Text
+-- 	if enteredText == "" then
+-- 		return
+-- 	end
+
+-- 	local userId = tonumber(enteredText)
+-- 	if not userId then
+-- 		local success, fetchedId = pcall(Players.GetUserIdFromNameAsync, Players, enteredText)
+-- 		if success then
+-- 			userId = fetchedId
+-- 		end
+-- 	end
+
+-- 	if not userId then
+-- 		return
+-- 	end
+
+-- 	local callSuccess, searchSuccess = FeedEvents.User:Call(userId):Await()
+-- 	print("Searching...", userId, searchSuccess)
+-- 	if callSuccess and searchSuccess then
+-- 		ToggleSearchVisibility(false)
+-- 	end
+-- end
+
+-- TODO: Remove me
+local function ShopShareCodeSearch()
 	local enteredText = feedUI.Search.Creator.Text
 	if enteredText == "" then
 		return
 	end
 
-	local userId = tonumber(enteredText)
-	if not userId then
-		local success, fetchedId = pcall(Players.GetUserIdFromNameAsync, Players, enteredText)
-		if success then
-			userId = fetchedId
-		end
-	end
+	local shareCode = Base36.Decode(enteredText)
+	FeedEvents.LoadShowcaseWithId:FireServer(shareCode)
 
-	if not userId then
-		return
-	end
-
-	local callSuccess, searchSuccess = FeedEvents.User:Call(userId):Await()
-	print("Searching...", userId, searchSuccess)
-	if callSuccess and searchSuccess then
-		ToggleSearchVisibility(false)
-	end
+	ToggleSearchVisibility(false)
 end
 
 function NavigationUI:Initialize()
@@ -125,11 +139,11 @@ function NavigationUI:Initialize()
 	feedUI.ActionButton.ImageButton.Activated:Connect(function()
 		ToggleSearchVisibility()
 	end)
-	feedUI.Search.Toggle.Activated:Connect(UserSearch)
-	feedUI.Search.Creator.ReturnPressedFromOnScreenKeyboard:Connect(UserSearch)
+	feedUI.Search.Toggle.Activated:Connect(ShopShareCodeSearch)
+	feedUI.Search.Creator.ReturnPressedFromOnScreenKeyboard:Connect(ShopShareCodeSearch)
 	feedUI.Search.Creator.FocusLost:Connect(function(enterPressed)
 		if enterPressed then
-			UserSearch()
+			ShopShareCodeSearch()
 		end
 	end)
 

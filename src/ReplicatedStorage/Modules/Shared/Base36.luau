@@ -25,7 +25,7 @@ end
 
 local function Decode(str: string): number
 	local num = 0
-	local values = { string.byte(str, 1, -1) }
+	local values = { string.byte(str:upper(), 1, -1) }
 	for i, value in values do
 		num += lookupFromByte[value] * (math.pow(36, #values - i))
 	end
