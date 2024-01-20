@@ -1,6 +1,7 @@
 local DataService = {}
 
 local DataStoreService = game:GetService("DataStoreService")
+local MemoryStoreService = game:GetService("MemoryStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -20,12 +21,14 @@ DataService.PlayerRemoving = Signal()
 
 local STOREPREFIX = "PlayerData8"
 local PLAYERPREFIX = "Player_"
-local CACHETIMEOUT = 60 * 15
+local PLAYERCACHETIMEOUT = 60 * 15
+local SHARECODECACHEEXPIRATION = 60 * 60 * 24 * 8 -- 8 days
 
 local ProfileStore =
 	assert(ProfileService.GetProfileStore(STOREPREFIX, Data.dataTemplate), "Failed to load profile store")
 
 local ShareCodeStore = DataStoreService:GetDataStore("ShareCodes")
+local ShareCodeMemoryStore = MemoryStoreService:GetSortedMap("ShareCodes")
 
 type Profile = typeof(assert(ProfileStore:LoadProfileAsync(...)))
 type CachedProfile = {
@@ -44,9 +47,30 @@ type GlobalUpdateData = ShareCodeUpdate
 
 local profiles: { [Player]: Profile } = {}
 local cachedShowcases: { [number]: CachedProfile? } = {}
+local shareCodeCache: { [number]: { owner: number, guid: string } | false } = {}
 
 local function GetKey(userId: number)
 	return PLAYERPREFIX .. userId
+end
+
+local function UpdateShareCodeCache(code: number, owner: number, guid: string)
+	return Future.new(function()
+		local tries = 0
+		while true do
+			local success = pcall(function()
+				ShareCodeMemoryStore:SetAsync(tostring(code), {
+					owner = owner,
+					guid = guid,
+				}, SHARECODECACHEEXPIRATION)
+			end)
+			if success then
+				return
+			end
+
+			tries += 1
+			task.wait(2 ^ tries)
+		end
+	end)
 end
 
 local function UpdateShareCode(data: Data.Data, code: number, owner: number, guid: string)
@@ -177,7 +201,7 @@ function DataService:ReadOfflineData(userId: number, bypassCache: boolean?)
 		end
 
 		local cache = cachedShowcases[userId]
-		if cache and tick() - cache.cachedTime <= CACHETIMEOUT and not bypassCache then
+		if cache and tick() - cache.cachedTime <= PLAYERCACHETIMEOUT and not bypassCache then
 			return cache.data:Await()
 		end
 
@@ -290,21 +314,48 @@ function DataService:GenerateNextShareCode(player: Player, targetId: number, gui
 			until success == true
 		end)
 
+		UpdateShareCodeCache(nextNumber, targetId, guid)
+
 		return nextNumber
 	end, player)
 end
 
 function DataService:GetShareCodeData(code: number)
 	return Future.new(function(): (number?, string?)
-		local success, codeData = pcall(function()
-			return ShareCodeStore:GetAsync(tostring(code))
-		end)
-		if not success or not codeData then
-			return nil
+		local localCached = shareCodeCache[code]
+		if localCached ~= nil then
+			if typeof(localCached) == "boolean" then
+				return nil
+			end
+			return localCached.owner, localCached.guid
 		end
 
-		local owner: number = codeData.owner
-		local guid: string = codeData.guid
+		local owner: number
+		local guid: string
+
+		local cacheSuccess, cacheData = pcall(function()
+			return ShareCodeMemoryStore:GetAsync(tostring(code))
+		end)
+
+		if cacheSuccess and cacheData then
+			owner = cacheData.owner
+			guid = cacheData.guid
+		else
+			local success, codeData = pcall(function()
+				return ShareCodeStore:GetAsync(tostring(code))
+			end)
+
+			if not success or not codeData then
+				return nil
+			end
+
+			owner = codeData.owner
+			guid = codeData.guid
+			UpdateShareCodeCache(code, owner, guid)
+		end
+
+		shareCodeCache[code] = { owner = owner, guid = guid }
+
 		return owner, guid
 	end)
 end
