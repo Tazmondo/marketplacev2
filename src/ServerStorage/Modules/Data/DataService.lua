@@ -351,8 +351,10 @@ function DataService:GetShareCodeData(code: number)
 
 			owner = codeData.owner
 			guid = codeData.guid
-			UpdateShareCodeCache(code, owner, guid)
 		end
+
+		-- Always update the cache to reset the expiry date.
+		UpdateShareCodeCache(code, owner, guid)
 
 		shareCodeCache[code] = { owner = owner, guid = guid }
 
