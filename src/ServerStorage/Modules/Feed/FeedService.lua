@@ -253,8 +253,6 @@ function HandleRandomFeedUpdated(feed: { Types.Showcase })
 end
 
 function FeedService:Initialize()
-	Players.CharacterAutoLoads = false
-
 	Players.PlayerAdded:Connect(PlayerAdded)
 	for i, player in Players:GetPlayers() do
 		PlayerAdded(player)
@@ -312,6 +310,6 @@ function FeedService:Initialize()
 	RandomFeed.Extended:Connect(HandleRandomFeedUpdated)
 end
 
-FeedService:Initialize()
+-- FeedService:Initialize()
 
 return FeedService
