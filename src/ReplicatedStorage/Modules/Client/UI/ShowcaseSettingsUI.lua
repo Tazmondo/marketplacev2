@@ -2,7 +2,7 @@ local ShopSettingsUI = {}
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
+local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
@@ -29,7 +29,7 @@ function Save()
 
 	local logoId = tonumber(gui.Frame.Logo.TextBox.Text)
 
-	ShowcaseEvents.UpdateSettings:FireServer({
+	ShopEvents.UpdateSettings:FireServer({
 		name = name,
 		primaryColor = activeShowcase.primaryColor,
 		accentColor = activeShowcase.accentColor,

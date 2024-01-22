@@ -7,7 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
-local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
+local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
+local VisibilityEvent = require(ReplicatedStorage.Events.VisibilityEvent)
 local DataService = require(script.Parent.Data.DataService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
@@ -20,8 +21,6 @@ local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
-local UpdateVisiblePlayersEvent =
-	require(ReplicatedStorage.Events.Showcase.ServerFired.UpdateVisiblePlayersEvent):Server()
 local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
 local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
 local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Server()
@@ -161,7 +160,7 @@ function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: ActiveShow
 	for player, _ in showcase.playersPresent do
 		table.insert(visiblePlayers, player)
 	end
-	UpdateVisiblePlayersEvent:FireList(visiblePlayers, visiblePlayers)
+	VisibilityEvent:FireClients(visiblePlayers, visiblePlayers)
 end
 
 function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: ActiveShowcase)
@@ -181,7 +180,7 @@ function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: ActiveSho
 	for player, _ in showcase.playersPresent do
 		table.insert(visiblePlayers, player)
 	end
-	UpdateVisiblePlayersEvent:FireList(visiblePlayers, visiblePlayers)
+	VisibilityEvent:FireClients(visiblePlayers, visiblePlayers)
 end
 
 function ShowcaseService:GetShowcaseOfPlayer(player: Player): ActiveShowcase?
@@ -502,7 +501,7 @@ local function HandleUpdateOutfitStand(
 	SaveShowcase(showcase)
 end
 
-local function HandleUpdateShowcaseSettings(player: Player, settings: ShowcaseEvents.UpdateSettings)
+local function HandleUpdateShowcaseSettings(player: Player, settings: ShopEvents.UpdateSettings)
 	local showcase = GetEditableShowcase(player)
 	if not showcase then
 		return
@@ -613,10 +612,10 @@ function ShowcaseService:Initialize()
 	DeleteShowcaseEvent:On(HandleDeleteShowcase)
 	PurchaseEvents.Asset:SetServerListener(HandlePurchaseAsset)
 
-	ShowcaseEvents.UpdateStand:SetServerListener(HandleUpdateStand)
-	ShowcaseEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
-	ShowcaseEvents.UpdateSettings:SetServerListener(HandleUpdateShowcaseSettings)
-	ShowcaseEvents.UpdateLayout:SetServerListener(function(player, id)
+	ShopEvents.UpdateStand:SetServerListener(HandleUpdateStand)
+	ShopEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
+	ShopEvents.UpdateSettings:SetServerListener(HandleUpdateShowcaseSettings)
+	ShopEvents.UpdateLayout:SetServerListener(function(player, id)
 		HandleUpdateShowcaseLayout(player, id :: LayoutData.LayoutId)
 	end)
 

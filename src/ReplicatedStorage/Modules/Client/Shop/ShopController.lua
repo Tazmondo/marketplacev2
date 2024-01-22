@@ -5,10 +5,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
-local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
+local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local CatalogUI = require(ReplicatedStorage.Modules.Client.UI.CatalogUI)
-local CartController = require(script.Parent.CartController)
-local CharacterCache = require(script.Parent.CharacterCache)
+local CartController = require(ReplicatedStorage.Modules.Client.CartController)
+local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
 local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
 local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
@@ -270,7 +270,7 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 				prompt.ActionText = "Remove Outfit"
 				prompt.ObjectText = "Stand"
 				prompt.Triggered:Connect(function()
-					ShowcaseEvents.UpdateOutfitStand:FireServer(roundedPosition, nil)
+					ShopEvents.UpdateOutfitStand:FireServer(roundedPosition, nil)
 				end)
 			else
 				SetDisplayVisibility(model, true)
@@ -279,10 +279,7 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 				prompt.Triggered:Connect(function()
 					local outfit = CatalogUI:SelectOutfit():Await()
 					if outfit then
-						ShowcaseEvents.UpdateOutfitStand:FireServer(
-							roundedPosition,
-							HumanoidDescription.Serialize(outfit)
-						)
+						ShopEvents.UpdateOutfitStand:FireServer(roundedPosition, HumanoidDescription.Serialize(outfit))
 					end
 				end)
 			end
@@ -384,7 +381,7 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 				prompt.ObjectText = "Stand"
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					ShowcaseEvents.UpdateStand:FireServer(roundedPosition, nil)
+					ShopEvents.UpdateStand:FireServer(roundedPosition, nil)
 				end)
 			else
 				SetDisplayVisibility(part, true)
@@ -394,7 +391,7 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 				prompt.Triggered:Connect(function()
 					local selectedItem = CatalogUI:SelectItem():Await()
 					if selectedItem then
-						ShowcaseEvents.UpdateStand:FireServer(roundedPosition, selectedItem)
+						ShopEvents.UpdateStand:FireServer(roundedPosition, selectedItem)
 					end
 				end)
 			end

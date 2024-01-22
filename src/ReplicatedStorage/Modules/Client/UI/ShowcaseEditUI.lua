@@ -5,7 +5,7 @@ local ShowcaseEditUI = {}
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ShowcaseEvents = require(ReplicatedStorage.Events.ShowcaseEvents)
+local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local ShowcaseNavigationUI = require(script.Parent.ShowcaseNavigationUI)
 local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
@@ -159,7 +159,7 @@ function Update()
 		return
 	end
 
-	ShowcaseEvents.UpdateSettings:FireServer({
+	ShopEvents.UpdateSettings:FireServer({
 		name = activeShowcase.name,
 		primaryColor = gui.Wrapper.CurrentPrimaryColor.BackgroundColor3,
 		accentColor = gui.Wrapper.CurrentAccentColor.BackgroundColor3,
@@ -208,7 +208,7 @@ end
 
 function SwitchLayout(id: LayoutData.LayoutId)
 	UpdateLayoutSelection(id)
-	ShowcaseEvents.UpdateLayout:FireServer(id)
+	ShopEvents.UpdateLayout:FireServer(id)
 end
 
 -- Should only be called once
