@@ -23,7 +23,7 @@ return {
 	end),
 
 	-- TODO: Remove me
-	LoadShowcaseWithId = Red.SharedEvent("Showcase_LoadShowcaseWithId", function(shareCode)
+	LoadShopWithId = Red.SharedEvent("Shop_LoadShopWithId", function(shareCode)
 		return Guard.Number(shareCode)
 	end),
 }

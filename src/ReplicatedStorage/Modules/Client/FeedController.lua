@@ -16,7 +16,7 @@ function FeedController:BumpIndex(bumpAmount: number)
 		return
 	end
 
-	local newIndex = math.clamp(currentIndex + bumpAmount, 0, #currentFeed.showcases)
+	local newIndex = math.clamp(currentIndex + bumpAmount, 0, #currentFeed.shops)
 	currentIndex = newIndex
 
 	FeedEvents.Move:FireServer(newIndex)
@@ -27,13 +27,13 @@ end
 function HandleUpdateFeed(feed: Types.FeedData)
 	local newIndex = 1
 
-	-- Preserve the index so it still matches up with the current showcase if the feed has changed in some way
+	-- Preserve the index so it still matches up with the current shop if the feed has changed in some way
 	if currentFeed and currentIndex and currentFeed.viewedUser == feed.viewedUser and currentFeed.type == feed.type then
-		local difference = #feed.showcases - #currentFeed.showcases
+		local difference = #feed.shops - #currentFeed.shops
 		if
 			difference >= 0
-			and feed.showcases[currentIndex]
-			and feed.showcases[currentIndex].GUID == currentFeed.showcases[currentIndex].GUID
+			and feed.shops[currentIndex]
+			and feed.shops[currentIndex].GUID == currentFeed.shops[currentIndex].GUID
 		then
 			-- List has only grown so keep index the same
 			newIndex = currentIndex

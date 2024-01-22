@@ -16,7 +16,7 @@ export type OutfitStand = {
 	roundedPosition: Vector3,
 }
 
-export type Showcase = {
+export type Shop = {
 	owner: number, -- UserId
 	layoutId: LayoutData.LayoutId,
 	name: string,
@@ -31,9 +31,9 @@ export type Showcase = {
 	outfitStands: { OutfitStand },
 }
 
-export type ShowcaseMode = "View" | "Edit"
+export type ShopMode = "View" | "Edit"
 
-export type NetworkShowcase = {
+export type NetworkShop = {
 	owner: number,
 	layoutId: LayoutData.LayoutId,
 	name: string,
@@ -48,11 +48,11 @@ export type NetworkShowcase = {
 	-- This would be a table with vector3 keys but instance keys can't be sent across network boundaries
 	stands: { Stand },
 	outfitStands: { OutfitStand },
-	mode: ShowcaseMode,
+	mode: ShopMode,
 }
 
 -- For displaying in UI
-export type NetworkShowcaseDetails = {
+export type NetworkShopDetails = {
 	owner: number,
 	name: string,
 	thumbId: number,
@@ -82,7 +82,7 @@ function GuardFeed(value: unknown): FeedType
 end
 
 export type FeedData = {
-	showcases: { Showcase },
+	shops: { Shop },
 	type: FeedType,
 	viewedUser: number?, -- When nil, user is on a feed. When set, user is viewing
 }

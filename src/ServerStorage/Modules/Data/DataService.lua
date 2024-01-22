@@ -46,7 +46,7 @@ type ShareCodeUpdate = {
 type GlobalUpdateData = ShareCodeUpdate
 
 local profiles: { [Player]: Profile } = {}
-local cachedShowcases: { [number]: CachedProfile? } = {}
+local cachedShops: { [number]: CachedProfile? } = {}
 local shareCodeCache: { [number]: { owner: number, guid: string } | false } = {}
 
 local function GetKey(userId: number)
@@ -74,15 +74,15 @@ local function UpdateShareCodeCache(code: number, owner: number, guid: string)
 end
 
 local function UpdateShareCode(data: Data.Data, code: number, owner: number, guid: string)
-	local showcase = TableUtil.Find(data.showcases, function(showcase)
-		return showcase.GUID == guid
+	local shop = TableUtil.Find(data.shops, function(shop)
+		return shop.GUID == guid
 	end)
 
-	if not showcase then
+	if not shop then
 		return
 	end
 
-	showcase.shareCode = code
+	shop.shareCode = code
 end
 
 local function ProcessGlobalUpdate(profile: Profile, update: GlobalUpdateData): boolean
@@ -148,7 +148,7 @@ function PlayerRemoving(player: Player)
 		profile.Data.firstTime = false
 
 		-- Might not need to deep copy here, but doing it just to be safe.
-		cachedShowcases[player.UserId] = {
+		cachedShops[player.UserId] = {
 			cachedTime = tick(),
 			data = Future.new(function(): Data.Data?
 				return TableUtil.Copy(profile.Data, true)
@@ -183,7 +183,7 @@ function FetchOfflineData(userId: number)
 		return nil
 	end, userId)
 
-	cachedShowcases[userId] = {
+	cachedShops[userId] = {
 		cachedTime = tick(),
 		data = dataFuture,
 	}
@@ -200,7 +200,7 @@ function DataService:ReadOfflineData(userId: number, bypassCache: boolean?)
 			return profiles[player].Data
 		end
 
-		local cache = cachedShowcases[userId]
+		local cache = cachedShops[userId]
 		if cache and tick() - cache.cachedTime <= PLAYERCACHETIMEOUT and not bypassCache then
 			return cache.data:Await()
 		end
@@ -261,15 +261,15 @@ function DataService:GenerateNextShareCode(player: Player, targetId: number, gui
 			return
 		end
 
-		local showcase = TableUtil.Find(data.showcases, function(showcase)
-			return showcase.GUID == guid
+		local shop = TableUtil.Find(data.shops, function(shop)
+			return shop.GUID == guid
 		end)
-		if not showcase then
+		if not shop then
 			return
 		end
 
-		if showcase.shareCode then
-			return showcase.shareCode
+		if shop.shareCode then
+			return shop.shareCode
 		end
 
 		-- Don't need to rate limit before this point, as the offline data gets cached.
@@ -362,7 +362,7 @@ function DataService:GetShareCodeData(code: number)
 	end)
 end
 
-local function HandleGetShowcaseDetails(player: Player, shareCode: number): Types.NetworkShowcaseDetails?
+local function HandleGetShopDetails(player: Player, shareCode: number): Types.NetworkShopDetails?
 	local owner, guid = DataService:GetShareCodeData(shareCode):Await()
 	if not owner or not guid then
 		return nil
@@ -373,22 +373,22 @@ local function HandleGetShowcaseDetails(player: Player, shareCode: number): Type
 		return nil
 	end
 
-	local showcase = TableUtil.Find(ownerData.showcases, function(showcase)
-		return showcase.GUID == guid
+	local shop = TableUtil.Find(ownerData.shops, function(shop)
+		return shop.GUID == guid
 	end)
-	if not showcase then
+	if not shop then
 		return
 	end
 
 	return {
 		owner = owner,
-		name = showcase.name,
-		thumbId = showcase.thumbId,
-		logoId = showcase.logoId,
-		primaryColor = Color3.fromHex(showcase.primaryColor),
-		accentColor = Color3.fromHex(showcase.accentColor),
-		GUID = showcase.GUID,
-		shareCode = showcase.shareCode,
+		name = shop.name,
+		thumbId = shop.thumbId,
+		logoId = shop.logoId,
+		primaryColor = Color3.fromHex(shop.primaryColor),
+		accentColor = Color3.fromHex(shop.accentColor),
+		GUID = shop.GUID,
+		shareCode = shop.shareCode,
 	}
 end
 
@@ -424,7 +424,7 @@ function DataService:Initialize()
 
 	DataEvents.CreateOutfit:SetServerListener(HandleNewOutfit)
 	DataEvents.DeleteOutfit:SetServerListener(HandleDeleteOutfit)
-	DataEvents.GetShowcaseDetails:SetCallback(HandleGetShowcaseDetails)
+	DataEvents.GetShopDetails:SetCallback(HandleGetShopDetails)
 end
 
 DataService:Initialize()

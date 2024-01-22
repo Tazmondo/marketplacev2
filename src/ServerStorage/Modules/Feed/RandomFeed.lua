@@ -15,18 +15,18 @@ local Signal = require(ReplicatedStorage.Packages.Signal)
 -- Doesn't seem to be necessary? Will increase if datastore read rate limits are being hit.
 local FEEDRATELIMIT = 0
 
-local usedShowcases: { [string]: true? } = {}
+local usedShops: { [string]: true? } = {}
 
--- Players that cannot contribute any more showcases to the feed
+-- Players that cannot contribute any more shops to the feed
 local exhaustedPlayers: { [number]: true? } = {}
-local cachedFeed: { Types.Showcase } = {}
+local cachedFeed: { Types.Shop } = {}
 
 local random = Random.new()
 local rateLimit = Util.CreateRateYield(FEEDRATELIMIT)
 
 RandomFeed.Extended = Signal()
 
-local function _GetNextShowcase(): Types.Showcase?
+local function _GetNextShop(): Types.Shop?
 	rateLimit()
 
 	local nextPlayer = RandomPlayerService:GetPlayer(exhaustedPlayers):Await()
@@ -38,58 +38,58 @@ local function _GetNextShowcase(): Types.Showcase?
 	local data = DataService:ReadOfflineData(nextPlayer):Await()
 	if not data then
 		exhaustedPlayers[nextPlayer] = true
-		return _GetNextShowcase()
+		return _GetNextShop()
 	end
 
 	-- Remove invalid players so they don't clutter up the random feed
-	if not RandomValid.AnyValid(data.showcases) then
+	if not RandomValid.AnyValid(data.shops) then
 		exhaustedPlayers[nextPlayer] = true
 		RandomPlayerService:RemovePlayer(nextPlayer)
-		return _GetNextShowcase()
+		return _GetNextShop()
 	end
 
-	local filteredShowcases = {}
-	for i, showcase in data.showcases do
-		if not usedShowcases[showcase.GUID] and RandomValid.IsValid(showcase) then
-			table.insert(filteredShowcases, showcase)
+	local filteredShops = {}
+	for i, shop in data.shops do
+		if not usedShops[shop.GUID] and RandomValid.IsValid(shop) then
+			table.insert(filteredShops, shop)
 		end
 	end
 
-	if #filteredShowcases <= 1 then
+	if #filteredShops <= 1 then
 		exhaustedPlayers[nextPlayer] = true
-		if #filteredShowcases == 0 then
-			return _GetNextShowcase()
+		if #filteredShops == 0 then
+			return _GetNextShop()
 		end
 	end
 
-	local index = random:NextInteger(1, #filteredShowcases)
-	local showcase = filteredShowcases[index]
-	usedShowcases[showcase.GUID] = true
+	local index = random:NextInteger(1, #filteredShops)
+	local shop = filteredShops[index]
+	usedShops[shop.GUID] = true
 
-	local processedShowcase = Data.FromDataShowcase(showcase, nextPlayer)
+	local processedShop = Data.FromDataShop(shop, nextPlayer)
 
-	table.insert(cachedFeed, processedShowcase)
+	table.insert(cachedFeed, processedShop)
 	RandomFeed.Extended:Fire(cachedFeed)
 
-	return processedShowcase
+	return processedShop
 end
 
-local DebounceGetNextShowcase = Util.ToFuture(Util.CreateYieldDebounce(_GetNextShowcase))
+local DebounceGetNextShop = Util.ToFuture(Util.CreateYieldDebounce(_GetNextShop))
 
 --- Attempts to get a random feed of up to the desired length.
 --- May return less than the desired length if there aren't enough valid feeds.
 --- Also ensures there is only one feed fetch operation ongoing at a time
 
 function RandomFeed.GetFeed(desiredLength: number?)
-	return Future.new(function(): { Types.Showcase }?
+	return Future.new(function(): { Types.Shop }?
 		if not desiredLength or desiredLength <= #cachedFeed then
 			return cachedFeed
 		end
 
 		while #cachedFeed <= desiredLength do
-			local nextShowcase = DebounceGetNextShowcase():Await()
-			if not nextShowcase then
-				-- No more showcases to generate
+			local nextShop = DebounceGetNextShop():Await()
+			if not nextShop then
+				-- No more shops to generate
 				if #cachedFeed > 0 then
 					return cachedFeed
 				else
@@ -102,9 +102,9 @@ function RandomFeed.GetFeed(desiredLength: number?)
 	end)
 end
 
--- Pre-load some random showcases
+-- Pre-load some random shops
 task.spawn(function()
-	print("Pre-loaded random showcases: ", RandomFeed.GetFeed(3):Await())
+	print("Pre-loaded random shops: ", RandomFeed.GetFeed(3):Await())
 end)
 
 return RandomFeed

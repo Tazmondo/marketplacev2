@@ -27,19 +27,19 @@ local function GuardUpdateSettings(settings: unknown)
 end
 
 return {
-	UpdateStand = Red.SharedEvent("Showcase_UpdateStnad", function(roundedPosition, assetId)
+	UpdateStand = Red.SharedEvent("Shop_UpdateStnad", function(roundedPosition, assetId)
 		return Guard.Vector3(roundedPosition), Guard.Optional(Guard.Number)(assetId)
 	end),
 
-	UpdateOutfitStand = Red.SharedEvent("Showcase_UpdateOutfitStand", function(roundedPosition, description)
+	UpdateOutfitStand = Red.SharedEvent("Shop_UpdateOutfitStand", function(roundedPosition, description)
 		return Guard.Vector3(roundedPosition), Guard.Optional(HumanoidDescription.Guard)(description)
 	end),
 
-	UpdateSettings = Red.SharedEvent("Showcase_UpdateSettings", function(settings)
+	UpdateSettings = Red.SharedEvent("Shop_UpdateSettings", function(settings)
 		return GuardUpdateSettings(settings)
 	end),
 
-	UpdateLayout = Red.SharedEvent("Showcase_UpdateLayout", function(layoutId)
+	UpdateLayout = Red.SharedEvent("Shop_UpdateLayout", function(layoutId)
 		return Layouts:GuardLayoutId(layoutId)
 	end),
 }

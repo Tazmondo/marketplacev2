@@ -55,7 +55,7 @@ local Config = {
 
 	DefaultFeed = "Random" :: Types.FeedType,
 
-	-- Number of stands for a showcase to show up on feeds
+	-- Number of stands for a shop to show up on feeds
 	-- MinimumStandsForRandom = 12,
 
 	-- Proportion of stands used to show up on the random feed

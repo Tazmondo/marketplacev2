@@ -1,13 +1,13 @@
 -- Sorry this code is ugly, but it gets the job done.
 
-local ShowcaseEditUI = {}
+local ShopEditUI = {}
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
-local ShowcaseNavigationUI = require(script.Parent.ShowcaseNavigationUI)
-local ShowcaseSettingsUI = require(script.Parent.ShowcaseSettingsUI)
+local ShopNavigationUI = require(script.Parent.ShopNavigationUI)
+local ShopSettingsUI = require(script.Parent.ShopSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
@@ -17,7 +17,7 @@ local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().ControllerEdit
 
-local activeShowcase: Types.NetworkShowcase? = nil
+local activeShop: Types.NetworkShop? = nil
 local selectedTexture: string? = nil
 
 function SelectButton(button: Instance?, visible: boolean)
@@ -50,7 +50,7 @@ function SelectFrame(frame: Instance?)
 		end
 	end
 
-	ShowcaseSettingsUI:Close()
+	ShopSettingsUI:Close()
 
 	return ret
 end
@@ -99,16 +99,16 @@ function PickTexture(texture: string)
 end
 
 function ShowSettings()
-	if ShowcaseSettingsUI:IsOpen() then
-		ShowcaseSettingsUI:Close()
+	if ShopSettingsUI:IsOpen() then
+		ShopSettingsUI:Close()
 		SelectButton(gui.Wrapper.ShopSettings, false)
 	else
-		if not activeShowcase then
+		if not activeShop then
 			return
 		end
 
 		SelectFrame()
-		ShowcaseSettingsUI:Display(activeShowcase)
+		ShopSettingsUI:Display(activeShop)
 		SelectButton(gui.Wrapper.ShopSettings, true)
 	end
 end
@@ -155,27 +155,27 @@ function UpdateLayoutSelection(layoutId: string)
 end
 
 function Update()
-	if not activeShowcase or not selectedTexture then
+	if not activeShop or not selectedTexture then
 		return
 	end
 
 	ShopEvents.UpdateSettings:FireServer({
-		name = activeShowcase.name,
+		name = activeShop.name,
 		primaryColor = gui.Wrapper.CurrentPrimaryColor.BackgroundColor3,
 		accentColor = gui.Wrapper.CurrentAccentColor.BackgroundColor3,
-		thumbId = activeShowcase.thumbId,
-		logoId = activeShowcase.logoId,
+		thumbId = activeShop.thumbId,
+		logoId = activeShop.logoId,
 		texture = selectedTexture,
 	})
 end
 
 function Exit()
-	ShowcaseNavigationUI:RejoinPlace()
+	ShopNavigationUI:RejoinPlace()
 end
 
-function ShowcaseEditUI:Hide()
+function ShopEditUI:Hide()
 	gui.Visible = false
-	activeShowcase = nil
+	activeShop = nil
 	selectedTexture = nil
 end
 
@@ -190,20 +190,20 @@ function GenerateDeeplink(ownerId: number, GUID: string)
 	return `https://www.roblox.com/games/start?placeId={game.PlaceId}&launchData={b64}`
 end
 
-function ShowcaseEditUI:Display(showcase: Types.NetworkShowcase)
-	activeShowcase = showcase
-	selectedTexture = showcase.texture
+function ShopEditUI:Display(shop: Types.NetworkShop)
+	activeShop = shop
+	selectedTexture = shop.texture
 
 	gui.Visible = true
-	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = showcase.primaryColor
-	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = showcase.accentColor
+	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = shop.primaryColor
+	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = shop.accentColor
 
-	gui.ShareLink.TextBox.Text = GenerateDeeplink(showcase.owner, showcase.GUID)
+	gui.ShareLink.TextBox.Text = GenerateDeeplink(shop.owner, shop.GUID)
 
-	UpdatePrimaryColourPickerSelection(showcase.primaryColor)
-	UpdateAccentColourPickerSelection(showcase.accentColor)
-	UpdateTextureSelection(showcase.texture)
-	UpdateLayoutSelection(showcase.layoutId)
+	UpdatePrimaryColourPickerSelection(shop.primaryColor)
+	UpdateAccentColourPickerSelection(shop.accentColor)
+	UpdateTextureSelection(shop.texture)
+	UpdateLayoutSelection(shop.layoutId)
 end
 
 function SwitchLayout(id: LayoutData.LayoutId)
@@ -236,7 +236,7 @@ function PopulateLayoutFrame()
 	end
 end
 
-function ShowcaseEditUI:Initialize()
+function ShopEditUI:Initialize()
 	gui.Visible = false
 	SelectFrame()
 	SelectButton(nil, false)
@@ -297,6 +297,6 @@ function ShowcaseEditUI:Initialize()
 	end
 end
 
-ShowcaseEditUI:Initialize()
+ShopEditUI:Initialize()
 
-return ShowcaseEditUI
+return ShopEditUI

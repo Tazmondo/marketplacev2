@@ -11,15 +11,15 @@ local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().ShopSettings
 
-local activeShowcase: Types.NetworkShowcase? = nil
+local activeShop: Types.NetworkShop? = nil
 
 function Save()
-	if not activeShowcase then
+	if not activeShop then
 		return
 	end
 	local name = Util.LimitString(gui.Frame.ShopName.TextBox.Text, Config.MaxPlaceNameLength)
 	if #name == 0 then
-		name = activeShowcase.name
+		name = activeShop.name
 	end
 
 	gui.Frame.ShopName.TextBox.Text = name
@@ -31,28 +31,28 @@ function Save()
 
 	ShopEvents.UpdateSettings:FireServer({
 		name = name,
-		primaryColor = activeShowcase.primaryColor,
-		accentColor = activeShowcase.accentColor,
-		texture = activeShowcase.texture,
-		thumbId = thumbId or activeShowcase.thumbId,
-		logoId = logoId or activeShowcase.logoId,
+		primaryColor = activeShop.primaryColor,
+		accentColor = activeShop.accentColor,
+		texture = activeShop.texture,
+		thumbId = thumbId or activeShop.thumbId,
+		logoId = logoId or activeShop.logoId,
 	})
 
 	ShopSettingsUI:Close()
 end
 
 function ShopSettingsUI:Close()
-	activeShowcase = nil
+	activeShop = nil
 	gui.Visible = false
 end
 
-function ShopSettingsUI:Display(showcase: Types.NetworkShowcase)
+function ShopSettingsUI:Display(shop: Types.NetworkShop)
 	gui.Visible = true
-	activeShowcase = showcase
+	activeShop = shop
 
-	gui.Frame.ShopName.TextBox.Text = showcase.name
-	gui.Frame.Thumbnail.TextBox.Text = tostring(showcase.thumbId)
-	gui.Frame.ShopThumbnail.Image = Thumbs.GetAsset(showcase.thumbId)
+	gui.Frame.ShopName.TextBox.Text = shop.name
+	gui.Frame.Thumbnail.TextBox.Text = tostring(shop.thumbId)
+	gui.Frame.ShopThumbnail.Image = Thumbs.GetAsset(shop.thumbId)
 end
 
 function ShopSettingsUI:IsOpen()

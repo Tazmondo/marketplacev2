@@ -22,7 +22,7 @@ local function RenderCollectionItems(collectionFrame: CollectionFrame, shareCode
 
 	for i, code in randomCodes do
 		local shopElement = template:Clone()
-		DataEvents.GetShowcaseDetails:Call(code):After(function(success, details)
+		DataEvents.GetShopDetails:Call(code):After(function(success, details)
 			if not success or not details then
 				return
 			end

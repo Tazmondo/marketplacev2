@@ -5,7 +5,7 @@ local MemoryStoreService = game:GetService("MemoryStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
-local ShowcaseService = require(script.Parent.ShowcaseService)
+local ShopService = require(script.Parent.ShopService)
 
 local gainsStore = MemoryStoreService:GetSortedMap("Rewards")
 
@@ -16,12 +16,12 @@ function HandlePurchase(player: Player, assetId: number, purchased: boolean)
 		return
 	end
 
-	local showcase = ShowcaseService:GetShowcaseOfPlayer(player)
-	if not showcase then
+	local shop = ShopService:GetShopOfPlayer(player)
+	if not shop then
 		return
 	end
 
-	local ownerId = showcase.owner
+	local ownerId = shop.owner
 	local itemDetails = DataFetch.GetItemDetails(assetId):Await()
 	if not itemDetails or not itemDetails.price then
 		return

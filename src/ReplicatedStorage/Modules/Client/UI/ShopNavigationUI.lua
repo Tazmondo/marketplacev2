@@ -1,4 +1,4 @@
-local ShowcaseNavigationUI = {}
+local ShopNavigationUI = {}
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,32 +14,32 @@ local lastLoaded = os.clock()
 local currentFeed: Types.FeedData? = nil
 local currentIndex: number? = nil
 
-function ShowcaseNavigationUI:Hide()
+function ShopNavigationUI:Hide()
 	gui.Visible = false
 end
 
-function ShowcaseNavigationUI:Display()
+function ShopNavigationUI:Display()
 	print("Display feed:", currentFeed, currentIndex)
 
-	if not currentFeed or #currentFeed.showcases == 0 or not currentIndex then
+	if not currentFeed or #currentFeed.shops == 0 or not currentIndex then
 		gui.Visible = false
 		return
 	end
-	local showcase = currentFeed.showcases[currentIndex]
-	if not showcase then
+	local shop = currentFeed.shops[currentIndex]
+	if not shop then
 		gui.Visible = false
 		return
 	end
 
-	gui.ShopInfo.ProfileImage.Image = Thumbs.GetAsset(showcase.thumbId)
+	gui.ShopInfo.ProfileImage.Image = Thumbs.GetAsset(shop.thumbId)
 
-	gui.ShopInfo.Text.ShopName.Text = showcase.name
+	gui.ShopInfo.Text.ShopName.Text = shop.name
 
 	gui.ShopInfo.Text.CreatorName.Text = ""
 
 	local save = os.clock()
 	lastLoaded = save
-	Future.Try(Players.GetNameFromUserIdAsync, Players, showcase.owner):After(function(success, name)
+	Future.Try(Players.GetNameFromUserIdAsync, Players, shop.owner):After(function(success, name)
 		if lastLoaded ~= save then
 			-- Another future has been started, so cancel this one.
 			return
@@ -49,7 +49,7 @@ function ShowcaseNavigationUI:Display()
 			gui.ShopInfo.Text.CreatorName.Text = `By {name}`
 		else
 			gui.ShopInfo.Text.CreatorName.Text = "failed to load creator name"
-			warn("Failed to load creator name for:", showcase.owner)
+			warn("Failed to load creator name for:", shop.owner)
 		end
 	end)
 
@@ -63,7 +63,7 @@ function ShowcaseNavigationUI:Display()
 		gui.Back.BackgroundTransparency = 0
 	end
 
-	if currentIndex == #currentFeed.showcases then
+	if currentIndex == #currentFeed.shops then
 		gui.Forward.Active = false
 		gui.Forward.ImageTransparency = 0
 		gui.Forward.BackgroundTransparency = 0
@@ -76,17 +76,17 @@ function ShowcaseNavigationUI:Display()
 	gui.Visible = true
 end
 
-function ShowcaseNavigationUI:RejoinPlace()
+function ShopNavigationUI:RejoinPlace()
 	FeedController:BumpIndex(0)
 end
 
 function HandleUpdate(feed, index)
 	currentFeed = feed
 	currentIndex = index
-	ShowcaseNavigationUI:Display()
+	ShopNavigationUI:Display()
 end
 
-function ShowcaseNavigationUI:Initialize()
+function ShopNavigationUI:Initialize()
 	gui.Visible = false
 	FeedController.Updated:Connect(HandleUpdate)
 
@@ -99,6 +99,6 @@ function ShowcaseNavigationUI:Initialize()
 	end)
 end
 
-ShowcaseNavigationUI:Initialize()
+ShopNavigationUI:Initialize()
 
-return ShowcaseNavigationUI
+return ShopNavigationUI

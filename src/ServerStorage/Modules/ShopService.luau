@@ -1,4 +1,4 @@
-local ShowcaseService = {}
+local ShopService = {}
 
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -21,17 +21,17 @@ local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
-local EditShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
-local CreateShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
-local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Server()
-local DeleteShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Server()
+local EditShopEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.EditShowcaseEvent):Server()
+local CreateShopEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.CreateShowcaseEvent):Server()
+local LoadShopEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Server()
+local DeleteShopEvent = require(ReplicatedStorage.Events.Showcase.ClientFired.DeleteShowcaseEvent):Server()
 
-type ActiveShowcase = {
+type ActiveShop = {
 	stands: { Types.Stand },
 	outfitStands: { Types.OutfitStand },
 	playersPresent: { [Player]: true },
 	owner: number, -- UserId since owner doesn't have to be in the server
-	mode: Types.ShowcaseMode,
+	mode: Types.ShopMode,
 
 	-- Since updating is an asynchronous operation, we don't want old updates to override new ones
 	lastUpdate: number,
@@ -47,9 +47,9 @@ type ActiveShowcase = {
 	thumbId: number,
 }
 
-local placeTable: { ActiveShowcase } = {}
+local placeTable: { ActiveShop } = {}
 
-local playerShowcases: { [Player]: ActiveShowcase? } = {}
+local playerShops: { [Player]: ActiveShop? } = {}
 
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
@@ -129,74 +129,74 @@ function ReplicateAsset(assetId: number)
 	end)
 end
 
-function ToNetworkShowcase(showcase: ActiveShowcase): Types.NetworkShowcase
+function ToNetworkShop(shop: ActiveShop): Types.NetworkShop
 	return {
-		stands = showcase.stands,
-		outfitStands = showcase.outfitStands,
-		layoutId = showcase.layout.id,
-		mode = showcase.mode,
-		owner = showcase.owner,
-		name = showcase.name,
-		GUID = showcase.GUID,
-		shareCode = showcase.shareCode,
-		primaryColor = showcase.primaryColor,
-		accentColor = showcase.accentColor,
-		texture = showcase.texture,
-		thumbId = showcase.thumbId,
-		logoId = showcase.logoId,
+		stands = shop.stands,
+		outfitStands = shop.outfitStands,
+		layoutId = shop.layout.id,
+		mode = shop.mode,
+		owner = shop.owner,
+		name = shop.name,
+		GUID = shop.GUID,
+		shareCode = shop.shareCode,
+		primaryColor = shop.primaryColor,
+		accentColor = shop.accentColor,
+		texture = shop.texture,
+		thumbId = shop.thumbId,
+		logoId = shop.logoId,
 	}
 end
 
-function ShowcaseService:ExitPlayerShowcase(player: Player, showcase: ActiveShowcase)
-	showcase.playersPresent[player] = nil
+function ShopService:ExitPlayerShop(player: Player, shop: ActiveShop)
+	shop.playersPresent[player] = nil
 
-	if next(showcase.playersPresent) == nil then
+	if next(shop.playersPresent) == nil then
 		-- Empty
-		ShowcaseService:UnloadPlace(showcase)
+		ShopService:UnloadPlace(shop)
 		return
 	end
 
 	local visiblePlayers = {}
-	for player, _ in showcase.playersPresent do
+	for player, _ in shop.playersPresent do
 		table.insert(visiblePlayers, player)
 	end
 	VisibilityEvent:FireClients(visiblePlayers, visiblePlayers)
 end
 
-function ShowcaseService:EnterPlayerShowcase(player: Player, showcase: ActiveShowcase)
-	local oldPlace = playerShowcases[player]
+function ShopService:EnterPlayerShop(player: Player, shop: ActiveShop)
+	local oldPlace = playerShops[player]
 
 	-- Need to check GUIDs are different otherwise it will try and delete the old place.
-	if oldPlace and oldPlace.GUID ~= showcase.GUID then
-		ShowcaseService:ExitPlayerShowcase(player, oldPlace)
+	if oldPlace and oldPlace.GUID ~= shop.GUID then
+		ShopService:ExitPlayerShop(player, oldPlace)
 	end
 
-	showcase.playersPresent[player] = true
-	playerShowcases[player] = showcase
+	shop.playersPresent[player] = true
+	playerShops[player] = shop
 
-	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
+	LoadShopEvent:Fire(player, ToNetworkShop(shop))
 
 	local visiblePlayers = {}
-	for player, _ in showcase.playersPresent do
+	for player, _ in shop.playersPresent do
 		table.insert(visiblePlayers, player)
 	end
 	VisibilityEvent:FireClients(visiblePlayers, visiblePlayers)
 end
 
-function ShowcaseService:GetShowcaseOfPlayer(player: Player): ActiveShowcase?
-	local showcase = playerShowcases[player]
-	return showcase
+function ShopService:GetShopOfPlayer(player: Player): ActiveShop?
+	local shop = playerShops[player]
+	return shop
 end
 
-function SaveShowcase(showcase: ActiveShowcase)
-	local owner = Players:GetPlayerByUserId(showcase.owner)
+function SaveShop(shop: ActiveShop)
+	local owner = Players:GetPlayerByUserId(shop.owner)
 	if not owner then
-		warn("Tried to save showcase for player not in-game")
+		warn("Tried to save shop for player not in-game")
 		return
 	end
 
-	if showcase.mode ~= "Edit" then
-		warn("Tried to save showcase when not in edit mode.")
+	if shop.mode ~= "Edit" then
+		warn("Tried to save shop when not in edit mode.")
 		return
 	end
 
@@ -205,24 +205,24 @@ function SaveShowcase(showcase: ActiveShowcase)
 		return
 	end
 
-	local showcaseIndex
-	for i, v in data.showcases do
-		if v.GUID == showcase.GUID then
-			showcaseIndex = i
+	local shopIndex
+	for i, v in data.shops do
+		if v.GUID == shop.GUID then
+			shopIndex = i
 		end
 	end
 
-	if not showcaseIndex then
-		warn("Could not find owned showcase")
+	if not shopIndex then
+		warn("Could not find owned shop")
 		return
 	end
 
 	-- Filter out stands that are invalid or lack an asset id
 	-- Invalid stands can be caused when switching layouts - the old stands may not have valid positions anymore.
-	local validPositions = showcase.layout.getValidStandPositions()
+	local validPositions = shop.layout.getValidStandPositions()
 	local filteredStands: { Data.Stand } = {}
 
-	for _, stand in showcase.stands do
+	for _, stand in shop.stands do
 		if stand.assetId and validPositions[stand.roundedPosition] then
 			table.insert(filteredStands, {
 				assetId = stand.assetId,
@@ -231,10 +231,10 @@ function SaveShowcase(showcase: ActiveShowcase)
 		end
 	end
 
-	local validOutfitPositions = showcase.layout.getValidOutfitStandPositions()
+	local validOutfitPositions = shop.layout.getValidOutfitStandPositions()
 
 	local filteredOutfitStands: { Data.OutfitStand } = {}
-	for _, stand in showcase.outfitStands do
+	for _, stand in shop.outfitStands do
 		if stand.description and validOutfitPositions[stand.roundedPosition] then
 			table.insert(filteredOutfitStands, {
 				description = stand.description,
@@ -243,22 +243,22 @@ function SaveShowcase(showcase: ActiveShowcase)
 		end
 	end
 
-	local newShowcase: Data.Showcase = {
+	local newShop: Data.Shop = {
 		stands = filteredStands,
 		outfitStands = filteredOutfitStands,
-		layoutId = showcase.layout.id,
-		GUID = showcase.GUID,
-		shareCode = showcase.shareCode,
-		name = showcase.name,
-		primaryColor = showcase.primaryColor:ToHex(),
-		accentColor = showcase.accentColor:ToHex(),
-		texture = showcase.texture,
-		thumbId = showcase.thumbId,
-		logoId = showcase.logoId,
+		layoutId = shop.layout.id,
+		GUID = shop.GUID,
+		shareCode = shop.shareCode,
+		name = shop.name,
+		primaryColor = shop.primaryColor:ToHex(),
+		accentColor = shop.accentColor:ToHex(),
+		texture = shop.texture,
+		thumbId = shop.thumbId,
+		logoId = shop.logoId,
 	}
 
 	DataService:WriteData(owner, function(data)
-		data.showcases[showcaseIndex] = newShowcase
+		data.shops[shopIndex] = newShop
 	end)
 end
 
@@ -315,38 +315,38 @@ function PopulateLayoutOutfitStands(
 	return outputStands
 end
 
-function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.ShowcaseMode)
-	-- Check for already existing showcase with the same GUID, but only for viewing. Showcases in edit mode should
-	-- Be kept entirely separate because the mode is stored within the showcase data itself, and not on a per-player basis.
+function ShopService:GetShop(shop: Types.Shop, mode: Types.ShopMode)
+	-- Check for already existing shop with the same GUID, but only for viewing. Shops in edit mode should
+	-- Be kept entirely separate because the mode is stored within the shop data itself, and not on a per-player basis.
 	for i, place in placeTable do
-		if place.GUID == showcase.GUID and mode == "View" and place.mode == "View" then
+		if place.GUID == shop.GUID and mode == "View" and place.mode == "View" then
 			return place
 		end
 	end
 
-	local layout = Layouts:GetLayout(showcase.layoutId)
+	local layout = Layouts:GetLayout(shop.layoutId)
 
 	-- Every physical part should have a registered stand
-	-- This is necessary so the showcase can accept stand updates for stands that don't yet have an item.
-	local stands = PopulateLayoutStands(showcase.stands, layout.getValidStandPositions())
-	local outfitStands = PopulateLayoutOutfitStands(showcase.outfitStands, layout.getValidOutfitStandPositions())
+	-- This is necessary so the shop can accept stand updates for stands that don't yet have an item.
+	local stands = PopulateLayoutStands(shop.stands, layout.getValidStandPositions())
+	local outfitStands = PopulateLayoutOutfitStands(shop.outfitStands, layout.getValidOutfitStandPositions())
 
-	local place: ActiveShowcase = {
+	local place: ActiveShop = {
 		stands = stands,
 		outfitStands = outfitStands,
 		layout = layout,
-		owner = showcase.owner,
+		owner = shop.owner,
 		playersPresent = {},
 		mode = mode,
-		GUID = showcase.GUID,
-		shareCode = showcase.shareCode,
-		name = showcase.name,
-		primaryColor = showcase.primaryColor,
-		accentColor = showcase.accentColor,
-		texture = showcase.texture,
+		GUID = shop.GUID,
+		shareCode = shop.shareCode,
+		name = shop.name,
+		primaryColor = shop.primaryColor,
+		accentColor = shop.accentColor,
+		texture = shop.texture,
 		lastUpdate = os.clock(),
-		thumbId = showcase.thumbId,
-		logoId = showcase.logoId,
+		thumbId = shop.thumbId,
+		logoId = shop.logoId,
 	}
 
 	table.insert(placeTable, place)
@@ -354,7 +354,7 @@ function ShowcaseService:GetShowcase(showcase: Types.Showcase, mode: Types.Showc
 	return place
 end
 
-function ShowcaseService:UnloadPlace(place: ActiveShowcase)
+function ShopService:UnloadPlace(place: ActiveShop)
 	if next(place.playersPresent) ~= nil then
 		warn("Unloaded a place while players were still inside it!")
 	end
@@ -373,11 +373,11 @@ function HandleCreatePlace(player: Player)
 		return
 	end
 
-	if #data.showcases >= Config.MaxPlaces then
+	if #data.shops >= Config.MaxPlaces then
 		return
 	end
 
-	local newShowcase: Types.Showcase = {
+	local newShop: Types.Shop = {
 		name = `{player.Name}'s Shop`,
 		layoutId = Config.DefaultLayout,
 		stands = {},
@@ -392,58 +392,58 @@ function HandleCreatePlace(player: Player)
 	}
 
 	DataService:WriteData(player, function(data)
-		table.insert(data.showcases, Data.ToDataShowcase(newShowcase))
+		table.insert(data.shops, Data.ToDataShop(newShop))
 	end)
 end
 
-function HandleEditShowcase(player: Player, GUID: string)
+function HandleEditShop(player: Player, GUID: string)
 	local data = DataService:ReadData(player):Await()
 	if not data then
 		return
 	end
 
-	local chosenShowcase
-	for i, showcase in data.showcases do
-		if showcase.GUID == GUID then
-			chosenShowcase = Data.FromDataShowcase(showcase, player.UserId)
+	local chosenShop
+	for i, shop in data.shops do
+		if shop.GUID == GUID then
+			chosenShop = Data.FromDataShop(shop, player.UserId)
 			break
 		end
 	end
 
-	if not chosenShowcase then
+	if not chosenShop then
 		return
 	end
 
-	local place = ShowcaseService:GetShowcase(chosenShowcase, "Edit")
-	ShowcaseService:EnterPlayerShowcase(player, place)
+	local place = ShopService:GetShop(chosenShop, "Edit")
+	ShopService:EnterPlayerShop(player, place)
 end
 
-local function GetEditableShowcase(player: Player): ActiveShowcase?
-	local showcase = playerShowcases[player]
-	if not showcase then
+local function GetEditableShop(player: Player): ActiveShop?
+	local shop = playerShops[player]
+	if not shop then
 		return nil
 	end
 
-	if showcase.mode ~= "Edit" then
-		warn(player, "Tried to update a showcase that was not in edit mode.")
+	if shop.mode ~= "Edit" then
+		warn(player, "Tried to update a shop that was not in edit mode.")
 		return nil
 	end
 
-	return showcase
+	return shop
 end
 
 function HandleUpdateStand(player: Player, roundedPosition: Vector3, assetId: number?)
-	local showcase = GetEditableShowcase(player)
-	if not showcase then
+	local shop = GetEditableShop(player)
+	if not shop then
 		return
 	end
 
-	if not showcase.layout.getValidStandPositions()[roundedPosition] then
+	if not shop.layout.getValidStandPositions()[roundedPosition] then
 		warn("Updated with an invalid position:", roundedPosition)
 		return
 	end
 
-	local stand = TableUtil.Find(showcase.stands, function(stand)
+	local stand = TableUtil.Find(shop.stands, function(stand)
 		return stand.roundedPosition == roundedPosition
 	end)
 
@@ -462,8 +462,8 @@ function HandleUpdateStand(player: Player, roundedPosition: Vector3, assetId: nu
 		ReplicateAsset(assetId)
 	end
 
-	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
-	SaveShowcase(showcase)
+	LoadShopEvent:Fire(player, ToNetworkShop(shop))
+	SaveShop(shop)
 end
 
 local function HandleUpdateOutfitStand(
@@ -471,17 +471,17 @@ local function HandleUpdateOutfitStand(
 	roundedPosition: Vector3,
 	description: Types.SerializedDescription?
 )
-	local showcase = GetEditableShowcase(player)
-	if not showcase then
+	local shop = GetEditableShop(player)
+	if not shop then
 		return
 	end
 
-	if not showcase.layout.getValidOutfitStandPositions()[roundedPosition] then
+	if not shop.layout.getValidOutfitStandPositions()[roundedPosition] then
 		warn("Updated with an invalid position:", roundedPosition)
 		return
 	end
 
-	local stand = TableUtil.Find(showcase.outfitStands, function(stand)
+	local stand = TableUtil.Find(shop.outfitStands, function(stand)
 		return stand.roundedPosition == roundedPosition
 	end)
 
@@ -497,18 +497,18 @@ local function HandleUpdateOutfitStand(
 
 	stand.description = description
 
-	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
-	SaveShowcase(showcase)
+	LoadShopEvent:Fire(player, ToNetworkShop(shop))
+	SaveShop(shop)
 end
 
-local function HandleUpdateShowcaseSettings(player: Player, settings: ShopEvents.UpdateSettings)
-	local showcase = GetEditableShowcase(player)
-	if not showcase then
+local function HandleUpdateShopSettings(player: Player, settings: ShopEvents.UpdateSettings)
+	local shop = GetEditableShop(player)
+	if not shop then
 		return
 	end
 
 	local updateTime = os.clock()
-	showcase.lastUpdate = updateTime
+	shop.lastUpdate = updateTime
 
 	local primaryColorExists = Config.PrimaryColors[settings.primaryColor:ToHex()]
 	if not primaryColorExists then
@@ -528,7 +528,7 @@ local function HandleUpdateShowcaseSettings(player: Player, settings: ShopEvents
 		return
 	end
 
-	if showcase.name ~= settings.name then
+	if shop.name ~= settings.name then
 		-- Yields
 		local success, result = pcall(function()
 			return TextService:FilterStringAsync(
@@ -549,47 +549,47 @@ local function HandleUpdateShowcaseSettings(player: Player, settings: ShopEvents
 		local filteredName = result:GetNonChatStringForBroadcastAsync()
 
 		-- Eliminates race conditions caused by updating name quickly
-		if showcase.lastUpdate ~= updateTime then
+		if shop.lastUpdate ~= updateTime then
 			return
 		end
 
-		showcase.name = Util.LimitString(filteredName, Config.MaxPlaceNameLength)
+		shop.name = Util.LimitString(filteredName, Config.MaxPlaceNameLength)
 	end
 
-	showcase.primaryColor = settings.primaryColor
-	showcase.accentColor = settings.accentColor
-	showcase.thumbId = settings.thumbId
-	showcase.logoId = settings.logoId
-	showcase.texture = settings.texture
+	shop.primaryColor = settings.primaryColor
+	shop.accentColor = settings.accentColor
+	shop.thumbId = settings.thumbId
+	shop.logoId = settings.logoId
+	shop.texture = settings.texture
 
-	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
-	SaveShowcase(showcase)
+	LoadShopEvent:Fire(player, ToNetworkShop(shop))
+	SaveShop(shop)
 end
 
-local function HandleUpdateShowcaseLayout(player: Player, layoutId: LayoutData.LayoutId)
-	local showcase = GetEditableShowcase(player)
-	if not showcase then
+local function HandleUpdateShopLayout(player: Player, layoutId: LayoutData.LayoutId)
+	local shop = GetEditableShop(player)
+	if not shop then
 		return
 	end
 	local newLayout = Layouts:GetLayout(layoutId)
-	showcase.layout = newLayout
-	showcase.stands = PopulateLayoutStands(showcase.stands, newLayout.getValidStandPositions())
-	showcase.outfitStands = PopulateLayoutOutfitStands(showcase.outfitStands, newLayout.getValidOutfitStandPositions())
+	shop.layout = newLayout
+	shop.stands = PopulateLayoutStands(shop.stands, newLayout.getValidStandPositions())
+	shop.outfitStands = PopulateLayoutOutfitStands(shop.outfitStands, newLayout.getValidOutfitStandPositions())
 
-	LoadShowcaseEvent:Fire(player, ToNetworkShowcase(showcase))
-	SaveShowcase(showcase)
+	LoadShopEvent:Fire(player, ToNetworkShop(shop))
+	SaveShop(shop)
 end
 
-function HandleDeleteShowcase(player: Player, guid: string)
+function HandleDeleteShop(player: Player, guid: string)
 	DataService:WriteData(player, function(data)
-		for i, showcase in data.showcases do
-			if showcase.GUID == guid then
-				table.remove(data.showcases, i)
+		for i, shop in data.shops do
+			if shop.GUID == guid then
+				table.remove(data.shops, i)
 				return
 			end
 		end
 
-		warn("Tried to delete a non-existent showcase")
+		warn("Tried to delete a non-existent shop")
 	end)
 end
 
@@ -599,29 +599,29 @@ local function HandlePurchaseAsset(player: Player, assetId: number)
 end
 
 local function PlayerRemoving(player: Player)
-	local currentPlace = playerShowcases[player]
+	local currentPlace = playerShops[player]
 	if currentPlace then
-		playerShowcases[player] = nil
-		ShowcaseService:ExitPlayerShowcase(player, currentPlace)
+		playerShops[player] = nil
+		ShopService:ExitPlayerShop(player, currentPlace)
 	end
 end
 
-function ShowcaseService:Initialize()
-	CreateShowcaseEvent:On(HandleCreatePlace)
-	EditShowcaseEvent:On(HandleEditShowcase)
-	DeleteShowcaseEvent:On(HandleDeleteShowcase)
+function ShopService:Initialize()
+	CreateShopEvent:On(HandleCreatePlace)
+	EditShopEvent:On(HandleEditShop)
+	DeleteShopEvent:On(HandleDeleteShop)
 	PurchaseEvents.Asset:SetServerListener(HandlePurchaseAsset)
 
 	ShopEvents.UpdateStand:SetServerListener(HandleUpdateStand)
 	ShopEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
-	ShopEvents.UpdateSettings:SetServerListener(HandleUpdateShowcaseSettings)
+	ShopEvents.UpdateSettings:SetServerListener(HandleUpdateShopSettings)
 	ShopEvents.UpdateLayout:SetServerListener(function(player, id)
-		HandleUpdateShowcaseLayout(player, id :: LayoutData.LayoutId)
+		HandleUpdateShopLayout(player, id :: LayoutData.LayoutId)
 	end)
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 end
 
-ShowcaseService:Initialize()
+ShopService:Initialize()
 
-return ShowcaseService
+return ShopService

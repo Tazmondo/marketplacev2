@@ -7,7 +7,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local FeedEvents = require(ReplicatedStorage.Events.FeedEvents)
 local RandomFeed = require(script.Parent.RandomFeed)
 local DataService = require(ServerStorage.Modules.Data.DataService)
-local ShowcaseService = require(ServerStorage.Modules.ShowcaseService)
+local ShopService = require(ServerStorage.Modules.ShopService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
@@ -28,7 +28,7 @@ function GuardJoinData(data: unknown): Types.LaunchData
 end
 
 -- Only used if no other feeds can be fetched
-local DefaultShowcase: Types.Showcase = {
+local DefaultShop: Types.Shop = {
 	name = "Untitled Shop",
 	owner = 68252170,
 	layoutId = Config.DefaultLayout,
@@ -40,14 +40,14 @@ local DefaultShowcase: Types.Showcase = {
 	thumbId = Config.DefaultShopThumbnail,
 	texture = Material:GetDefault(),
 }
-TableUtil.Lock(DefaultShowcase)
+TableUtil.Lock(DefaultShop)
 
 local feedData: { [Player]: Types.FeedData? } = {}
 
-local cachedEditorPicks: { Types.Showcase }? = nil
+local cachedEditorPicks: { Types.Shop }? = nil
 
 function GetEditorsPicks()
-	return Future.new(function(): { Types.Showcase }?
+	return Future.new(function(): { Types.Shop }?
 		if cachedEditorPicks then
 			return cachedEditorPicks
 		end
@@ -61,8 +61,8 @@ function GetEditorsPicks()
 
 		local editorPicks = {}
 
-		for i, showcase in editorData.showcases do
-			editorPicks[i] = Data.FromDataShowcase(showcase, editorId)
+		for i, shop in editorData.shops do
+			editorPicks[i] = Data.FromDataShop(shop, editorId)
 		end
 
 		cachedEditorPicks = editorPicks
@@ -70,18 +70,18 @@ function GetEditorsPicks()
 	end)
 end
 
-function GetShowcase(ownerId: number, showcaseGUID: string)
+function GetShop(ownerId: number, shopGUID: string)
 	return Future.new(function()
 		local ownerData = DataService:ReadOfflineData(ownerId):Await()
 		if not ownerData then
-			return nil :: Types.Showcase?
+			return nil :: Types.Shop?
 		end
 
-		local showcase = TableUtil.Find(ownerData.showcases, function(showcase)
-			return showcase.GUID == showcaseGUID
+		local shop = TableUtil.Find(ownerData.shops, function(shop)
+			return shop.GUID == shopGUID
 		end)
-		if showcase then
-			return Data.FromDataShowcase(showcase, ownerId)
+		if shop then
+			return Data.FromDataShop(shop, ownerId)
 		end
 		return nil
 	end)
@@ -109,27 +109,27 @@ function PlayerAdded(player: Player)
 		end
 	end
 
-	local targetedShowcase = if launchData then GetShowcase(launchData.ownerId, launchData.GUID):Await() else nil
-	local showcases
+	local targetedShop = if launchData then GetShop(launchData.ownerId, launchData.GUID):Await() else nil
+	local shops
 
-	if targetedShowcase then
-		showcases = { targetedShowcase }
+	if targetedShop then
+		shops = { targetedShop }
 	else
 		if Config.DefaultFeed == "Editor" then
 			local editorPicks = GetEditorsPicks():Await()
 
 			if editorPicks then
-				showcases = editorPicks
+				shops = editorPicks
 			else
-				showcases = { TableUtil.Copy(DefaultShowcase, true) }
+				shops = { TableUtil.Copy(DefaultShop, true) }
 			end
 		elseif Config.DefaultFeed == "Random" then
-			showcases = RandomFeed.GetFeed(1):Await() or { TableUtil.Copy(DefaultShowcase, true) }
+			shops = RandomFeed.GetFeed(1):Await() or { TableUtil.Copy(DefaultShop, true) }
 		end
 	end
 
 	local data = {
-		showcases = showcases,
+		shops = shops,
 		type = Config.DefaultFeed,
 	}
 
@@ -137,12 +137,12 @@ function PlayerAdded(player: Player)
 
 	FeedEvents.Update:FireClient(player, data)
 
-	local showcase = showcases[1]
+	local shop = shops[1]
 
-	local place = ShowcaseService:GetShowcase(showcase, "View")
+	local place = ShopService:GetShop(shop, "View")
 
 	player:LoadCharacter()
-	ShowcaseService:EnterPlayerShowcase(player, place)
+	ShopService:EnterPlayerShop(player, place)
 end
 
 function PlayerRemoving(player: Player)
@@ -155,19 +155,19 @@ function HandleMoveFeed(player: Player, newIndex: number)
 		return
 	end
 
-	local showcase = playerFeedData.showcases[newIndex]
-	if not showcase then
+	local shop = playerFeedData.shops[newIndex]
+	if not shop then
 		return
 	end
 
 	if playerFeedData.type == "Random" then
-		-- Always try and load 10 showcases ahead
+		-- Always try and load 10 shops ahead
 		-- Don't need to use the returned value because it's already handled in the signal connection
 		RandomFeed.GetFeed(newIndex + 10)
 	end
 
-	local place = ShowcaseService:GetShowcase(showcase, "View")
-	ShowcaseService:EnterPlayerShowcase(player, place)
+	local place = ShopService:GetShop(shop, "View")
+	ShopService:EnterPlayerShop(player, place)
 end
 
 function HandleSwitchFeed(player: Player, type: Types.FeedType)
@@ -176,7 +176,7 @@ function HandleSwitchFeed(player: Player, type: Types.FeedType)
 		return
 	end
 
-	data.showcases = {}
+	data.shops = {}
 
 	if data.type == type and not data.viewedUser then
 		return
@@ -188,21 +188,21 @@ function HandleSwitchFeed(player: Player, type: Types.FeedType)
 	elseif type == "Random" then
 		feed = RandomFeed.GetFeed(3):Await()
 	elseif type == "Popular" then
-		feed = { TableUtil.Copy(DefaultShowcase, true) }
+		feed = { TableUtil.Copy(DefaultShop, true) }
 	end
 
 	if not feed or #feed <= 0 then
 		return
 	end
 
-	data.showcases = feed
+	data.shops = feed
 	data.type = type
 	data.viewedUser = nil
 
 	FeedEvents.Update:FireClient(player, data)
 
-	local firstShowcase = ShowcaseService:GetShowcase(feed[1], "View")
-	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
+	local firstShop = ShopService:GetShop(feed[1], "View")
+	ShopService:EnterPlayerShop(player, firstShop)
 end
 
 local userSearchRateLimit = Util.RateLimit(1, 6)
@@ -221,32 +221,32 @@ function HandleUserFeed(player: Player, userId: number)
 		return false
 	end
 
-	local showcases = {}
-	for i, showcase in targetData.showcases do
-		table.insert(showcases, Data.FromDataShowcase(showcase, userId))
+	local shops = {}
+	for i, shop in targetData.shops do
+		table.insert(shops, Data.FromDataShop(shop, userId))
 	end
 
-	if #showcases == 0 then
+	if #shops == 0 then
 		return false
 	end
 
 	feed.viewedUser = userId
-	feed.showcases = showcases
+	feed.shops = shops
 
 	FeedEvents.Update:FireClient(player, feed)
 
-	local firstShowcase = ShowcaseService:GetShowcase(feed.showcases[1], "View")
-	ShowcaseService:EnterPlayerShowcase(player, firstShowcase)
+	local firstShop = ShopService:GetShop(feed.shops[1], "View")
+	ShopService:EnterPlayerShop(player, firstShop)
 
 	return true
 end
 
-function HandleRandomFeedUpdated(feed: { Types.Showcase })
+function HandleRandomFeedUpdated(feed: { Types.Shop })
 	for player, data in feedData do
 		assert(data)
 
 		if data.type == "Random" then
-			data.showcases = feed
+			data.shops = feed
 			FeedEvents.Update:FireClient(player, data)
 		end
 	end
@@ -268,7 +268,7 @@ function FeedService:Initialize()
 
 	-- TODO: Remove me
 	local rateLimit = Util.RateLimit(2, 6)
-	FeedEvents.LoadShowcaseWithId:SetServerListener(function(player, shareCode)
+	FeedEvents.LoadShopWithId:SetServerListener(function(player, shareCode)
 		if not rateLimit(player) then
 			return
 		end
@@ -283,15 +283,15 @@ function FeedService:Initialize()
 			return nil
 		end
 
-		local dataShowcase = TableUtil.Find(ownerData.showcases, function(showcase)
-			return showcase.GUID == guid
+		local dataShop = TableUtil.Find(ownerData.shops, function(shop)
+			return shop.GUID == guid
 		end)
 
-		if not dataShowcase then
+		if not dataShop then
 			return nil
 		end
 
-		local showcase = Data.FromDataShowcase(dataShowcase, owner)
+		local shop = Data.FromDataShop(dataShop, owner)
 
 		local feed = feedData[player]
 		if not feed then
@@ -299,12 +299,12 @@ function FeedService:Initialize()
 		end
 
 		feed.viewedUser = owner
-		feed.showcases = { showcase }
+		feed.shops = { shop }
 
 		FeedEvents.Update:FireClient(player, feed)
 
-		local activeShowcase = ShowcaseService:GetShowcase(showcase, "View")
-		ShowcaseService:EnterPlayerShowcase(player, activeShowcase)
+		local activeShop = ShopService:GetShop(shop, "View")
+		ShopService:EnterPlayerShop(player, activeShop)
 	end)
 
 	RandomFeed.Extended:Connect(HandleRandomFeedUpdated)

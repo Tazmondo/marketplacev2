@@ -1,4 +1,4 @@
-local ShowcaseController = {}
+local ShopController = {}
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9,8 +9,8 @@ local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local CatalogUI = require(ReplicatedStorage.Modules.Client.UI.CatalogUI)
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
-local ShowcaseEditUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseEditUI)
-local ShowcaseNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShowcaseNavigationUI)
+local ShopEditUI = require(ReplicatedStorage.Modules.Client.UI.ShopEditUI)
+local ShopNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShopNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
@@ -20,7 +20,7 @@ local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
 
-local LoadShowcaseEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Client()
+local LoadShopEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Client()
 
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Accessory replication folder did not exist.")
@@ -72,7 +72,7 @@ local OUTFIT_VERTICAL_OFFSET = 3.7162
 local renderedStands: { [Vector3]: RenderedStand } = {}
 local renderedOutfitStands: { [Vector3]: RenderedOutfit } = {}
 local currentModel: Model? = nil
-local currentShowcase: Types.NetworkShowcase?
+local currentShop: Types.NetworkShop?
 
 -- Allows for comparison between stand objects.
 -- I would do this by comparing the tables are the same but luau type system doesn't like that?
@@ -107,7 +107,7 @@ local function SetDisplayVisibility(display: BasePart | Model, isVisible: boolea
 		end
 	else
 		-- display is a model
-		local TRANSPARENCY_ATTRIBUTE = "SHOWCASE_DEFAULT_TRANSPARENCY"
+		local TRANSPARENCY_ATTRIBUTE = "SHOP_DEFAULT_TRANSPARENCY"
 		for i, part in display:GetDescendants() do
 			if part:IsA("BasePart") then
 				local defaultTransparency = part:GetAttribute(TRANSPARENCY_ATTRIBUTE)
@@ -182,9 +182,9 @@ local function ClearStands()
 	end
 end
 
-local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: Model })
+local function CreateOutfitStands(shop: Types.NetworkShop, positionMap: { [Vector3]: Model })
 	local standMap: { [Vector3]: Types.OutfitStand? } = {}
-	for i, stand in showcase.outfitStands do
+	for i, stand in shop.outfitStands do
 		standMap[stand.roundedPosition] = stand
 	end
 
@@ -265,7 +265,7 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 			end)
 		end
 
-		if showcase.mode == "Edit" then
+		if shop.mode == "Edit" then
 			if stand and stand.description then
 				prompt.ActionText = "Remove Outfit"
 				prompt.ObjectText = "Stand"
@@ -296,9 +296,9 @@ local function CreateOutfitStands(showcase: Types.NetworkShowcase, positionMap: 
 	end
 end
 
-local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vector3]: BasePart })
+local function CreateStands(shop: Types.NetworkShop, positionMap: { [Vector3]: BasePart })
 	local standMap: { [Vector3]: Types.Stand? } = {}
-	for i, stand in showcase.stands do
+	for i, stand in shop.stands do
 		standMap[stand.roundedPosition] = stand
 	end
 
@@ -375,7 +375,7 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 			end)
 		end
 
-		if showcase.mode == "Edit" then
+		if shop.mode == "Edit" then
 			if stand and stand.assetId then
 				prompt.ActionText = "Remove Item"
 				prompt.ObjectText = "Stand"
@@ -410,17 +410,17 @@ local function CreateStands(showcase: Types.NetworkShowcase, positionMap: { [Vec
 	end
 end
 
-local function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
-	if not currentShowcase or not currentModel then
+local function LoadShopAppearance(shop: Types.NetworkShop)
+	if not currentShop or not currentModel then
 		return
 	end
 
-	debug.profilebegin("LoadShowcaseAppearance")
+	debug.profilebegin("LoadShopAppearance")
 
-	local materialSet = Material:GetMaterialSet(showcase.texture)
+	local materialSet = Material:GetMaterialSet(shop.texture)
 	if not materialSet then
 		materialSet = Material:GetMaterialSet(Material:GetDefault())
-		warn("Invalid texture found, should never be reached.", showcase.texture)
+		warn("Invalid texture found, should never be reached.", shop.texture)
 	end
 	assert(materialSet)
 
@@ -431,12 +431,12 @@ local function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 				if descendant:IsA("PartOperation") then
 					descendant.UsePartColor = true
 				end
-				descendant.Color = currentShowcase.primaryColor
+				descendant.Color = currentShop.primaryColor
 			elseif descendant:HasTag(Config.AccentColorTag) then
 				if descendant:IsA("PartOperation") then
 					descendant.UsePartColor = true
 				end
-				descendant.Color = currentShowcase.accentColor
+				descendant.Color = currentShop.accentColor
 			end
 
 			if descendant:HasTag(Config.TextureTag) then
@@ -450,26 +450,26 @@ local function LoadShowcaseAppearance(showcase: Types.NetworkShowcase)
 	local logo = currentModel:FindFirstChild("ShopLogo") :: BasePart
 	local gui = logo:FindFirstChild("SurfaceGui") :: SurfaceGui
 	local image = gui:FindFirstChild("ImageLabel") :: ImageLabel
-	image.Image = if showcase.logoId then Thumbs.GetAsset(showcase.logoId) else ""
+	image.Image = if shop.logoId then Thumbs.GetAsset(shop.logoId) else ""
 
 	debug.profileend()
 end
 
-local function HandleLoadShowcase(showcase: Types.NetworkShowcase)
-	print("Loading showcase", showcase)
+local function HandleLoadShop(shop: Types.NetworkShop)
+	print("Loading shop", shop)
 
 	if
-		not currentShowcase
-		or currentShowcase.GUID ~= showcase.GUID
-		or currentShowcase.layoutId ~= showcase.layoutId
-		or currentShowcase.mode ~= showcase.mode
+		not currentShop
+		or currentShop.GUID ~= shop.GUID
+		or currentShop.layoutId ~= shop.layoutId
+		or currentShop.mode ~= shop.mode
 	then
 		if currentModel then
 			currentModel:Destroy()
 		end
 		ClearStands()
 
-		currentModel = Layouts:GetLayout(showcase.layoutId).modelTemplate:Clone()
+		currentModel = Layouts:GetLayout(shop.layoutId).modelTemplate:Clone()
 		assert(currentModel)
 
 		currentModel:PivotTo(CFrame.new())
@@ -480,12 +480,12 @@ local function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 	end
 	assert(currentModel)
 
-	currentShowcase = showcase
-	ShowcaseEditUI:Hide()
-	ShowcaseNavigationUI:Hide()
+	currentShop = shop
+	ShopEditUI:Hide()
+	ShopNavigationUI:Hide()
 
-	if showcase then
-		LoadShowcaseAppearance(showcase)
+	if shop then
+		LoadShopAppearance(shop)
 
 		local positionMap = {}
 		local outfitPositionMap = {}
@@ -502,13 +502,13 @@ local function HandleLoadShowcase(showcase: Types.NetworkShowcase)
 				outfitPositionMap[position] = descendant
 			end
 		end
-		CreateStands(showcase, positionMap)
-		CreateOutfitStands(showcase, outfitPositionMap)
+		CreateStands(shop, positionMap)
+		CreateOutfitStands(shop, outfitPositionMap)
 
-		if showcase.mode == "Edit" then
-			ShowcaseEditUI:Display(showcase)
+		if shop.mode == "Edit" then
+			ShopEditUI:Display(shop)
 		else
-			ShowcaseNavigationUI:Display()
+			ShopNavigationUI:Display()
 		end
 	end
 end
@@ -522,7 +522,7 @@ local function GetTweenedStandAlpha(alpha: number)
 end
 
 local function RenderStepped(dt: number)
-	if not currentShowcase then
+	if not currentShop then
 		return
 	end
 	debug.profilebegin("RenderStands")
@@ -555,12 +555,12 @@ local function RenderStepped(dt: number)
 	debug.profileend()
 end
 
-function ShowcaseController:Initialize()
-	LoadShowcaseEvent:On(HandleLoadShowcase)
+function ShopController:Initialize()
+	LoadShopEvent:On(HandleLoadShop)
 
 	RunService.RenderStepped:Connect(RenderStepped)
 end
 
-ShowcaseController:Initialize()
+ShopController:Initialize()
 
-return ShowcaseController
+return ShopController

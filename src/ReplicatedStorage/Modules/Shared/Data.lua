@@ -40,7 +40,7 @@ local outfitStandTemplate = {
 	roundedPosition = { x = 0, y = 0, z = 0 },
 }
 
-export type Showcase = {
+export type Shop = {
 	name: string,
 	thumbId: number,
 	logoId: number?,
@@ -56,7 +56,7 @@ export type Showcase = {
 	stands: { Stand },
 	outfitStands: { OutfitStand },
 }
-local showcaseTemplate: Showcase = {
+local shopTemplate: Shop = {
 	name = "Untitled Shop",
 	thumbId = Config.DefaultShopThumbnail,
 	layoutId = Config.DefaultLayout,
@@ -69,14 +69,14 @@ local showcaseTemplate: Showcase = {
 }
 
 export type Data = {
-	showcases: { Showcase },
+	shops: { Shop },
 	outfits: { Outfit },
 	version: number,
 	firstTime: boolean,
 }
 
 local dataTemplate: Data = {
-	showcases = {},
+	shops = {},
 	outfits = {},
 	version = 9,
 	firstTime = true,
@@ -107,14 +107,14 @@ function Data.Migrate(data: Data)
 		end
 	end
 
-	for i, showcase in data.showcases do
-		for k, v in pairs(showcaseTemplate) do
-			if not showcase[k] then
-				showcase[k] = v
+	for i, shop in data.shops do
+		for k, v in pairs(shopTemplate) do
+			if not shop[k] then
+				shop[k] = v
 			end
 		end
 
-		for i, stand in showcase.stands do
+		for i, stand in shop.stands do
 			for k, v in pairs(standTemplate) do
 				if not stand[k] then
 					stand[k] = v
@@ -122,7 +122,7 @@ function Data.Migrate(data: Data)
 			end
 		end
 
-		for i, stand in showcase.outfitStands do
+		for i, stand in shop.outfitStands do
 			for k, v in pairs(outfitStandTemplate) do
 				if not stand[k] then
 					stand[k] = v
@@ -156,18 +156,18 @@ function Data.ToDataOutfitStand(stand: Types.OutfitStand): OutfitStand?
 	end
 end
 
-function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
-	local stands = table.create(#showcase.stands)
+function Data.ToDataShop(shop: Types.Shop): Shop
+	local stands = table.create(#shop.stands)
 
-	for i, stand in showcase.stands do
+	for i, stand in shop.stands do
 		local dataStand = Data.ToDataStand(stand)
 		if dataStand then
 			table.insert(stands, dataStand)
 		end
 	end
 
-	local outfitStands = table.create(#showcase.outfitStands)
-	for i, stand in showcase.outfitStands do
+	local outfitStands = table.create(#shop.outfitStands)
+	for i, stand in shop.outfitStands do
 		local dataStand = Data.ToDataOutfitStand(stand)
 		if dataStand then
 			table.insert(outfitStands, dataStand)
@@ -175,17 +175,17 @@ function Data.ToDataShowcase(showcase: Types.Showcase): Showcase
 	end
 
 	return {
-		thumbId = showcase.thumbId,
-		layoutId = showcase.layoutId,
-		name = showcase.name,
-		primaryColor = showcase.primaryColor:ToHex(),
-		accentColor = showcase.accentColor:ToHex(),
-		texture = showcase.texture,
-		GUID = showcase.GUID,
-		shareCode = showcase.shareCode,
+		thumbId = shop.thumbId,
+		layoutId = shop.layoutId,
+		name = shop.name,
+		primaryColor = shop.primaryColor:ToHex(),
+		accentColor = shop.accentColor:ToHex(),
+		texture = shop.texture,
+		GUID = shop.GUID,
+		shareCode = shop.shareCode,
 		stands = stands,
 		outfitStands = outfitStands,
-		logoId = showcase.logoId,
+		logoId = shop.logoId,
 	}
 end
 
@@ -203,35 +203,35 @@ function Data.FromDataOutfitStand(stand: OutfitStand): Types.OutfitStand
 	}
 end
 
-function Data.FromDataShowcase(showcase: Showcase, ownerId: number): Types.Showcase
-	local stands = TableUtil.Map(showcase.stands, Data.FromDataStand)
-	local outfitStands = TableUtil.Map(showcase.outfitStands, Data.FromDataOutfitStand)
+function Data.FromDataShop(shop: Shop, ownerId: number): Types.Shop
+	local stands = TableUtil.Map(shop.stands, Data.FromDataStand)
+	local outfitStands = TableUtil.Map(shop.outfitStands, Data.FromDataOutfitStand)
 
 	-- Since these may become invalidated as the game progresses, need to make sure they don't cause cascading errors into the rest of the code.
-	local primaryColor = if Config.PrimaryColors[showcase.primaryColor]
-		then Color3.fromHex(showcase.primaryColor)
+	local primaryColor = if Config.PrimaryColors[shop.primaryColor]
+		then Color3.fromHex(shop.primaryColor)
 		else Config.DefaultPrimaryColor
 
-	local accentColor = if Config.AccentColors[showcase.accentColor]
-		then Color3.fromHex(showcase.accentColor)
+	local accentColor = if Config.AccentColors[shop.accentColor]
+		then Color3.fromHex(shop.accentColor)
 		else Config.DefaultAccentColor
 
-	local layoutId: LayoutData.LayoutId = if Layouts:LayoutIdExists(showcase.layoutId)
-		then showcase.layoutId :: LayoutData.LayoutId
+	local layoutId: LayoutData.LayoutId = if Layouts:LayoutIdExists(shop.layoutId)
+		then shop.layoutId :: LayoutData.LayoutId
 		else Config.DefaultLayout
 
-	local texture: string = if Material:TextureExists(showcase.texture) then showcase.texture else Material:GetDefault()
+	local texture: string = if Material:TextureExists(shop.texture) then shop.texture else Material:GetDefault()
 
 	return {
-		GUID = showcase.GUID,
-		shareCode = showcase.shareCode,
+		GUID = shop.GUID,
+		shareCode = shop.shareCode,
 		layoutId = layoutId,
 		owner = ownerId,
 		stands = stands,
 		outfitStands = outfitStands,
-		name = showcase.name,
-		thumbId = showcase.thumbId,
-		logoId = showcase.logoId,
+		name = shop.name,
+		thumbId = shop.thumbId,
+		logoId = shop.logoId,
 		primaryColor = primaryColor,
 		accentColor = accentColor,
 		texture = texture,

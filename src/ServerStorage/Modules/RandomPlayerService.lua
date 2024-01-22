@@ -204,13 +204,13 @@ end
 
 function PlayerAdded(player: Player)
 	local data = DataService:ReadData(player):Await()
-	if data and RandomValid.AnyValid(data.showcases) then
+	if data and RandomValid.AnyValid(data.shops) then
 		RandomPlayerService:AddPlayer(player.UserId)
 	end
 end
 
 function PlayerRemoving(player: Player, data: Data.Data?)
-	if data and RandomValid.AnyValid(data.showcases) then
+	if data and RandomValid.AnyValid(data.shops) then
 		RandomPlayerService:AddPlayer(player.UserId)
 	end
 end

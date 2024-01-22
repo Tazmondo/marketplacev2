@@ -6,15 +6,15 @@ local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 
-function RandomValid.IsValid(showcase: Data.Showcase): boolean
-	-- We don't want empty showcases clogging up the feed
+function RandomValid.IsValid(shop: Data.Shop): boolean
+	-- We don't want empty shops clogging up the feed
 
-	if Layouts:LayoutIdExists(showcase.layoutId) then
-		local layoutId: LayoutData.LayoutId = Layouts:GuardLayoutId(showcase.layoutId)
+	if Layouts:LayoutIdExists(shop.layoutId) then
+		local layoutId: LayoutData.LayoutId = Layouts:GuardLayoutId(shop.layoutId)
 		local layout = Layouts:GetLayout(layoutId)
 		local totalStands = layout.getNumberOfStands()
 
-		local usedStands = #showcase.stands
+		local usedStands = #shop.stands
 		local proportion = usedStands / totalStands
 
 		return proportion >= Config.RequiredProportionForRandom
@@ -23,10 +23,10 @@ function RandomValid.IsValid(showcase: Data.Showcase): boolean
 	return false
 end
 
-function RandomValid.AnyValid(showcases: { Data.Showcase }): boolean
+function RandomValid.AnyValid(shops: { Data.Shop }): boolean
 	local valid = false
-	for i, showcase in showcases do
-		if RandomValid.IsValid(showcase) then
+	for i, shop in shops do
+		if RandomValid.IsValid(shop) then
 			valid = true
 			break
 		end
@@ -35,10 +35,10 @@ function RandomValid.AnyValid(showcases: { Data.Showcase }): boolean
 	return valid
 end
 
-function RandomValid.AllValid(showcases: { Data.Showcase }): boolean
+function RandomValid.AllValid(shops: { Data.Shop }): boolean
 	local valid = true
-	for i, showcase in showcases do
-		if not RandomValid.IsValid(showcase) then
+	for i, shop in shops do
+		if not RandomValid.IsValid(shop) then
 			valid = false
 			break
 		end

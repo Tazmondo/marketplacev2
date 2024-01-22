@@ -18,9 +18,9 @@ return {
 		return Guard.String(name), HumanoidDescription.Guard(serDescription)
 	end),
 
-	GetShowcaseDetails = Red.Function("Data_ShowcaseDetails", function(shareCode)
+	GetShopDetails = Red.Function("Data_ShopDetails", function(shareCode)
 		return Guard.Number(shareCode)
 	end, function(details)
-		return details :: Types.NetworkShowcaseDetails?
+		return details :: Types.NetworkShopDetails?
 	end),
 }

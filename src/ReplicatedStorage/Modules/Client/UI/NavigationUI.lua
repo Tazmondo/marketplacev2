@@ -113,7 +113,7 @@ local function ShopShareCodeSearch()
 	end
 
 	local shareCode = Base36.Decode(enteredText)
-	FeedEvents.LoadShowcaseWithId:FireServer(shareCode)
+	FeedEvents.LoadShopWithId:FireServer(shareCode)
 
 	ToggleSearchVisibility(false)
 end
