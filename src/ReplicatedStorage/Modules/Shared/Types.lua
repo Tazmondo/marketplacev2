@@ -51,6 +51,18 @@ export type NetworkShowcase = {
 	mode: ShowcaseMode,
 }
 
+-- For displaying in UI
+export type NetworkShowcaseDetails = {
+	owner: number,
+	name: string,
+	thumbId: number,
+	logoId: number?,
+	primaryColor: Color3,
+	accentColor: Color3,
+	GUID: string,
+	shareCode: number?,
+}
+
 export type Outfit = {
 	name: string,
 	description: HumanoidDescription,

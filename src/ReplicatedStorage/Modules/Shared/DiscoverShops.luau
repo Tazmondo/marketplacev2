@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Base36 = require(script.Parent.Base36)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local categoryCodes: { [string]: { string } } = {
-	Unique = {
+	["Unique Shops"] = {
 		"9",
 		"C",
 		"O",
@@ -94,7 +94,7 @@ local categoryCodes: { [string]: { string } } = {
 		"3Y",
 	},
 
-	Girls = {
+	["Girls Shops"] = {
 		"A",
 		"D",
 		"E",
@@ -141,7 +141,7 @@ local categoryCodes: { [string]: { string } } = {
 		"3T",
 	},
 
-	Boys = {
+	["Boys Shops"] = {
 		"B",
 		"L",
 		"T",
@@ -166,7 +166,7 @@ local categoryCodes: { [string]: { string } } = {
 		"3Y",
 	},
 
-	Accessories = {
+	["Accessory Shops"] = {
 		"7",
 		"V",
 		"1A",
@@ -192,7 +192,7 @@ local categoryCodes: { [string]: { string } } = {
 		"3Q",
 	},
 
-	Theme = {
+	["Themed Shops"] = {
 		"8",
 		"M",
 		"R",
@@ -229,15 +229,15 @@ local categoryCodes: { [string]: { string } } = {
 		"3X",
 	},
 
-	Hair = { "G", "H", "1P", "1S", "25", "2H", "2T", "2U", "3B" },
+	["Hair Shops"] = { "G", "H", "1P", "1S", "25", "2H", "2T", "2U", "3B" },
 
-	Affordable = { "J", "1G", "23" },
+	["Affordable Shops"] = { "J", "1G", "23" },
 
-	Sweaters = { "W" },
+	["Sweater Shops"] = { "W" },
 
-	Anime = { "X", "1B" },
+	["Anime Shops"] = { "X", "1B" },
 
-	Shoes = { "11", "17", "3I" },
+	["Shoe Shops"] = { "11", "17", "3I" },
 }
 
 local numberCategories = {}
@@ -245,4 +245,27 @@ for category, codes in categoryCodes do
 	numberCategories[category] = TableUtil.Map(codes, Base36.Decode)
 end
 
-return numberCategories
+local categoryOrder = {
+	"Editor's Picks",
+	"Unique Shops",
+	"Girls Shops",
+	"Boys Shops",
+	"Accessory Shops",
+	"Themed Shops",
+	"Hair Shops",
+	"Affordable Shops",
+	"Sweater Shops",
+	"Anime Shops",
+	"Shoe Shops",
+}
+for _, category in categoryOrder do
+	assert(numberCategories[category] ~= nil, `{category} data not found when initializing discover picks.`)
+end
+for category, _ in numberCategories do
+	assert(table.find(categoryOrder, category), `{category} had data but was not listed in the order.`)
+end
+
+return {
+	order = categoryOrder,
+	codes = numberCategories,
+}

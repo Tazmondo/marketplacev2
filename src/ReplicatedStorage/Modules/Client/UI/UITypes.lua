@@ -1,72 +1,9 @@
 export type Nav = ScreenGui & {
-	Feed: Frame & {
-		Current: ImageButton & {
-			UIPadding: UIPadding,
-			UICorner: UICorner,
-			Expand: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			Feed: TextLabel,
-			UIListLayout: UIListLayout,
-		},
-		Search: ImageButton & {
-			UICorner: UICorner,
-			Toggle: TextButton & {
-				UICorner: UICorner,
-				TextLabel: TextLabel,
-				UIListLayout: UIListLayout,
-			},
-			Creator: TextBox & {
-				UICorner: UICorner,
-				UIPadding: UIPadding,
-			},
-			UIListLayout: UIListLayout,
-		},
-		ActionButton: Frame & {
-			UICorner: UICorner,
-			UIListLayout: UIListLayout,
-			ImageButton: ImageButton & {
-				SearchIcon: ImageLabel & {
-					UICorner: UICorner,
-				},
-				UIListLayout: UIListLayout,
-				CloseIcon: ImageLabel & {
-					UICorner: UICorner,
-				},
-				UICorner: UICorner,
-			},
-		},
-		Frame: Frame & {
-			Editor: ImageButton & {
-				UIListLayout: UIListLayout,
-				UIPadding: UIPadding,
-				Feed: TextLabel,
-				UICorner: UICorner,
-			},
-			Popular: ImageButton & {
-				UIListLayout: UIListLayout,
-				UIPadding: UIPadding,
-				Feed: TextLabel,
-				UICorner: UICorner,
-			},
-			UIListLayout: UIListLayout,
-			UICorner: UICorner,
-			Random: ImageButton & {
-				UIListLayout: UIListLayout,
-				UIPadding: UIPadding,
-				Feed: TextLabel,
-				UICorner: UICorner,
-			},
-			UIPadding: UIPadding,
-		},
-		UISizeConstraint: UISizeConstraint,
-	},
 	Nav: Frame & {
 		Profile: Frame & {
 			ImageButton: ImageButton & {
 				UICorner: UICorner,
+				UIStroke: UIStroke,
 			},
 			Frame: Frame & {
 				Body: TextLabel,
@@ -86,6 +23,7 @@ export type Nav = ScreenGui & {
 			},
 			ImageButton: ImageButton & {
 				UICorner: UICorner,
+				UIStroke: UIStroke,
 			},
 		},
 		UIListLayout: UIListLayout,
@@ -98,6 +36,172 @@ export type Nav = ScreenGui & {
 			},
 			ImageButton: ImageButton & {
 				UICorner: UICorner,
+				UIStroke: UIStroke,
+			},
+		},
+	},
+	Feed: Frame & {
+		Current: ImageButton & {
+			UIPadding: UIPadding,
+			Expand: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			UICorner: UICorner,
+			UIStroke: UIStroke,
+			Feed: TextLabel,
+			UIListLayout: UIListLayout,
+		},
+		Search: ImageButton & {
+			Creator: TextBox & {
+				UICorner: UICorner,
+				UIPadding: UIPadding,
+			},
+			UIListLayout: UIListLayout,
+			UIStroke: UIStroke,
+			UICorner: UICorner,
+			Toggle: TextButton & {
+				UICorner: UICorner,
+				TextLabel: TextLabel,
+				UIListLayout: UIListLayout,
+			},
+		},
+		ActionButton: Frame & {
+			UICorner: UICorner,
+			UIStroke: UIStroke,
+			UIListLayout: UIListLayout,
+			ImageButton: ImageButton & {
+				SearchIcon: ImageLabel & {
+					UICorner: UICorner,
+				},
+				UIListLayout: UIListLayout,
+				CloseIcon: ImageLabel & {
+					UICorner: UICorner,
+				},
+				UICorner: UICorner,
+			},
+		},
+		Frame: Frame & {
+			Editor: ImageButton & {
+				UIListLayout: UIListLayout,
+				UIPadding: UIPadding,
+				Feed: TextLabel,
+				UICorner: UICorner,
+			},
+			UIPadding: UIPadding,
+			UICorner: UICorner,
+			UIStroke: UIStroke,
+			Random: ImageButton & {
+				UIListLayout: UIListLayout,
+				UIPadding: UIPadding,
+				Feed: TextLabel,
+				UICorner: UICorner,
+			},
+			UIListLayout: UIListLayout,
+		},
+		UISizeConstraint: UISizeConstraint,
+	},
+	Discover: Frame & {
+		UIListLayout: UIListLayout,
+		Frame: Frame & {
+			Discover: Frame & {
+				Controls: Frame & {
+					UIListLayout: UIListLayout,
+					UICorner: UICorner,
+					UISizeConstraint: UISizeConstraint,
+					Close: TextButton & {
+						Close: ImageLabel & {
+							UICorner: UICorner,
+						},
+						UICorner: UICorner,
+						UIStroke: UIStroke,
+						UISizeConstraint: UISizeConstraint,
+						UIListLayout: UIListLayout,
+					},
+				},
+				Tabs: Frame & {
+					UISizeConstraint: UISizeConstraint,
+					UIPadding: UIPadding,
+					UICorner: UICorner,
+					UIListLayout: UIListLayout,
+					UIStroke: UIStroke,
+					Discover: TextButton & {
+						UIListLayout: UIListLayout,
+						TextLabel: TextLabel & {
+							UITextSizeConstraint: UITextSizeConstraint,
+						},
+						UICorner: UICorner,
+					},
+					Accessories: TextButton & {
+						UIListLayout: UIListLayout,
+						TextLabel: TextLabel & {
+							UITextSizeConstraint: UITextSizeConstraint,
+						},
+						UICorner: UICorner,
+					},
+				},
+				Results: Frame & {
+					UIPadding: UIPadding,
+					List: ScrollingFrame & {
+						UIListLayout: UIListLayout,
+						Collection: Frame & {
+							UIListLayout: UIListLayout,
+							Title: Frame & {
+								UIListLayout: UIListLayout,
+								UISizeConstraint: UISizeConstraint,
+								TextLabel: TextLabel & {
+									UITextSizeConstraint: UITextSizeConstraint,
+								},
+							},
+							ListWrapper: Frame & {
+								FadeLeft: Frame & {
+									Left: TextButton & {
+										Image: ImageLabel & {
+											UICorner: UICorner,
+										},
+										UICorner: UICorner,
+										UIStroke: UIStroke,
+										UISizeConstraint: UISizeConstraint,
+										UIListLayout: UIListLayout,
+									},
+									UIListLayout: UIListLayout,
+								},
+								FadeRight: Frame & {
+									UIListLayout: UIListLayout,
+									Right: TextButton & {
+										Image: ImageLabel & {
+											UICorner: UICorner,
+										},
+										UICorner: UICorner,
+										UIStroke: UIStroke,
+										UISizeConstraint: UISizeConstraint,
+										UIListLayout: UIListLayout,
+									},
+								},
+								List: ScrollingFrame & {
+									UIListLayout: UIListLayout,
+									ShopInfo: ImageButton & {
+										UICorner: UICorner,
+										Frame: Frame & {
+											UIListLayout: UIListLayout,
+											Text: Frame & {
+												UIListLayout: UIListLayout,
+												ShopName: TextLabel,
+												CreatorName: TextButton,
+											},
+											ProfileImage: ImageLabel & {
+												UICorner: UICorner,
+												UIStroke: UIStroke,
+											},
+										},
+										UIPadding: UIPadding,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	},

@@ -362,6 +362,36 @@ function DataService:GetShareCodeData(code: number)
 	end)
 end
 
+local function HandleGetShowcaseDetails(player: Player, shareCode: number): Types.NetworkShowcaseDetails?
+	local owner, guid = DataService:GetShareCodeData(shareCode):Await()
+	if not owner or not guid then
+		return nil
+	end
+
+	local ownerData = DataService:ReadOfflineData(owner):Await()
+	if not ownerData then
+		return nil
+	end
+
+	local showcase = TableUtil.Find(ownerData.showcases, function(showcase)
+		return showcase.GUID == guid
+	end)
+	if not showcase then
+		return
+	end
+
+	return {
+		owner = owner,
+		name = showcase.name,
+		thumbId = showcase.thumbId,
+		logoId = showcase.logoId,
+		primaryColor = Color3.fromHex(showcase.primaryColor),
+		accentColor = Color3.fromHex(showcase.accentColor),
+		GUID = showcase.GUID,
+		shareCode = showcase.shareCode,
+	}
+end
+
 local function HandleNewOutfit(player: Player, name: string, serDescription: Types.SerializedDescription)
 	local newOutfit: Data.Outfit = {
 		name = name,
@@ -394,6 +424,7 @@ function DataService:Initialize()
 
 	DataEvents.CreateOutfit:SetServerListener(HandleNewOutfit)
 	DataEvents.DeleteOutfit:SetServerListener(HandleDeleteOutfit)
+	DataEvents.GetShowcaseDetails:SetCallback(HandleGetShowcaseDetails)
 end
 
 DataService:Initialize()
