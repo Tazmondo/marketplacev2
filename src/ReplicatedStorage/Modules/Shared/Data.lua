@@ -78,7 +78,7 @@ export type Data = {
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 9,
+	version = 10,
 	firstTime = true,
 }
 Data.dataTemplate = dataTemplate
@@ -99,6 +99,12 @@ function Data.Migrate(data: Data)
 	if data.version == dataTemplate.version then
 		-- Data shape hasn't updated, no need to reconcile
 		return
+	end
+
+	if data.version < 10 then
+		data.shops = (data :: any).showcases or {};
+		(data :: any).showcases = nil
+		data.version = 10
 	end
 
 	for k, v in pairs(dataTemplate) do
