@@ -1,12 +1,14 @@
+local DiscoverUI = {}
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
+local ShopController = require(ReplicatedStorage.Modules.Client.Shop.ShopController)
 local DiscoverShops = require(ReplicatedStorage.Modules.Shared.DiscoverShops)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local UILoader = require(script.Parent.UILoader)
-local DiscoverUI = {}
 
 local gui = UILoader:GetNavigation().Discover
 
@@ -40,6 +42,11 @@ local function RenderCollectionItems(collectionFrame: CollectionFrame, shareCode
 			shopElement.Visible = true
 			shopElement.LayoutOrder = i
 			shopElement.Parent = list
+
+			shopElement.Activated:Connect(function()
+				gui.Visible = false
+				ShopController:LoadDynamicShopFromCode(code)
+			end)
 		end)
 	end
 end
@@ -107,6 +114,11 @@ local function RenderCollections()
 
 		element.Parent = list
 	end
+end
+
+function DiscoverUI:Toggle(force: boolean?)
+	local visible = if force ~= nil then force else not gui.Visible
+	gui.Visible = visible
 end
 
 local function Initialize()

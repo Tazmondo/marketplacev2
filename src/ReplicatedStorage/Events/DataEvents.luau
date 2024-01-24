@@ -23,4 +23,10 @@ return {
 	end, function(details)
 		return details :: Types.NetworkShopDetails?
 	end),
+
+	GetShop = Red.Function("Data_FullShop", function(shareCode)
+		return Guard.Number(shareCode)
+	end, function(shop)
+		return shop :: Types.Shop?
+	end),
 }

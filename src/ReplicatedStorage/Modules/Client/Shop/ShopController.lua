@@ -1,26 +1,25 @@
 local ShopController = {}
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
+local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
+local AccessoryCache = require(ReplicatedStorage.Modules.Client.AccessoryCache)
 local CatalogUI = require(ReplicatedStorage.Modules.Client.UI.CatalogUI)
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
-local ShopEditUI = require(ReplicatedStorage.Modules.Client.UI.ShopEditUI)
-local ShopNavigationUI = require(ReplicatedStorage.Modules.Client.UI.ShopNavigationUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
+local MallCFrames = require(ReplicatedStorage.Modules.Shared.MallCFrames)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
-
-local LoadShopEvent = require(ReplicatedStorage.Events.Showcase.ServerFired.LoadShowcaseEvent):Client()
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Accessory replication folder did not exist.")
@@ -66,13 +65,23 @@ type RenderedOutfit = {
 	destroyed: boolean,
 }
 
+type ShopMode = "View" | "Edit"
+
+type RenderedShop = {
+	renderedStands: { [Vector3]: RenderedStand },
+	renderedOutfitStands: { [Vector3]: RenderedOutfit },
+	cframe: CFrame,
+	currentModel: Model,
+	mode: ShopMode,
+	details: Types.Shop,
+	destroyed: boolean,
+}
+
 -- Subtract from the placeholder pivot to get the ground position
 local OUTFIT_VERTICAL_OFFSET = 3.7162
 
-local renderedStands: { [Vector3]: RenderedStand } = {}
-local renderedOutfitStands: { [Vector3]: RenderedOutfit } = {}
-local currentModel: Model? = nil
-local currentShop: Types.NetworkShop?
+local renderedShops: { RenderedShop } = {}
+local dynamicShop: RenderedShop? = nil
 
 -- Allows for comparison between stand objects.
 -- I would do this by comparing the tables are the same but luau type system doesn't like that?
@@ -122,19 +131,10 @@ local function SetDisplayVisibility(display: BasePart | Model, isVisible: boolea
 end
 
 local function GetAccessory(assetId: number, scale: number?)
-	return Future.new(function(assetId: number, scale: number?)
-		local accessoryTemplate = accessoryReplication:WaitForChild(tostring(assetId), 5) :: Model?
-		if not accessoryTemplate then
-			-- warn("Failed to load accessory: ", assetId)
-			return nil :: Model?
-		end
-
-		local accessory = accessoryTemplate:Clone()
-
-		for i, descendant in accessory:GetDescendants() do
-			if descendant:IsA("BasePart") then
-				descendant.Anchored = true
-			end
+	return Future.new(function(assetId: number, scale: number?): Model?
+		local accessory = AccessoryCache:Get(assetId):Await()
+		if not accessory then
+			return nil
 		end
 
 		local insertedScale = accessory:GetScale()
@@ -144,7 +144,7 @@ local function GetAccessory(assetId: number, scale: number?)
 	end, assetId, scale)
 end
 
-local function DestroyStand(stand: RenderedStand)
+local function DestroyStand(shop: RenderedShop, stand: RenderedStand)
 	stand.destroyed = true
 	if stand.renderModel then
 		stand.renderModel:Destroy()
@@ -152,39 +152,42 @@ local function DestroyStand(stand: RenderedStand)
 
 	stand.prompt:Destroy()
 
-	if renderedStands[stand.roundedPosition].standId == stand.standId then
-		renderedStands[stand.roundedPosition] = nil
+	if shop.renderedStands[stand.roundedPosition].standId == stand.standId then
+		shop.renderedStands[stand.roundedPosition] = nil
 	else
 		warn("Destroyed old stand at a position")
 	end
 end
 
-local function DestroyOutfitStand(stand: RenderedOutfit)
+local function DestroyOutfitStand(shop: RenderedShop, stand: RenderedOutfit)
 	stand.destroyed = true
 	if stand.outfitModel then
 		stand.outfitModel:Destroy()
 	end
 
 	stand.prompt:Destroy()
-	if renderedOutfitStands[stand.roundedPosition].standId == stand.standId then
-		renderedOutfitStands[stand.roundedPosition] = nil
+	if shop.renderedOutfitStands[stand.roundedPosition].standId == stand.standId then
+		shop.renderedOutfitStands[stand.roundedPosition] = nil
 	else
 		warn("Destroyed old outfit stand at a position")
 	end
 end
 
-local function ClearStands()
-	for position, stand in renderedStands do
-		DestroyStand(stand)
+local function DestroyShop(shop: RenderedShop)
+	if shop.destroyed then
+		warn(debug.traceback("Destroyed an already destroyed shop"))
+		return
 	end
-	for position, stand in renderedOutfitStands do
-		DestroyOutfitStand(stand)
-	end
+
+	local index = assert(table.find(renderedShops, shop), "Destroyed shop without index.")
+	table.remove(renderedShops, index)
+	shop.destroyed = true
+	shop.currentModel:Destroy()
 end
 
-local function CreateOutfitStands(shop: Types.NetworkShop, positionMap: { [Vector3]: Model })
+local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: Model })
 	local standMap: { [Vector3]: Types.OutfitStand? } = {}
-	for i, stand in shop.outfitStands do
+	for i, stand in shop.details.outfitStands do
 		standMap[stand.roundedPosition] = stand
 	end
 
@@ -196,7 +199,7 @@ local function CreateOutfitStands(shop: Types.NetworkShop, positionMap: { [Vecto
 		local halvedScale = ((standScale - 1) * 0.5) + 1
 
 		local stand = standMap[roundedPosition]
-		local existingStand = renderedOutfitStands[roundedPosition]
+		local existingStand = shop.renderedOutfitStands[roundedPosition]
 		if existingStand then
 			local existingDescription = existingStand.description
 			local newDescription = if stand then stand.description else nil
@@ -204,7 +207,7 @@ local function CreateOutfitStands(shop: Types.NetworkShop, positionMap: { [Vecto
 			if HumanoidDescription.Equal(existingDescription, newDescription) then
 				continue
 			else
-				DestroyOutfitStand(existingStand)
+				DestroyOutfitStand(shop, existingStand)
 			end
 		end
 
@@ -223,7 +226,7 @@ local function CreateOutfitStands(shop: Types.NetworkShop, positionMap: { [Vecto
 
 			destroyed = false,
 		}
-		renderedOutfitStands[roundedPosition] = renderedStand
+		shop.renderedOutfitStands[roundedPosition] = renderedStand
 
 		if stand and stand.description then
 			prompt.Parent = modelPart
@@ -296,21 +299,21 @@ local function CreateOutfitStands(shop: Types.NetworkShop, positionMap: { [Vecto
 	end
 end
 
-local function CreateStands(shop: Types.NetworkShop, positionMap: { [Vector3]: BasePart })
+local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePart })
 	local standMap: { [Vector3]: Types.Stand? } = {}
-	for i, stand in shop.stands do
+	for i, stand in shop.details.stands do
 		standMap[stand.roundedPosition] = stand
 	end
 
 	for roundedPosition, part in positionMap do
 		local stand = standMap[roundedPosition]
 
-		local existingStand = renderedStands[roundedPosition]
+		local existingStand = shop.renderedStands[roundedPosition]
 		if existingStand then
 			if existingStand.assetId == (if stand then stand.assetId else nil) then
 				continue
 			else
-				DestroyStand(existingStand)
+				DestroyStand(shop, existingStand)
 			end
 		end
 
@@ -339,7 +342,7 @@ local function CreateStands(shop: Types.NetworkShop, positionMap: { [Vector3]: B
 
 			destroyed = false,
 		}
-		renderedStands[roundedPosition] = renderedStand
+		shop.renderedStands[roundedPosition] = renderedStand
 
 		if stand and stand.assetId then
 			GetAccessory(stand.assetId, standScale):After(function(model)
@@ -410,33 +413,29 @@ local function CreateStands(shop: Types.NetworkShop, positionMap: { [Vector3]: B
 	end
 end
 
-local function LoadShopAppearance(shop: Types.NetworkShop)
-	if not currentShop or not currentModel then
-		return
-	end
-
+local function LoadShopAppearance(shop: RenderedShop)
 	debug.profilebegin("LoadShopAppearance")
 
-	local materialSet = Material:GetMaterialSet(shop.texture)
+	local materialSet = Material:GetMaterialSet(shop.details.texture)
 	if not materialSet then
 		materialSet = Material:GetMaterialSet(Material:GetDefault())
-		warn("Invalid texture found, should never be reached.", shop.texture)
+		warn("Invalid texture found, should never be reached.", shop.details.texture)
 	end
 	assert(materialSet)
 
 	-- Go through descendants here rather than using collectionservice, as there will be many places in the workspace.
-	for i, descendant in currentModel:GetDescendants() do
+	for i, descendant in shop.currentModel:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			if descendant:HasTag(Config.PrimaryColorTag) then
 				if descendant:IsA("PartOperation") then
 					descendant.UsePartColor = true
 				end
-				descendant.Color = currentShop.primaryColor
+				descendant.Color = shop.details.primaryColor
 			elseif descendant:HasTag(Config.AccentColorTag) then
 				if descendant:IsA("PartOperation") then
 					descendant.UsePartColor = true
 				end
-				descendant.Color = currentShop.accentColor
+				descendant.Color = shop.details.accentColor
 			end
 
 			if descendant:HasTag(Config.TextureTag) then
@@ -447,70 +446,71 @@ local function LoadShopAppearance(shop: Types.NetworkShop)
 	end
 
 	-- Already asserted in Layouts.lua
-	local logo = currentModel:FindFirstChild("ShopLogo") :: BasePart
+	local logo = shop.currentModel:FindFirstChild("ShopLogo") :: BasePart
 	local gui = logo:FindFirstChild("SurfaceGui") :: SurfaceGui
 	local image = gui:FindFirstChild("ImageLabel") :: ImageLabel
-	image.Image = if shop.logoId then Thumbs.GetAsset(shop.logoId) else ""
+	image.Image = if shop.details.logoId then Thumbs.GetAsset(shop.details.logoId) else ""
 
 	debug.profileend()
 end
 
-local function HandleLoadShop(shop: Types.NetworkShop)
-	print("Loading shop", shop)
+local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMode): RenderedShop
+	local model = Layouts:GetLayout(shopDetails.layoutId).modelTemplate:Clone()
+	model:PivotTo(shopCFrame)
+	model.Parent = workspace
 
-	if
-		not currentShop
-		or currentShop.GUID ~= shop.GUID
-		or currentShop.layoutId ~= shop.layoutId
-		or currentShop.mode ~= shop.mode
-	then
-		if currentModel then
-			currentModel:Destroy()
-		end
-		ClearStands()
+	local shop = {
+		cframe = shopCFrame,
+		currentModel = model,
+		details = shopDetails,
+		renderedStands = {},
+		renderedOutfitStands = {},
+		mode = mode,
+		destroyed = false,
+	}
+	LoadShopAppearance(shop)
 
-		currentModel = Layouts:GetLayout(shop.layoutId).modelTemplate:Clone()
-		assert(currentModel)
+	local positionMap = {}
+	local outfitPositionMap = {}
 
-		currentModel:PivotTo(CFrame.new())
-		currentModel.Parent = workspace
-
-		local character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
-		character:PivotTo(currentModel:GetPivot())
-	end
-	assert(currentModel)
-
-	currentShop = shop
-	ShopEditUI:Hide()
-	ShopNavigationUI:Hide()
-
-	if shop then
-		LoadShopAppearance(shop)
-
-		local positionMap = {}
-		local outfitPositionMap = {}
-
-		for i, descendant in currentModel:GetDescendants() do
-			if descendant:HasTag(Config.StandTag) then
-				assert(descendant:IsA("BasePart"), "Non-part tagged as stand.")
-				local position = Util.RoundedVector(currentModel:GetPivot():PointToObjectSpace(descendant.Position))
-				positionMap[position] = descendant
-			elseif descendant:HasTag(Config.OutfitStandTag) then
-				assert(descendant:IsA("Model"), "Non-model tagged as outfit stand.")
-				local position =
-					Util.RoundedVector(currentModel:GetPivot():PointToObjectSpace(descendant:GetPivot().Position))
-				outfitPositionMap[position] = descendant
-			end
-		end
-		CreateStands(shop, positionMap)
-		CreateOutfitStands(shop, outfitPositionMap)
-
-		if shop.mode == "Edit" then
-			ShopEditUI:Display(shop)
-		else
-			ShopNavigationUI:Display()
+	for i, descendant in model:GetDescendants() do
+		if descendant:HasTag(Config.StandTag) then
+			assert(descendant:IsA("BasePart"), "Non-part tagged as stand.")
+			local position = Util.RoundedVector(model:GetPivot():PointToObjectSpace(descendant.Position))
+			positionMap[position] = descendant
+		elseif descendant:HasTag(Config.OutfitStandTag) then
+			assert(descendant:IsA("Model"), "Non-model tagged as outfit stand.")
+			local position = Util.RoundedVector(model:GetPivot():PointToObjectSpace(descendant:GetPivot().Position))
+			outfitPositionMap[position] = descendant
 		end
 	end
+	CreateStands(shop, positionMap)
+	CreateOutfitStands(shop, outfitPositionMap)
+
+	return shop
+end
+
+local function LoadDynamicShop(shopDetails: Types.Shop)
+	if dynamicShop then
+		DestroyShop(dynamicShop)
+	end
+
+	local shopCFrame = MallCFrames.dynamicShop
+	local shop = NewShop(shopCFrame, shopDetails, "View")
+	dynamicShop = shop
+	table.insert(renderedShops, shop)
+end
+
+local function HandleLoadShop(shopCFrame: CFrame, shopDetails: Types.Shop)
+	local existingShop = TableUtil.Find(renderedShops, function(shop)
+		return (shop.cframe.Position - shopCFrame.Position).Magnitude < 5
+	end)
+	if existingShop then
+		DestroyShop(existingShop)
+	end
+
+	local shop = NewShop(shopCFrame, shopDetails, "View")
+	table.insert(renderedShops, shop)
 end
 
 local function GetTweenedStandAlpha(alpha: number)
@@ -522,42 +522,54 @@ local function GetTweenedStandAlpha(alpha: number)
 end
 
 local function RenderStepped(dt: number)
-	if not currentShop then
-		return
-	end
 	debug.profilebegin("RenderStands")
+	for _, shop in renderedShops do
+		for roundedPosition, stand in shop.renderedStands do
+			local model = stand.renderModel
 
-	for roundedPosition, stand in renderedStands do
-		local model = stand.renderModel
-
-		if not model then
-			continue
-		end
-
-		if stand.shouldSpin then
-			stand.rotation += dt * Config.StandRotationSpeed
-			if stand.rotation > math.rad(360) then
-				stand.rotation -= math.rad(360)
+			if not model then
+				continue
 			end
-		end
 
-		if stand.shouldBob then
-			stand.hoverPosition += dt * Config.StandBobSpeed
-			if stand.hoverPosition > 1 then
-				stand.hoverPosition -= 1
+			if stand.shouldSpin then
+				stand.rotation += dt * Config.StandRotationSpeed
+				if stand.rotation > math.rad(360) then
+					stand.rotation -= math.rad(360)
+				end
 			end
-		end
 
-		local hoverAlpha = GetTweenedStandAlpha(stand.hoverPosition)
-		local position = stand.standPart.Position + Vector3.new(0, 0.5 + 0.5 * hoverAlpha, 0)
-		model:PivotTo(CFrame.new(position) * CFrame.Angles(0, stand.rotation, 0))
+			if stand.shouldBob then
+				stand.hoverPosition += dt * Config.StandBobSpeed
+				if stand.hoverPosition > 1 then
+					stand.hoverPosition -= 1
+				end
+			end
+
+			local hoverAlpha = GetTweenedStandAlpha(stand.hoverPosition)
+			local position = stand.standPart.Position + Vector3.new(0, 0.5 + 0.5 * hoverAlpha, 0)
+			model:PivotTo(CFrame.new(position) * CFrame.Angles(0, stand.rotation, 0))
+		end
 	end
+
 	debug.profileend()
 end
 
-function ShopController:Initialize()
-	LoadShopEvent:On(HandleLoadShop)
+function ShopController:LoadDynamicShopFromCode(code: number)
+	return Future.new(function(code)
+		local success, details = DataEvents.GetShop:Call(code):Await()
+		if not success then
+			warn(details)
+			return
+		end
+		if not details then
+			warn("details not found")
+			return
+		end
+		LoadDynamicShop(details)
+	end, code)
+end
 
+function ShopController:Initialize()
 	RunService.RenderStepped:Connect(RenderStepped)
 end
 

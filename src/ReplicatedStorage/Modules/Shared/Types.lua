@@ -31,25 +31,7 @@ export type Shop = {
 	outfitStands: { OutfitStand },
 }
 
-export type ShopMode = "View" | "Edit"
-
-export type NetworkShop = {
-	owner: number,
-	layoutId: LayoutData.LayoutId,
-	name: string,
-	thumbId: number,
-	logoId: number?,
-	primaryColor: Color3,
-	accentColor: Color3,
-	texture: string,
-	GUID: string,
-	shareCode: number?,
-
-	-- This would be a table with vector3 keys but instance keys can't be sent across network boundaries
-	stands: { Stand },
-	outfitStands: { OutfitStand },
-	mode: ShopMode,
-}
+export type SpawnMode = "Server" | "Player"
 
 -- For displaying in UI
 export type NetworkShopDetails = {

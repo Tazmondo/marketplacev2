@@ -25,8 +25,11 @@ function CharacterCache:LoadWithDescription(description: HumanoidDescription | T
 
 		local success, model = AvatarEvents.GenerateModel:Call(serialized):Await()
 		if success and model then
-			cache[stringDescription] = model:Clone()
-			return model:Clone()
+			local cloned = model:Clone()
+			model:Destroy()
+
+			cache[stringDescription] = cloned
+			return cloned:Clone()
 		else
 			return nil
 		end

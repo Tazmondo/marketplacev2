@@ -2,26 +2,31 @@ local PurchaseService = {}
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
-local ShopService = require(script.Parent.ShopService)
 
 local gainsStore = MemoryStoreService:GetSortedMap("Rewards")
 
 local EXPIRATION = 60 * 60 * 24 * 21 -- 3 weeks
 
-function HandlePurchase(player: Player, assetId: number, purchased: boolean)
+local pendingPurchases: { [Player]: number } = {}
+
+local function HandlePromptFinished(player: Player, assetId: number, purchased: boolean)
+	local ownerId = pendingPurchases[player]
+	if not ownerId then
+		warn("Bought without an owner")
+		return
+	end
+	pendingPurchases[player] = nil
+
 	if not purchased then
 		return
 	end
 
-	local shop = ShopService:GetShopOfPlayer(player)
-	if not shop then
-		return
-	end
-
-	local ownerId = shop.owner
 	local itemDetails = DataFetch.GetItemDetails(assetId):Await()
 	if not itemDetails or not itemDetails.price then
 		return
@@ -38,8 +43,22 @@ function HandlePurchase(player: Player, assetId: number, purchased: boolean)
 	end, EXPIRATION)
 end
 
+local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwner: number)
+	pendingPurchases[player] = shopOwner
+
+	-- When we get exclusive deals we will need to secure this so users can't buy the exclusive assets.
+	MarketplaceService:PromptPurchase(player, assetId)
+end
+
+local function PlayerRemoving(player: Player)
+	pendingPurchases[player] = nil
+end
+
 function PurchaseService:Initialize()
-	MarketplaceService.PromptPurchaseFinished:Connect(HandlePurchase)
+	MarketplaceService.PromptPurchaseFinished:Connect(HandlePromptFinished)
+	PurchaseEvents.Asset:SetServerListener(HandlePurchaseAssetEvent)
+
+	Players.PlayerRemoving:Connect(PlayerRemoving)
 end
 
 PurchaseService:Initialize()

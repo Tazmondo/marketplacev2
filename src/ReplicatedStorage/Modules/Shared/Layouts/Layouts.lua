@@ -92,7 +92,7 @@ function Layouts:GuardLayoutId(id: unknown): LayoutData.LayoutId
 end
 
 function Layouts:GetLayout(id: LayoutData.LayoutId)
-	return savedLayouts[id]
+	return assert(savedLayouts[id], `{id} is not a valid layout id!`)
 end
 
 function Layouts:GetLayouts()

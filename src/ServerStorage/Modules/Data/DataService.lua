@@ -12,7 +12,6 @@ local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
-local Spawn = require(ReplicatedStorage.Packages.Spawn)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local ProfileService = require(script.Parent.ProfileService)
 local SharedIncremental = require(script.Parent.SharedIncremental)
@@ -240,7 +239,7 @@ function DataService:WriteData(player: Player, mutate: (Data.Data) -> ())
 		-- As it would be updated after the event is sent
 
 		local yielded = true
-		Spawn(function()
+		task.spawn(function()
 			mutate(data)
 			yielded = false
 		end)
@@ -320,7 +319,7 @@ function DataService:GenerateNextShareCode(player: Player, targetId: number, gui
 	end, player)
 end
 
-function DataService:GetShareCodeData(code: number)
+local function GetShareCodeData(code: number)
 	return Future.new(function(): (number?, string?)
 		local localCached = shareCodeCache[code]
 		if localCached ~= nil then
@@ -362,21 +361,29 @@ function DataService:GetShareCodeData(code: number)
 	end)
 end
 
+local function ShopFromShareCode(shareCode: number)
+	return Future.new(function(shareCode): (Data.Shop?, number?)
+		local owner, guid = GetShareCodeData(shareCode):Await()
+		if not owner or not guid then
+			return
+		end
+
+		local ownerData = DataService:ReadOfflineData(owner):Await()
+		if not ownerData then
+			return
+		end
+
+		local shop = TableUtil.Find(ownerData.shops, function(shop)
+			return shop.GUID == guid
+		end)
+
+		return shop, owner
+	end, shareCode)
+end
+
 local function HandleGetShopDetails(player: Player, shareCode: number): Types.NetworkShopDetails?
-	local owner, guid = DataService:GetShareCodeData(shareCode):Await()
-	if not owner or not guid then
-		return nil
-	end
-
-	local ownerData = DataService:ReadOfflineData(owner):Await()
-	if not ownerData then
-		return nil
-	end
-
-	local shop = TableUtil.Find(ownerData.shops, function(shop)
-		return shop.GUID == guid
-	end)
-	if not shop then
+	local shop, owner = ShopFromShareCode(shareCode):Await()
+	if not shop or not owner then
 		return
 	end
 
@@ -390,6 +397,15 @@ local function HandleGetShopDetails(player: Player, shareCode: number): Types.Ne
 		GUID = shop.GUID,
 		shareCode = shop.shareCode,
 	}
+end
+
+local function HandleGetShop(player: Player, shareCode: number): Types.Shop?
+	local shop, owner = ShopFromShareCode(shareCode):Await()
+	if not shop or not owner then
+		return
+	end
+
+	return Data.FromDataShop(shop, owner)
 end
 
 local function HandleNewOutfit(player: Player, name: string, serDescription: Types.SerializedDescription)
@@ -417,7 +433,7 @@ end
 function DataService:Initialize()
 	Players.PlayerAdded:Connect(PlayerAdded)
 	for i, player in Players:GetPlayers() do
-		Spawn(PlayerAdded, player)
+		task.spawn(PlayerAdded, player)
 	end
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
@@ -425,6 +441,7 @@ function DataService:Initialize()
 	DataEvents.CreateOutfit:SetServerListener(HandleNewOutfit)
 	DataEvents.DeleteOutfit:SetServerListener(HandleDeleteOutfit)
 	DataEvents.GetShopDetails:SetCallback(HandleGetShopDetails)
+	DataEvents.GetShop:SetCallback(HandleGetShop)
 end
 
 DataService:Initialize()

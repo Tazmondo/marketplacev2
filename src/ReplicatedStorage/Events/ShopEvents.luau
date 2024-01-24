@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 local Red = require(ReplicatedStorage.Packages.Red)
 
@@ -13,6 +14,8 @@ export type UpdateSettings = {
 	logoId: number?,
 	texture: string,
 }
+
+export type LoadShopSettings = { shop: Types.Shop, spawnMode: Types.SpawnMode }?
 
 local function GuardUpdateSettings(settings: unknown)
 	local value: any = settings
@@ -27,7 +30,15 @@ local function GuardUpdateSettings(settings: unknown)
 end
 
 return {
-	UpdateStand = Red.SharedEvent("Shop_UpdateStnad", function(roundedPosition, assetId)
+	CreateShop = Red.SharedEvent("Shop_CreateShop", function()
+		return
+	end),
+
+	DeleteShop = Red.SharedEvent("Shop_DeleteShop", function(guid)
+		return Guard.String(guid)
+	end),
+
+	UpdateStand = Red.SharedEvent("Shop_UpdateStand", function(roundedPosition, assetId)
 		return Guard.Vector3(roundedPosition), Guard.Optional(Guard.Number)(assetId)
 	end),
 
@@ -41,5 +52,17 @@ return {
 
 	UpdateLayout = Red.SharedEvent("Shop_UpdateLayout", function(layoutId)
 		return Layouts:GuardLayoutId(layoutId)
+	end),
+
+	GetAccessoryModel = Red.Function("Shop_GetAccessory", function(id)
+		return Guard.Number(id)
+	end, function(model)
+		return model :: Model?
+	end),
+
+	-- Server-Fired, no need to type check.
+	-- If nil then unload shop
+	LoadShop = Red.SharedEvent("Shop_LoadShop", function(cframe, options)
+		return Guard.CFrame(cframe), options :: LoadShopSettings
 	end),
 }
