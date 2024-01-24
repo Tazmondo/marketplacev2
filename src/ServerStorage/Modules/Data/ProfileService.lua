@@ -288,6 +288,10 @@ export type GlobalUpdates = {
 	ClearActiveUpdate: (self: GlobalUpdates, updateId: number) -> (),
 }
 
+export type ProfileVersionQuery<Data, MetaTags, RobloxMetaData> = {
+	NextAsync: (self: ProfileVersionQuery<Data, MetaTags, RobloxMetaData>) -> Profile<Data, MetaTags, RobloxMetaData>?,
+}
+
 export type ProfileStore<Data, MetaTags, RobloxMetaData> = {
 	LoadProfileAsync: (
 		self: ProfileStore<Data, MetaTags, RobloxMetaData>,
@@ -306,6 +310,16 @@ export type ProfileStore<Data, MetaTags, RobloxMetaData> = {
 		profileKey: string,
 		version: string | nil
 	) -> Profile<Data, MetaTags, RobloxMetaData> | nil,
+
+	ProfileVersionQuery: (
+		self: ProfileStore<Data, MetaTags, RobloxMetaData>,
+		profileKey: string,
+		sortDirection: Enum.SortDirection?,
+		minDate: DateTime | number | nil,
+		maxDate: DateTime | number | nil
+	) -> ProfileVersionQuery<Data, MetaTags, RobloxMetaData>,
+
+	WipeProfileAsync: (self: ProfileStore<Data, MetaTags, RobloxMetaData>, profileKey: string) -> boolean,
 }
 
 export type Profile<Data, MetaTags, RobloxMetaData> = {
@@ -381,6 +395,9 @@ export type Profile<Data, MetaTags, RobloxMetaData> = {
 	--- Call `Profile:Save()` to quickly progress GlobalUpdates state or to speed up the propagation of
 	--- `Profile.MetaData.MetaTags` changes to `Profile.MetaData.MetaTagsLatest`.
 	Save: (self: Profile<Data, MetaTags, RobloxMetaData>) -> nil,
+
+	ClearGlobalUpdates: (self: Profile<Data, MetaTags, RobloxMetaData>) -> nil,
+	OverwriteAsync: (self: Profile<Data, MetaTags, RobloxMetaData>) -> nil,
 }
 
 local Madwork -- Standalone Madwork reference for portable version of ProfileService
