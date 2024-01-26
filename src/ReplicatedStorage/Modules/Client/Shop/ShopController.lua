@@ -186,6 +186,14 @@ local function DestroyShop(shop: RenderedShop)
 	table.remove(renderedShops, index)
 	shop.destroyed = true
 	shop.currentModel:Destroy()
+
+	for _, stand in shop.renderedStands do
+		DestroyStand(shop, stand)
+	end
+
+	for _, stand in shop.renderedOutfitStands do
+		DestroyOutfitStand(shop, stand)
+	end
 end
 
 local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: Model })
