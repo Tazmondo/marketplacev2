@@ -6,7 +6,6 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
-local ShopNavigationUI = require(script.Parent.ShopNavigationUI)
 local ShopSettingsUI = require(script.Parent.ShopSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
@@ -17,7 +16,7 @@ local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().ControllerEdit
 
-local activeShop: Types.NetworkShop? = nil
+local activeShop: Types.Shop? = nil
 local selectedTexture: string? = nil
 
 function SelectButton(button: Instance?, visible: boolean)
@@ -73,11 +72,6 @@ end
 function ToggleLayoutFrame()
 	local visible = SelectFrame(gui.LayoutPicker)
 	SelectButton(gui.Wrapper.CurrentLayout, visible)
-end
-
-function ToggleShareFrame()
-	local visible = SelectFrame(gui.ShareLink)
-	SelectButton(gui.Wrapper.ShareLink, visible)
 end
 
 function PickPrimaryColor(color: Color3)
@@ -169,14 +163,11 @@ function Update()
 	})
 end
 
-function Exit()
-	ShopNavigationUI:RejoinPlace()
-end
-
 function ShopEditUI:Hide()
 	gui.Visible = false
 	activeShop = nil
 	selectedTexture = nil
+	ShopSettingsUI:Close()
 end
 
 function GenerateDeeplink(ownerId: number, GUID: string)
@@ -190,7 +181,7 @@ function GenerateDeeplink(ownerId: number, GUID: string)
 	return `https://www.roblox.com/games/start?placeId={game.PlaceId}&launchData={b64}`
 end
 
-function ShopEditUI:Display(shop: Types.NetworkShop)
+function ShopEditUI:Display(shop: Types.Shop)
 	activeShop = shop
 	selectedTexture = shop.texture
 
@@ -247,8 +238,6 @@ function ShopEditUI:Initialize()
 
 	gui.Wrapper.CurrentLayout.Activated:Connect(ToggleLayoutFrame)
 	gui.Wrapper.ShopSettings.Activated:Connect(ShowSettings)
-	gui.Wrapper.ShareLink.Activated:Connect(ToggleShareFrame)
-	gui.Wrapper.Exit.Activated:Connect(Exit)
 
 	PopulateLayoutFrame()
 

@@ -38,6 +38,10 @@ return {
 		return Guard.String(guid)
 	end),
 
+	ClaimShop = Red.SharedEvent("Shop_Claim", function(shopCFrame, guid)
+		return Guard.CFrame(shopCFrame), Guard.String(guid)
+	end),
+
 	UpdateStand = Red.SharedEvent("Shop_UpdateStand", function(roundedPosition, assetId)
 		return Guard.Vector3(roundedPosition), Guard.Optional(Guard.Number)(assetId)
 	end),

@@ -1,9 +1,5 @@
 local PlayerVisibilityController = {}
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local VisibilityEvent = require(ReplicatedStorage.Events.VisibilityEvent)
-
 type PlayerData = {
 	visible: boolean,
 	character: Model?,
@@ -79,8 +75,6 @@ function PlayerRemoving(player: Player)
 end
 
 function PlayerVisibilityController:Initialize()
-	VisibilityEvent:SetClientListener(HandleUpdateVisiblePlayers)
-
 	Players.PlayerAdded:Connect(PlayerAdded)
 	for i, player in Players:GetPlayers() do
 		PlayerAdded(player)
@@ -88,6 +82,6 @@ function PlayerVisibilityController:Initialize()
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 end
 
-PlayerVisibilityController:Initialize()
+-- PlayerVisibilityController:Initialize()
 
 return PlayerVisibilityController

@@ -78,7 +78,7 @@ export type Data = {
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 10,
+	version = 11,
 	firstTime = true,
 }
 Data.dataTemplate = dataTemplate
@@ -101,12 +101,57 @@ function Data.Migrate(data: Data)
 		return
 	end
 
+	-- Specific migrations
 	if data.version < 10 then
+		-- Renamed showcases to shops
 		data.shops = (data :: any).showcases or {};
 		(data :: any).showcases = nil
-		data.version = 10
 	end
 
+	if data.version < 11 then
+		-- Greedy fill new layouts with old layout data
+		for _, shop in data.shops do
+			if not Layouts:LayoutIdExists(shop.layoutId) then
+				shop.layoutId = "Shop 1" :: LayoutData.LayoutId
+			end
+			local newLayout = Layouts:GetLayout(shop.layoutId :: LayoutData.LayoutId)
+
+			local validStandPositions = newLayout.getValidStandPositions()
+			local validOutfitStandPositions = newLayout.getValidOutfitStandPositions()
+
+			local migratedStands: { Stand } = {}
+			local migratedOutfits: { OutfitStand } = {}
+			local oldStands = table.clone(shop.stands or {})
+			local oldOutfits = table.clone(shop.outfitStands or {})
+
+			for position, _ in validStandPositions do
+				local oldStand = table.remove(oldStands, #oldStands)
+				if not oldStand then
+					break
+				end
+				table.insert(migratedStands, {
+					assetId = oldStand.assetId,
+					roundedPosition = Data.VectorToTable(position),
+				})
+			end
+
+			for position, _ in validOutfitStandPositions do
+				local oldStand = table.remove(oldOutfits, #oldOutfits)
+				if not oldStand then
+					break
+				end
+				table.insert(migratedOutfits, {
+					description = oldStand.description,
+					roundedPosition = Data.VectorToTable(position),
+				})
+			end
+
+			shop.stands = migratedStands
+			shop.outfitStands = migratedOutfits
+		end
+	end
+
+	-- General migration
 	for k, v in pairs(dataTemplate) do
 		if not data[k] then
 			data[k] = v

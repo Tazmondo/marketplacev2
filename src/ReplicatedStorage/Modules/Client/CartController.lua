@@ -13,6 +13,7 @@ export type CartItem = {
 	id: number,
 	equipped: boolean,
 	bodyPart: Enum.BodyPart?,
+	shopOwner: number?,
 }
 
 -- O(1) lookup time but also ordered
@@ -25,11 +26,12 @@ local lastEquippedPackage: number? = nil
 
 CartController.CartUpdated = Signal()
 
-local function NewCartItem(id: number, bodyPart: Enum.BodyPart?)
+local function NewCartItem(id: number, shopOwner: number?, bodyPart: Enum.BodyPart?)
 	return {
 		id = id,
 		equipped = true,
 		bodyPart = bodyPart,
+		shopOwner = shopOwner,
 	}
 end
 
@@ -121,22 +123,22 @@ function CartController:RemoveFromCart(id: number)
 	UpdateCharacter()
 end
 
-function CartController:AddToCart(id: number)
+function CartController:AddToCart(id: number, shopOwner: number?)
 	if not cartSet[id] then
-		table.insert(cartItems, NewCartItem(id))
+		table.insert(cartItems, NewCartItem(id, shopOwner))
 		cartSet[id] = true
 	end
 
 	UpdateCharacter()
 end
 
-function CartController:ToggleInCart(id: number)
+function CartController:ToggleInCart(id: number, shopOwner: number?)
 	local _, index = TableUtil.Find(cartItems, function(item)
 		return item.id == id
 	end)
 
 	if not index then
-		table.insert(cartItems, NewCartItem(id))
+		table.insert(cartItems, NewCartItem(id, shopOwner))
 		cartSet[id] = true
 	else
 		table.remove(cartItems, index)
@@ -146,7 +148,7 @@ function CartController:ToggleInCart(id: number)
 	UpdateCharacter()
 end
 
-function CartController:EquipBodyPart(bodyPart: Enum.BodyPart, id: number?)
+function CartController:EquipBodyPart(bodyPart: Enum.BodyPart, id: number?, shopOwner: number?)
 	if id then
 		local existingPart = TableUtil.Find(cartItems, function(item)
 			return item.bodyPart == bodyPart
@@ -155,7 +157,7 @@ function CartController:EquipBodyPart(bodyPart: Enum.BodyPart, id: number?)
 
 		bodyDescriptionTable[bodyPart.Name] = id
 		if not identical then
-			table.insert(cartItems, NewCartItem(id, bodyPart))
+			table.insert(cartItems, NewCartItem(id, shopOwner, bodyPart))
 			cartSet[id] = true
 		end
 
@@ -177,7 +179,7 @@ function CartController:EquipBodyPart(bodyPart: Enum.BodyPart, id: number?)
 	UpdateCharacter()
 end
 
-function CartController:EquipPackage(bundleId: number)
+function CartController:EquipPackage(bundleId: number, shopOwner: number?)
 	return Future.new(function()
 		lastEquippedPackage = bundleId
 
@@ -213,7 +215,7 @@ function CartController:EquipPackage(bundleId: number)
 			if existingItem then
 				existingItem.equipped = true
 			else
-				table.insert(cartItems, NewCartItem(id, bodyPart))
+				table.insert(cartItems, NewCartItem(id, shopOwner, bodyPart))
 				cartSet[id] = true
 			end
 			bodyDescriptionTable[bodyPartName] = id
@@ -242,12 +244,15 @@ function CartController:Reset()
 	end)
 end
 
-function CartController:UseDescription(description: HumanoidDescription)
+function CartController:UseDescription(description: HumanoidDescription, shopOwner: number?)
 	cartItems = {}
 	cartSet = {}
 
 	for i, accessory in description:GetAccessories(true) do
-		table.insert(cartItems, { id = accessory.AssetId, equipped = true })
+		local newItem = NewCartItem(accessory.AssetId, shopOwner)
+		newItem.equipped = true
+		table.insert(cartItems, newItem)
+
 		cartSet[accessory.AssetId] = true
 	end
 
@@ -255,7 +260,9 @@ function CartController:UseDescription(description: HumanoidDescription)
 	for _, part in Enum.BodyPart:GetEnumItems() :: { Enum.BodyPart } do
 		local id = bodyDescriptionTable[part.Name]
 		if id ~= 0 then
-			table.insert(cartItems, NewCartItem(id, part))
+			local newItem = NewCartItem(id, shopOwner, part)
+			newItem.equipped = true
+			table.insert(cartItems, newItem)
 			cartSet[id] = true
 		end
 	end
@@ -317,7 +324,7 @@ local function InitialCharacterLoad(char: Model)
 	for _, part in Enum.BodyPart:GetEnumItems() :: { Enum.BodyPart } do
 		local id = bodyDescriptionTable[part.Name]
 		if id ~= 0 then
-			table.insert(cartItems, NewCartItem(id, part))
+			table.insert(cartItems, NewCartItem(id, nil, part))
 			cartSet[id] = true
 		end
 	end

@@ -524,7 +524,11 @@ function RenderWearing()
 				if not cartItem.bodyPart then
 					CartController:ToggleEquipped(id)
 				elseif cartItem.bodyPart then
-					CartController:EquipBodyPart(cartItem.bodyPart, if item.UIStroke.Enabled then id else nil)
+					CartController:EquipBodyPart(
+						cartItem.bodyPart,
+						if item.UIStroke.Enabled then id else nil,
+						cartItem.shopOwner
+					)
 				end
 			elseif currentUseMode == "Select" and not cartItem.bodyPart then
 				ItemSelected:Fire(id)
@@ -532,7 +536,7 @@ function RenderWearing()
 		end)
 
 		item.Buy.Activated:Connect(function()
-			PurchaseEvents.Asset:FireServer(id)
+			PurchaseEvents.Asset:FireServer(id, cartItem.shopOwner)
 		end)
 
 		item.Parent = template.Parent
@@ -773,8 +777,8 @@ function HideOutfitPreviewPage()
 	outfitBinRemove()
 end
 
-function RenderOutfitPreviewPage(outfit: HumanoidDescription)
-	return Future.new(function(outfit: HumanoidDescription)
+function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?)
+	return Future.new(function(outfit: HumanoidDescription, shopOwner: number?)
 		local tracker = newproxy()
 		outfitPaneTracker = tracker
 		outfitBinRemove()
@@ -817,7 +821,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 
 		local function ApplyOnClicked(button: GuiButton, description: HumanoidDescription)
 			outfitBinAdd(button.Activated:Connect(function()
-				CartController:UseDescription(description)
+				CartController:UseDescription(description, shopOwner)
 			end))
 		end
 
@@ -869,13 +873,13 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 
 			itemElement.Activated:Connect(function()
 				if itemType == "Accessory" then
-					CartController:ToggleInCart(id)
+					CartController:ToggleInCart(id, shopOwner)
 				else
 					assert(typeof(itemType) == "EnumItem")
 					if itemElement.UIStroke.Enabled then
-						CartController:EquipBodyPart(itemType, nil)
+						CartController:EquipBodyPart(itemType, nil, shopOwner)
 					else
-						CartController:EquipBodyPart(itemType, id)
+						CartController:EquipBodyPart(itemType, id, shopOwner)
 					end
 				end
 			end)
@@ -922,7 +926,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription)
 			return
 		end
 		outfitBinAdd(CartController.CartUpdated:Connect(RenderEquipped))
-	end, outfit)
+	end, outfit, shopOwner)
 end
 
 local renderTrack = newproxy()

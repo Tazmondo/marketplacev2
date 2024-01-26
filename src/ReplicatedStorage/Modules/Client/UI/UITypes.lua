@@ -208,6 +208,100 @@ export type Nav = ScreenGui & {
 }
 
 export type Main = ScreenGui & {
+	Profile: Frame & {
+		Total: Frame & {
+			UIPadding: UIPadding,
+			Close: Frame & {
+				UIListLayout: UIListLayout,
+				List: ImageButton & {
+					UICorner: UICorner,
+				},
+				Grid: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+			UIListLayout: UIListLayout,
+			Frame: Frame & {
+				UIListLayout: UIListLayout,
+				Frame: Frame & {
+					UIListLayout: UIListLayout,
+					ImageLabel: ImageLabel,
+					Amount: TextLabel,
+				},
+				TextLabel: TextLabel & {
+					UITextSizeConstraint: UITextSizeConstraint,
+				},
+			},
+			UISizeConstraint: UISizeConstraint,
+		},
+		UIPadding: UIPadding,
+		UIListLayout: UIListLayout,
+		UICorner: UICorner,
+		Frame: Frame & {
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			List: ScrollingFrame & {
+				UIListLayout: UIListLayout,
+				CreateShop: TextButton & {
+					UIListLayout: UIListLayout,
+					TextLabel: TextLabel,
+					UICorner: UICorner,
+				},
+				Row: ImageButton & {
+					Price: Frame & {
+						UIListLayout: UIListLayout,
+						Select: TextButton & {
+							UICorner: UICorner,
+						},
+					},
+					UIPadding: UIPadding,
+					Thumb: ImageLabel & {
+						UICorner: UICorner,
+						UIStroke: UIStroke,
+					},
+					UICorner: UICorner,
+					Details: Frame & {
+						NameLabel: TextLabel,
+						Frame: Frame & {
+							UIListLayout: UIListLayout,
+							Price: TextLabel,
+							ImageLabel: ImageLabel,
+						},
+						UIListLayout: UIListLayout,
+					},
+					UISizeConstraint: UISizeConstraint,
+					UIListLayout: UIListLayout,
+				},
+				Frame: Frame & {
+					UIListLayout: UIListLayout,
+					UIPadding: UIPadding,
+					UICorner: UICorner,
+				},
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Title: Frame & {
+			Title: Frame & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+			},
+			Avatar: Frame & {
+				UIListLayout: UIListLayout,
+				ImageButton: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+			UIListLayout: UIListLayout,
+			Close: Frame & {
+				UIListLayout: UIListLayout,
+				ImageButton: ImageButton & {
+					UICorner: UICorner,
+				},
+			},
+			UISizeConstraint: UISizeConstraint,
+			UIPadding: UIPadding,
+		},
+	},
 	Welcome: Frame & {
 		UICorner: UICorner,
 		Frame: Frame & {
@@ -231,6 +325,290 @@ export type Main = ScreenGui & {
 		UIPadding: UIPadding,
 		UISizeConstraint: UISizeConstraint,
 	},
+	EditField: Frame & {
+		Top: Frame & {
+			UICorner: UICorner,
+			ItemName: TextBox & {
+				UIListLayout: UIListLayout,
+				UIStroke: UIStroke,
+				UIPadding: UIPadding,
+				UICorner: UICorner,
+			},
+			UIListLayout: UIListLayout,
+		},
+		UIPadding: UIPadding,
+		Title: TextLabel,
+		UIListLayout: UIListLayout,
+		Actions: Frame & {
+			UIListLayout: UIListLayout,
+		},
+		UISizeConstraint: UISizeConstraint,
+		UICorner: UICorner,
+	},
+	ControllerEdit: Frame & {
+		StorefrontPicker: Frame & {
+			UICorner: UICorner,
+			ScrollingFrame: ScrollingFrame & {
+				UIListLayout: UIListLayout,
+				Layout: ImageButton & {
+					UICorner: UICorner,
+					SelectedOutline: UIStroke,
+				},
+				UIPadding: UIPadding,
+			},
+		},
+		TexturePicker: Frame & {
+			WoodColourless: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pattern: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Tile: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UICorner: UICorner,
+			Plastic: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIGridLayout: UIGridLayout,
+			Concrete: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Tile2: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIPadding: UIPadding,
+		},
+		UICorner: UICorner,
+		Wrapper: Frame & {
+			CurrentAccentColor: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			CurrentPrimaryColor: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			UIListLayout: UIListLayout,
+			CurrentTexture: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			ShopSettings: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			Profile: TextButton & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+				UICorner: UICorner,
+			},
+			CurrentLayout: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			Storefront: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
+			UIPadding: UIPadding,
+		},
+		PrimaryColorPicker: Frame & {
+			Rose: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			BabyYellow: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIPadding: UIPadding,
+			Mint: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Purple: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			DarkRed: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Beige: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Brown: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Orange: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Blue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UICorner: UICorner,
+			LightGray: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pink: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Midnight: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIGridLayout: UIGridLayout,
+			Black: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Green: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Cloud: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Yellow: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			LightBlue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			White: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+		},
+		ShareLink: Frame & {
+			UIPadding: UIPadding,
+			Thumb: ImageLabel,
+			UICorner: UICorner,
+			Details: Frame & {
+				UIListLayout: UIListLayout,
+				Title: TextLabel,
+				Body: TextLabel,
+			},
+			UIListLayout: UIListLayout,
+			TextBox: TextBox & {
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+				UIPadding: UIPadding,
+			},
+		},
+		LayoutPicker: Frame & {
+			UICorner: UICorner,
+			ScrollingFrame: ScrollingFrame & {
+				UIListLayout: UIListLayout,
+				Layout: ImageButton & {
+					UICorner: UICorner,
+					SelectedOutline: UIStroke,
+				},
+				UIPadding: UIPadding,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		AccentColorPicker: Frame & {
+			Rose: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			BabyYellow: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIPadding: UIPadding,
+			Mint: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Purple: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			DarkRed: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Beige: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Brown: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Orange: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Blue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UICorner: UICorner,
+			LightGray: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pink: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			LightBlue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UIGridLayout: UIGridLayout,
+			Black: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Green: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Cloud: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Yellow: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Midnight: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			White: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+		},
+	},
 	Avatar: Frame & {
 		UICorner: UICorner,
 		Content: Frame & {
@@ -238,11 +616,13 @@ export type Main = ScreenGui & {
 				UIListLayout: UIListLayout,
 				UIPadding: UIPadding,
 				Row: Frame & {
-					UIListLayout: UIListLayout,
 					ImageFrame: Frame & {
 						UICorner: UICorner,
 						Frame: Frame & {
-							UIListLayout: UIListLayout,
+							IsLimited: Frame & {
+								UIAspectRatioConstraint: UIAspectRatioConstraint,
+								LimitedUGC: ImageButton,
+							},
 							ItemImage: ImageLabel & {
 								UICorner: UICorner,
 							},
@@ -256,6 +636,9 @@ export type Main = ScreenGui & {
 							},
 						},
 					},
+					UICorner: UICorner,
+					UIListLayout: UIListLayout,
+					UISizeConstraint: UISizeConstraint,
 					Details: Frame & {
 						UIListLayout: UIListLayout,
 						Text: Frame & {
@@ -270,7 +653,6 @@ export type Main = ScreenGui & {
 							ImageLabel: ImageLabel,
 						},
 					},
-					UICorner: UICorner,
 				},
 			},
 			Title: Frame & {
@@ -288,6 +670,7 @@ export type Main = ScreenGui & {
 						UICorner: UICorner,
 					},
 				},
+				UISizeConstraint: UISizeConstraint,
 				TextLabel: TextLabel,
 			},
 			UIListLayout: UIListLayout,
@@ -308,10 +691,37 @@ export type Main = ScreenGui & {
 					},
 				},
 				UIPadding: UIPadding,
+				UISizeConstraint: UISizeConstraint,
 			},
 			Outfits: ScrollingFrame & {
-				UIPadding: UIPadding,
+				ItemWrapper: ImageButton & {
+					ImageFrame: Frame & {
+						UICorner: UICorner,
+						Frame: Frame & {
+							UIListLayout: UIListLayout,
+							Details: Frame & {
+								UIListLayout: UIListLayout,
+								UIPadding: UIPadding,
+								Label: TextLabel,
+							},
+							ItemImage: ImageLabel & {
+								UICorner: UICorner,
+							},
+						},
+					},
+					UIStroke: UIStroke,
+					UICorner: UICorner,
+					UIListLayout: UIListLayout,
+				},
 				UIGridLayout: UIGridLayout,
+				UIPadding: UIPadding,
+				New: ImageButton & {
+					UIPadding: UIPadding,
+					UICorner: UICorner,
+					Body: TextLabel,
+					UIListLayout: UIListLayout,
+					ItemImage: ImageLabel,
+				},
 			},
 		},
 		UISizeConstraint: UISizeConstraint,
@@ -515,521 +925,6 @@ export type Main = ScreenGui & {
 				UIPadding: UIPadding,
 			},
 		},
-	},
-	Profile: Frame & {
-		Total: Frame & {
-			UIPadding: UIPadding,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				List: ImageButton & {
-					UICorner: UICorner,
-				},
-				Grid: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UIListLayout: UIListLayout,
-			Frame: Frame & {
-				UIListLayout: UIListLayout,
-				Frame: Frame & {
-					UIListLayout: UIListLayout,
-					ImageLabel: ImageLabel,
-					Amount: TextLabel,
-				},
-				TextLabel: TextLabel & {
-					UITextSizeConstraint: UITextSizeConstraint,
-				},
-			},
-			UISizeConstraint: UISizeConstraint,
-		},
-		UIPadding: UIPadding,
-		UIListLayout: UIListLayout,
-		UICorner: UICorner,
-		Frame: Frame & {
-			UIListLayout: UIListLayout,
-			UIPadding: UIPadding,
-			List: ScrollingFrame & {
-				UIListLayout: UIListLayout,
-				CreateShop: TextButton & {
-					UIListLayout: UIListLayout,
-					TextLabel: TextLabel,
-					UICorner: UICorner,
-				},
-				Row: ImageButton & {
-					Price: Frame & {
-						UIListLayout: UIListLayout,
-						Select: TextButton & {
-							UICorner: UICorner,
-						},
-					},
-					UIPadding: UIPadding,
-					Thumb: ImageLabel & {
-						UICorner: UICorner,
-						UIStroke: UIStroke,
-					},
-					UICorner: UICorner,
-					Details: Frame & {
-						NameLabel: TextLabel,
-						Frame: Frame & {
-							UIListLayout: UIListLayout,
-							Price: TextLabel,
-							ImageLabel: ImageLabel,
-						},
-						UIListLayout: UIListLayout,
-					},
-					UISizeConstraint: UISizeConstraint,
-					UIListLayout: UIListLayout,
-				},
-				Frame: Frame & {
-					UIListLayout: UIListLayout,
-					UIPadding: UIPadding,
-					UICorner: UICorner,
-				},
-			},
-		},
-		UISizeConstraint: UISizeConstraint,
-		Title: Frame & {
-			Title: Frame & {
-				UIListLayout: UIListLayout,
-				TextLabel: TextLabel,
-			},
-			Avatar: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UIListLayout: UIListLayout,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UISizeConstraint: UISizeConstraint,
-			UIPadding: UIPadding,
-		},
-	},
-	Item: Frame & {
-		UICorner: UICorner,
-		UISizeConstraint: UISizeConstraint,
-		Content: Frame & {
-			UIPadding: UIPadding,
-			Details: Frame & {
-				UIPadding: UIPadding,
-				Available: Frame & {
-					UIListLayout: UIListLayout,
-					TextLabel: TextLabel,
-					Amount: TextLabel,
-				},
-				UICorner: UICorner,
-				UIListLayout: UIListLayout,
-				Names: Frame & {
-					UIListLayout: UIListLayout,
-					ItemName: TextLabel,
-					Creator: TextLabel,
-				},
-			},
-			UIListLayout: UIListLayout,
-			Actions: Frame & {
-				UIListLayout: UIListLayout,
-				Try: TextButton & {
-					UICorner: UICorner,
-					TextLabel: TextLabel,
-					UIListLayout: UIListLayout,
-				},
-				Buy: TextButton & {
-					UICorner: UICorner,
-					UIListLayout: UIListLayout,
-					TextLabel: TextLabel,
-					ImageLabel: ImageLabel,
-				},
-			},
-			ImageFrame: Frame & {
-				UIListLayout: UIListLayout,
-				UICorner: UICorner,
-				UISizeConstraint: UISizeConstraint,
-				ItemImage: ImageLabel,
-			},
-		},
-		Title: Frame & {
-			UIListLayout: UIListLayout,
-			UIPadding: UIPadding,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-		},
-	},
-	ControllerEdit: Frame & {
-		TexturePicker: Frame & {
-			WoodColourless: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Pattern: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Tile: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UICorner: UICorner,
-			Plastic: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UIGridLayout: UIGridLayout,
-			Concrete: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Tile2: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UIPadding: UIPadding,
-		},
-		ShareLink: Frame & {
-			UIPadding: UIPadding,
-			Thumb: ImageLabel,
-			UICorner: UICorner,
-			Details: Frame & {
-				UIListLayout: UIListLayout,
-				Title: TextLabel,
-				Body: TextLabel,
-			},
-			UIListLayout: UIListLayout,
-			TextBox: TextBox & {
-				UICorner: UICorner,
-				UIStroke: UIStroke,
-				UIPadding: UIPadding,
-			},
-		},
-		Wrapper: Frame & {
-			Exit: TextButton & {
-				UIListLayout: UIListLayout,
-				UIPadding: UIPadding,
-				TextLabel: TextLabel,
-				UICorner: UICorner,
-			},
-			CurrentAccentColor: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			CurrentPrimaryColor: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			UIListLayout: UIListLayout,
-			CurrentTexture: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			ShopSettings: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			CurrentLayout: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			ShareLink: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			UIPadding: UIPadding,
-		},
-		PrimaryColorPicker: Frame & {
-			Rose: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			BabyYellow: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UIPadding: UIPadding,
-			Mint: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Purple: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			DarkRed: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Beige: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Brown: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Orange: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Blue: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UICorner: UICorner,
-			LightGray: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Pink: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Midnight: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UIGridLayout: UIGridLayout,
-			Black: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Green: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Cloud: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Yellow: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			LightBlue: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			White: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-		},
-		UICorner: UICorner,
-		LayoutPicker: Frame & {
-			UICorner: UICorner,
-			ScrollingFrame: ScrollingFrame & {
-				UIListLayout: UIListLayout,
-				Layout: ImageButton & {
-					UICorner: UICorner,
-					SelectedOutline: UIStroke,
-				},
-				UIPadding: UIPadding,
-			},
-		},
-		UISizeConstraint: UISizeConstraint,
-		AccentColorPicker: Frame & {
-			Rose: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			BabyYellow: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UIPadding: UIPadding,
-			Mint: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Purple: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			DarkRed: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Beige: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Brown: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Orange: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Blue: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UICorner: UICorner,
-			LightGray: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Pink: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			LightBlue: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			UIGridLayout: UIGridLayout,
-			Black: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Green: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Cloud: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Yellow: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Midnight: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			White: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-		},
-	},
-	Confirm: Frame & {
-		Title: TextLabel,
-		UIPadding: UIPadding,
-		UICorner: UICorner,
-		UIListLayout: UIListLayout,
-		Actions: Frame & {
-			UIListLayout: UIListLayout,
-			SecondaryButton: TextButton & {
-				UIListLayout: UIListLayout,
-				TextLabel: TextLabel,
-				UICorner: UICorner,
-			},
-			PrimaryButton: TextButton & {
-				UIListLayout: UIListLayout,
-				TextLabel: TextLabel,
-				UICorner: UICorner,
-			},
-		},
-		UISizeConstraint: UISizeConstraint,
-		Body: TextLabel,
-	},
-	Outfits: Frame & {
-		UICorner: UICorner,
-		Content: Frame & {
-			UIListLayout: UIListLayout,
-			OutfitItems: ScrollingFrame & {
-				UIListLayout: UIListLayout,
-				Title: Frame & {
-					UIListLayout: UIListLayout,
-					ShopName: TextLabel,
-					Close: Frame & {
-						UIListLayout: UIListLayout,
-						ImageButton: ImageButton & {
-							UICorner: UICorner,
-						},
-					},
-				},
-				UIPadding: UIPadding,
-			},
-			Outfits: ScrollingFrame & {
-				UIGridLayout: UIGridLayout,
-				UIPadding: UIPadding,
-			},
-			Title: Frame & {
-				UIListLayout: UIListLayout,
-				TextLabel: TextLabel,
-				UIPadding: UIPadding,
-				Close: Frame & {
-					UIListLayout: UIListLayout,
-					ImageButton: ImageButton & {
-						UICorner: UICorner,
-					},
-				},
-			},
-		},
-		UISizeConstraint: UISizeConstraint,
-	},
-	ControllerNav: Frame & {
-		UIListLayout: UIListLayout,
-		UIPadding: UIPadding,
-		ShopInfo: Frame & {
-			ProfileImage: ImageLabel & {
-				UICorner: UICorner,
-				UIStroke: UIStroke,
-			},
-			UIPadding: UIPadding,
-			UICorner: UICorner,
-			UIListLayout: UIListLayout,
-			Text: Frame & {
-				UIListLayout: UIListLayout,
-				ShopName: TextLabel,
-				CreatorName: TextButton,
-			},
-			ButtonLike: ImageButton & {
-				UICorner: UICorner,
-			},
-			ButtonUnlike: ImageButton & {
-				UICorner: UICorner,
-			},
-		},
-		UICorner: UICorner,
-		Forward: ImageButton & {
-			UICorner: UICorner,
-			UIPadding: UIPadding,
-		},
-		UISizeConstraint: UISizeConstraint,
-		Back: ImageButton & {
-			UICorner: UICorner,
-			UIPadding: UIPadding,
-		},
-	},
-	Explore: Frame & {
-		Top: Frame & {
-			UICorner: UICorner,
-			ItemName: TextBox & {
-				UIPadding: UIPadding,
-				Toggle: TextButton & {
-					UICorner: UICorner,
-					TextLabel: TextLabel,
-					UIListLayout: UIListLayout,
-				},
-				UIStroke: UIStroke,
-				UIListLayout: UIListLayout,
-				UICorner: UICorner,
-			},
-			UIListLayout: UIListLayout,
-		},
-		UIPadding: UIPadding,
-		UICorner: UICorner,
-		ScrollingFrame: ScrollingFrame & {
-			UIGridLayout: UIGridLayout,
-		},
-		UIListLayout: UIListLayout,
 	},
 }
 

@@ -9,6 +9,8 @@ export type Layout = {
 	id: LayoutData.LayoutId,
 	displayThumbId: number,
 	modelTemplate: Model,
+	attachment: CFrame,
+	hasLogo: boolean,
 	getValidStandPositions: PositionFunction,
 	getValidOutfitStandPositions: PositionFunction,
 	getNumberOfStands: () -> number,
@@ -104,16 +106,26 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 	local model = LayoutFolder:FindFirstChild(id)
 	assert(model and model:IsA("Model"), `Could not find model layout with id: {id}`)
 
-	assert(model.PrimaryPart, `Layout {id} did not have PrimaryPart set to a pivot.`)
-
 	local logo = model:FindFirstChild("ShopLogo")
-	assert(logo and logo:IsA("BasePart"), `ShopLogo not found in {id}`)
 
-	local gui = logo:FindFirstChildOfClass("SurfaceGui")
-	assert(gui, `ShopLogo did not have gui in {id}`)
+	if logo then
+		local gui = logo:FindFirstChildOfClass("SurfaceGui")
+		assert(gui, `ShopLogo did not have gui in {id}`)
 
-	local image = gui:FindFirstChildOfClass("ImageLabel")
-	assert(image, `ShopLogo did not have an imagelabel in {id}`)
+		local image = gui:FindFirstChildOfClass("ImageLabel")
+		assert(image, `ShopLogo did not have an imagelabel in {id}`)
+	end
+
+	local attachmentPart = model:FindFirstChild("FrontAttachment")
+	assert(
+		attachmentPart and attachmentPart:IsA("BasePart"),
+		`Layout {id} did not have a front attachment, or it was not a part.`
+	)
+
+	-- They are not hidden in studio to aid with building, so hide them here.
+	attachmentPart.Transparency = 1
+
+	local attachmentCFrame = attachmentPart.CFrame:ToObjectSpace(model:GetPivot())
 
 	local validPositionFunction, validOutfitPositionFunction = GenerateValidPositionFunctions(model)
 	local standAmountFunction = GenerateNumberOfStandsFunction(validPositionFunction, validOutfitPositionFunction)
@@ -122,6 +134,8 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 		id = id,
 		displayThumbId = thumbId,
 		modelTemplate = model,
+		hasLogo = logo ~= nil,
+		attachment = attachmentCFrame,
 		getValidStandPositions = validPositionFunction,
 		getValidOutfitStandPositions = validOutfitPositionFunction,
 		getNumberOfStands = standAmountFunction,

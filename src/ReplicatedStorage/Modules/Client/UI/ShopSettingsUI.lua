@@ -11,7 +11,7 @@ local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().ShopSettings
 
-local activeShop: Types.NetworkShop? = nil
+local activeShop: Types.Shop? = nil
 
 function Save()
 	if not activeShop then
@@ -46,7 +46,7 @@ function ShopSettingsUI:Close()
 	gui.Visible = false
 end
 
-function ShopSettingsUI:Display(shop: Types.NetworkShop)
+function ShopSettingsUI:Display(shop: Types.Shop)
 	gui.Visible = true
 	activeShop = shop
 

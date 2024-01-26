@@ -381,6 +381,17 @@ local function ShopFromShareCode(shareCode: number)
 	end, shareCode)
 end
 
+function DataService:ShopFromShareCode(shareCode: number)
+	return Future.new(function(shareCode: number): Types.Shop?
+		local shop, owner = ShopFromShareCode(shareCode):Await()
+		if not shop or not owner then
+			return
+		end
+
+		return Data.FromDataShop(shop, owner)
+	end, shareCode)
+end
+
 local function HandleGetShopDetails(player: Player, shareCode: number): Types.NetworkShopDetails?
 	local shop, owner = ShopFromShareCode(shareCode):Await()
 	if not shop or not owner then

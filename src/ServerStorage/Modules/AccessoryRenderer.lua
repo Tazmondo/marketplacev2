@@ -126,6 +126,8 @@ local function ReplicateAsset(player: Player, assetId: number): Model?
 
 	model:ScaleTo(scale)
 	accessoryCache[assetId] = model:Clone()
+	model.Parent = player.PlayerGui
+	Debris:AddItem(model, 30)
 
 	return model
 end

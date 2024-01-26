@@ -7,12 +7,14 @@ local TextService = game:GetService("TextService")
 
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local DataService = require(script.Parent.Data.DataService)
+local LoadedService = require(script.Parent.LoadedService)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
+local MallCFrames = require(ReplicatedStorage.Modules.Shared.MallCFrames)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
@@ -440,7 +442,20 @@ local function HandleDeleteShop(player: Player, guid: string)
 	end)
 end
 
+local function PlayerAdded(player: Player)
+	local loaded = LoadedService:GetLoadedFuture(player):Await()
+	if not loaded then
+		return
+	end
+
+	-- Replicate all active shops
+	for i, shop in shopTable do
+		ShopEvents.LoadShop:FireClient(player, shop.cframe, ToNetworkShop(shop))
+	end
+end
+
 local function PlayerRemoving(player: Player)
+	-- Unclaim their shop
 	local claimedShop = TableUtil.Find(shopTable, function(shop)
 		return shop.mode == "Player" and shop.owner == player.UserId
 	end)
@@ -459,7 +474,25 @@ local function Initialize()
 		HandleUpdateShopLayout(player, id :: LayoutData.LayoutId)
 	end)
 
+	Players.PlayerAdded:Connect(PlayerAdded)
 	Players.PlayerRemoving:Connect(PlayerRemoving)
+
+	task.spawn(function()
+		local random = Random.new()
+
+		local function RandomShop(cframe: CFrame)
+			local shopDetails = DataService:ShopFromShareCode(random:NextInteger(10, 20)):Await()
+			if not shopDetails then
+				return
+			end
+			LoadShop(cframe, shopDetails, "Server")
+		end
+
+		-- RandomShop(MallCFrames.shops[2])
+		for _, cframe in MallCFrames.shops do
+			RandomShop(cframe)
+		end
+	end)
 end
 
 Initialize()

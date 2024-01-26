@@ -1,5 +1,6 @@
 local ShopController = {}
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -10,6 +11,7 @@ local AccessoryCache = require(ReplicatedStorage.Modules.Client.AccessoryCache)
 local CatalogUI = require(ReplicatedStorage.Modules.Client.UI.CatalogUI)
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
+local ShopEditUI = require(ReplicatedStorage.Modules.Client.UI.ShopEditUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
@@ -82,6 +84,7 @@ local OUTFIT_VERTICAL_OFFSET = 3.7162
 
 local renderedShops: { RenderedShop } = {}
 local dynamicShop: RenderedShop? = nil
+local currentEnteredShop: RenderedShop? = nil
 
 -- Allows for comparison between stand objects.
 -- I would do this by comparing the tables are the same but luau type system doesn't like that?
@@ -405,8 +408,7 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 				prompt.ObjectText = ""
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					-- ItemViewUI:Display(stand.assetId)
-					CartController:ToggleInCart(stand.assetId)
+					CartController:ToggleInCart(stand.assetId, shop.details.owner)
 				end)
 			end
 		end
@@ -445,18 +447,24 @@ local function LoadShopAppearance(shop: RenderedShop)
 		end
 	end
 
-	-- Already asserted in Layouts.lua
-	local logo = shop.currentModel:FindFirstChild("ShopLogo") :: BasePart
-	local gui = logo:FindFirstChild("SurfaceGui") :: SurfaceGui
-	local image = gui:FindFirstChild("ImageLabel") :: ImageLabel
-	image.Image = if shop.details.logoId then Thumbs.GetAsset(shop.details.logoId) else ""
+	local layout = Layouts:GetLayout(shop.details.layoutId)
+	if layout.hasLogo then
+		local logo = shop.currentModel:FindFirstChild("ShopLogo") :: BasePart
+		local gui = logo:FindFirstChild("SurfaceGui") :: SurfaceGui
+		local image = gui:FindFirstChild("ImageLabel") :: ImageLabel
+		image.Image = if shop.details.logoId then Thumbs.GetAsset(shop.details.logoId) else ""
+	end
 
 	debug.profileend()
 end
 
 local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMode): RenderedShop
-	local model = Layouts:GetLayout(shopDetails.layoutId).modelTemplate:Clone()
-	model:PivotTo(shopCFrame)
+	local layout = Layouts:GetLayout(shopDetails.layoutId)
+	local model = layout.modelTemplate:Clone()
+
+	--shopCFrame * attachment = shopCFrame
+
+	model:PivotTo(shopCFrame * layout.attachment)
 	model.Parent = workspace
 
 	local shop = {
@@ -501,7 +509,7 @@ local function LoadDynamicShop(shopDetails: Types.Shop)
 	table.insert(renderedShops, shop)
 end
 
-local function HandleLoadShop(shopCFrame: CFrame, shopDetails: Types.Shop)
+local function HandleLoadShop(shopCFrame: CFrame, options: ShopEvents.LoadShopSettings)
 	local existingShop = TableUtil.Find(renderedShops, function(shop)
 		return (shop.cframe.Position - shopCFrame.Position).Magnitude < 5
 	end)
@@ -509,7 +517,16 @@ local function HandleLoadShop(shopCFrame: CFrame, shopDetails: Types.Shop)
 		DestroyShop(existingShop)
 	end
 
-	local shop = NewShop(shopCFrame, shopDetails, "View")
+	if not options then
+		return
+	end
+
+	local mode: ShopMode = if options.shop.owner == Players.LocalPlayer.UserId
+			and options.spawnMode == "Player"
+		then "Edit"
+		else "View"
+
+	local shop = NewShop(shopCFrame, options.shop, mode)
 	table.insert(renderedShops, shop)
 end
 
@@ -521,7 +538,7 @@ local function GetTweenedStandAlpha(alpha: number)
 	end
 end
 
-local function RenderStepped(dt: number)
+local function RenderStands(dt: number)
 	debug.profilebegin("RenderStands")
 	for _, shop in renderedShops do
 		for roundedPosition, stand in shop.renderedStands do
@@ -554,6 +571,43 @@ local function RenderStepped(dt: number)
 	debug.profileend()
 end
 
+local function CheckCurrentShop()
+	local char = Players.LocalPlayer.Character
+	if not char then
+		return
+	end
+
+	local charPos = char:GetPivot().Position
+
+	local enteredShop
+	for _, shop in renderedShops do
+		local origin, size = shop.currentModel:GetBoundingBox()
+		if Util.PointInBounds(charPos, origin, size) then
+			enteredShop = shop
+			break
+		end
+	end
+
+	if enteredShop == currentEnteredShop then
+		return
+	end
+
+	currentEnteredShop = enteredShop
+	if enteredShop and enteredShop.mode == "Edit" then
+		ShopEditUI:Display(enteredShop.details)
+	else
+		ShopEditUI:Hide()
+	end
+end
+
+local function PreRender(dt: number)
+	RenderStands(dt)
+end
+
+local function PostSimulation()
+	CheckCurrentShop()
+end
+
 function ShopController:LoadDynamicShopFromCode(code: number)
 	return Future.new(function(code)
 		local success, details = DataEvents.GetShop:Call(code):Await()
@@ -570,7 +624,10 @@ function ShopController:LoadDynamicShopFromCode(code: number)
 end
 
 function ShopController:Initialize()
-	RunService.RenderStepped:Connect(RenderStepped)
+	RunService.PreRender:Connect(PreRender)
+	RunService.PostSimulation:Connect(PostSimulation)
+
+	ShopEvents.LoadShop:SetClientListener(HandleLoadShop)
 end
 
 ShopController:Initialize()

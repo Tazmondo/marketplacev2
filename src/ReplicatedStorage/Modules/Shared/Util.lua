@@ -188,4 +188,14 @@ function Util.AwaitAllFuturesTupled<K, V...>(t: { [K]: Future<V...> }): Future<{
 	end, t)
 end
 
+-- @Quenty & @Tazmondo
+function Util.PointInBounds(point: Vector3, origin: CFrame, size: Vector3)
+	local relative = origin:PointToObjectSpace(point)
+
+	local hsx, hsy, hsz = size.X / 2, size.Y / 2, size.Z / 2
+
+	local rx, ry, rz = relative.X, relative.Y, relative.Z
+	return rx >= -hsx and rx <= hsx and ry >= -hsy and ry <= hsy and rz >= -hsz and rz <= hsz
+end
+
 return Util

@@ -9,7 +9,7 @@ local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 
-local gainsStore = MemoryStoreService:GetSortedMap("Rewards")
+local purchaseMemory = MemoryStoreService:GetSortedMap("Rewards")
 
 local EXPIRATION = 60 * 60 * 24 * 21 -- 3 weeks
 
@@ -18,7 +18,6 @@ local pendingPurchases: { [Player]: number } = {}
 local function HandlePromptFinished(player: Player, assetId: number, purchased: boolean)
 	local ownerId = pendingPurchases[player]
 	if not ownerId then
-		warn("Bought without an owner")
 		return
 	end
 	pendingPurchases[player] = nil
@@ -34,7 +33,7 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 
 	local cut = math.floor(itemDetails.price * 0.4 * Config.OwnerCut)
 
-	gainsStore:UpdateAsync(`{ownerId}`, function(data: number?, sortKey: number?)
+	purchaseMemory:UpdateAsync(`{ownerId}`, function(data: number?, sortKey: number?)
 		data = data or 0
 		assert(data)
 
@@ -43,8 +42,10 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 	end, EXPIRATION)
 end
 
-local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwner: number)
-	pendingPurchases[player] = shopOwner
+local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwner: number?)
+	if shopOwner then
+		pendingPurchases[player] = shopOwner
+	end
 
 	-- When we get exclusive deals we will need to secure this so users can't buy the exclusive assets.
 	MarketplaceService:PromptPurchase(player, assetId)
