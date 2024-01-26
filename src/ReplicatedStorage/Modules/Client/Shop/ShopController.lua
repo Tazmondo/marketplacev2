@@ -628,6 +628,10 @@ function ShopController:LoadDynamicShopFromCode(code: number)
 			return
 		end
 		LoadDynamicShop(details)
+		local char = Players.LocalPlayer.Character
+		if char and dynamicShop then
+			char:PivotTo(dynamicShop.cframe * CFrame.new(0, 5, -10) * CFrame.Angles(0, math.pi, 0))
+		end
 	end, code)
 end
 
