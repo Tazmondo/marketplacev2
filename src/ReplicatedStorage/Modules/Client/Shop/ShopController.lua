@@ -29,6 +29,13 @@ assert(accessoryReplication, "Accessory replication folder did not exist.")
 local renderedAccessoryFolder = Instance.new("Folder", workspace)
 renderedAccessoryFolder.Name = "Rendered Accessories"
 
+local placeholderFolder = ReplicatedStorage.Assets["Shop Placeholders"] :: Folder
+local dynamicPlaceholder = placeholderFolder:FindFirstChild("DynamicPlaceholder")
+local shopPlaceholder = placeholderFolder:FindFirstChild("ShopPlaceholder")
+
+assert(dynamicPlaceholder and dynamicPlaceholder:IsA("Model"), "No dynamic shop placeholder found")
+assert(shopPlaceholder and shopPlaceholder:IsA("Model"), "No shop placeholder found")
+
 local assetsFolder = assert(ReplicatedStorage:FindFirstChild("Assets")) :: Folder
 local highlightTemplate = assert(assetsFolder:FindFirstChild("ItemHighlight")) :: Highlight
 
@@ -72,17 +79,23 @@ type ShopMode = "View" | "Edit"
 type RenderedShop = {
 	renderedStands: { [Vector3]: RenderedStand },
 	renderedOutfitStands: { [Vector3]: RenderedOutfit },
-	cframe: CFrame,
+	cframe: CFrame, -- Not the pivot, but the mall cframe it is attached to.
 	currentModel: Model,
 	mode: ShopMode,
 	details: Types.Shop,
 	destroyed: boolean,
 }
 
+type PlaceholderShop = {
+	model: Model,
+	cframe: CFrame,
+}
+
 -- Subtract from the placeholder pivot to get the ground position
 local OUTFIT_VERTICAL_OFFSET = 3.7162
 
 local renderedShops: { RenderedShop } = {}
+local placeholderShops: { PlaceholderShop } = {}
 local dynamicShop: RenderedShop? = nil
 local currentEnteredShop: RenderedShop? = nil
 
@@ -92,6 +105,47 @@ local standId = 0
 local function GetNextStandId()
 	standId += 1
 	return standId
+end
+
+local function RenderPlaceholderShop(cframe: CFrame)
+	local shopType = MallCFrames.GetCFrameType(cframe)
+	if shopType == nil then
+		return
+	end
+
+	local placeholder
+	if shopType == "Dynamic" then
+		placeholder = dynamicPlaceholder:Clone()
+	else
+		placeholder = shopPlaceholder:Clone()
+	end
+
+	local frontAttachment = placeholder:FindFirstChild("FrontAttachment") :: BasePart?
+	assert(frontAttachment, "Placeholder did not have a front attachment")
+
+	frontAttachment.Transparency = 1
+
+	local pivotFromFront = frontAttachment.CFrame:ToObjectSpace(placeholder:GetPivot())
+	placeholder:PivotTo(cframe:ToWorldSpace(pivotFromFront))
+
+	placeholder.Parent = workspace
+
+	table.insert(placeholderShops, {
+		model = placeholder,
+		cframe = cframe,
+	})
+end
+
+local function DestroyPlaceholder(cframe: CFrame)
+	local existingPlaceholder, index = TableUtil.Find(placeholderShops, function(shop)
+		return (shop.cframe.Position - cframe.Position).Magnitude < 5
+	end)
+	if not existingPlaceholder or not index then
+		return
+	end
+
+	existingPlaceholder.model:Destroy()
+	table.remove(placeholderShops, index)
 end
 
 local function SetDisplayVisibility(display: BasePart | Model, isVisible: boolean)
@@ -194,6 +248,8 @@ local function DestroyShop(shop: RenderedShop)
 	for _, stand in shop.renderedOutfitStands do
 		DestroyOutfitStand(shop, stand)
 	end
+
+	RenderPlaceholderShop(shop.cframe)
 end
 
 local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: Model })
@@ -467,6 +523,8 @@ local function LoadShopAppearance(shop: RenderedShop)
 end
 
 local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMode): RenderedShop
+	DestroyPlaceholder(shopCFrame)
+
 	local layout = Layouts:GetLayout(shopDetails.layoutId)
 	local model = layout.modelTemplate:Clone()
 
@@ -648,6 +706,11 @@ function ShopController:Initialize()
 	RunService.PostSimulation:Connect(PostSimulation)
 
 	ShopEvents.LoadShop:SetClientListener(HandleLoadShop)
+
+	for _, shopCFrame in MallCFrames.shops do
+		RenderPlaceholderShop(shopCFrame)
+	end
+	RenderPlaceholderShop(MallCFrames.dynamicShop)
 
 	Players.LocalPlayer.CharacterAdded:Once(function(char)
 		-- since the walk speed setter doesn't work on the first pass

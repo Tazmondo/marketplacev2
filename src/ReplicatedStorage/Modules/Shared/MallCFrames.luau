@@ -28,8 +28,21 @@ local function GetShopCFrame(cframe: CFrame): CFrame?
 	return
 end
 
+local function GetCFrameType(cframe: CFrame): "Shop" | "Dynamic" | nil
+	if GetShopCFrame(cframe) then
+		return "Shop"
+	end
+
+	if (dynamicShop.Position - cframe.Position).Magnitude < 5 then
+		return "Dynamic"
+	end
+
+	return
+end
+
 return {
 	shops = shops,
 	dynamicShop = assert(dynamicShop, "No dynamic shop found."),
 	GetShopCFrame = GetShopCFrame,
+	GetCFrameType = GetCFrameType,
 }
