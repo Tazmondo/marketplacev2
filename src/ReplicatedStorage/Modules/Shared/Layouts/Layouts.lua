@@ -16,14 +16,24 @@ export type Layout = {
 	getNumberOfStands: () -> number,
 }
 
+export type Storefront = {
+	id: LayoutData.StorefrontId,
+	displayThumbId: number,
+	modelTemplate: Model,
+	attachment: CFrame,
+	getNameLabel: (Model) -> TextLabel,
+}
+
 local LayoutFolder = ReplicatedStorage.Assets.Layouts :: Folder
+local StorefrontFolder = ReplicatedStorage.Assets.Storefronts :: Folder
 
 local savedLayouts: { [LayoutData.LayoutId]: Layout } = {}
+local savedStorefronts: { [LayoutData.StorefrontId]: Storefront } = {}
 
 local Layouts = {}
 
 -- So this loop is only run once and when it's needed
-function GenerateValidPositionFunctions(model: Model): (PositionFunction, PositionFunction)
+local function GenerateValidPositionFunctions(model: Model): (PositionFunction, PositionFunction)
 	local validPositions
 	local validOutfitPositions
 
@@ -64,7 +74,7 @@ function GenerateValidPositionFunctions(model: Model): (PositionFunction, Positi
 end
 
 -- Only run once per layout and only when needed
-function GenerateNumberOfStandsFunction(...: PositionFunction): () -> number
+local function GenerateNumberOfStandsFunction(...: PositionFunction): () -> number
 	local positionAmount
 	local positionFunctions = { ... }
 
@@ -102,7 +112,7 @@ function Layouts:GetLayouts()
 end
 
 -- Cause writing the table out every time is a pain
-function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
+local function SetupLayout(id: LayoutData.LayoutId, thumbnail: number)
 	local model = LayoutFolder:FindFirstChild(id)
 	assert(model and model:IsA("Model"), `Could not find model layout with id: {id}`)
 
@@ -132,7 +142,7 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 
 	savedLayouts[id] = TableUtil.Lock({
 		id = id,
-		displayThumbId = thumbId,
+		displayThumbId = thumbnail,
 		modelTemplate = model,
 		hasLogo = logo ~= nil,
 		attachment = attachmentCFrame,
@@ -142,8 +152,69 @@ function SetupLayout(id: LayoutData.LayoutId, thumbId: number)
 	})
 end
 
+function Layouts:StorefrontIdExists(id: string): boolean
+	return savedStorefronts[id :: LayoutData.StorefrontId] ~= nil
+end
+
+function Layouts:GuardStorefrontId(id: unknown): LayoutData.StorefrontId
+	assert(typeof(id) == "string" and savedStorefronts[id :: LayoutData.StorefrontId] ~= nil)
+	return id :: LayoutData.StorefrontId
+end
+
+function Layouts:GetStorefront(id: LayoutData.StorefrontId)
+	return assert(savedStorefronts[id], `{id} is not a valid storefront id!`)
+end
+
+function Layouts:GetStorefronts()
+	return savedStorefronts
+end
+
+function Layouts:GetRandomStorefrontId(seed: number?): LayoutData.StorefrontId
+	local random = Random.new(seed or math.random())
+
+	local storefronts = TableUtil.Values(Layouts:GetStorefronts())
+	local randomStorefront: LayoutData.StorefrontId = storefronts[random:NextInteger(1, #storefronts)].id
+
+	return randomStorefront
+end
+
+local function SetupStorefront(id: LayoutData.StorefrontId, thumbnail: number)
+	local model = StorefrontFolder:FindFirstChild(id)
+	assert(model and model:IsA("Model"), `Could not find model storefront with id: {id}`)
+
+	local attachmentPart = model:FindFirstChild("FrontAttachment")
+	assert(
+		attachmentPart and attachmentPart:IsA("BasePart"),
+		`Storefront "{id}" did not have a front attachment, or it was not a part.`
+	)
+
+	-- They are not hidden in studio to aid with building, so hide them here.
+	attachmentPart.Transparency = 1
+
+	local attachmentCFrame = attachmentPart.CFrame:ToObjectSpace(model:GetPivot())
+
+	local function getNameLabel(model: Model): TextLabel
+		return model:FindFirstChild("TextLabel", true) :: TextLabel
+	end
+
+	local textLabel = getNameLabel(model)
+	assert(textLabel and textLabel:IsA("TextLabel"), `Storefront "{id}" did not have a name label.`)
+
+	savedStorefronts[id] = TableUtil.Lock({
+		id = id,
+		displayThumbId = thumbnail,
+		modelTemplate = model,
+		attachment = attachmentCFrame,
+		getNameLabel = getNameLabel,
+	})
+end
+
 for layout: LayoutData.LayoutId, thumbnail in LayoutData.layoutData do
 	SetupLayout(layout, thumbnail)
+end
+
+for storefront: LayoutData.StorefrontId, thumbnail in LayoutData.storeFrontData do
+	SetupStorefront(storefront, thumbnail)
 end
 
 assert(Layouts:LayoutIdExists(Config.DefaultLayout), `Default layout {Config.DefaultLayout} is not a valid layout.`)

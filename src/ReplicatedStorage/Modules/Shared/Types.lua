@@ -19,6 +19,7 @@ export type OutfitStand = {
 export type Shop = {
 	owner: number, -- UserId
 	layoutId: LayoutData.LayoutId,
+	storefrontId: LayoutData.StorefrontId,
 	name: string,
 	thumbId: number,
 	logoId: number?,

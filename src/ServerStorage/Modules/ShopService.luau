@@ -31,6 +31,7 @@ type ActiveShop = {
 
 	name: string,
 	layout: Layouts.Layout,
+	storefront: Layouts.Storefront,
 	primaryColor: Color3,
 	accentColor: Color3,
 	texture: string,
@@ -51,6 +52,7 @@ local function ToNetworkShop(shop: ActiveShop): ShopEvents.LoadShopSettings
 		stands = shop.stands,
 		outfitStands = shop.outfitStands,
 		layoutId = shop.layout.id,
+		storefrontId = shop.storefront.id,
 		owner = shop.owner,
 		name = shop.name,
 		GUID = shop.GUID,
@@ -127,6 +129,7 @@ local function SaveShop(shop: ActiveShop)
 		stands = filteredStands,
 		outfitStands = filteredOutfitStands,
 		layoutId = shop.layout.id,
+		storefrontId = shop.storefront.id,
 		GUID = shop.GUID,
 		shareCode = shop.shareCode,
 		name = shop.name,
@@ -197,6 +200,7 @@ end
 
 local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.SpawnMode)
 	local layout = Layouts:GetLayout(shopDetails.layoutId)
+	local storefront = Layouts:GetStorefront(shopDetails.storefrontId)
 
 	-- Every physical part should have a registered stand
 	-- This is necessary so the shop can accept stand updates for stands that don't yet have an item.
@@ -207,6 +211,7 @@ local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.Spa
 		stands = stands,
 		outfitStands = outfitStands,
 		layout = layout,
+		storefront = storefront,
 		cframe = cframe,
 		owner = shopDetails.owner,
 		playersPresent = {},
@@ -252,6 +257,7 @@ local function HandleCreatePlace(player: Player)
 	local newShop: Types.Shop = {
 		name = `{player.Name}'s Shop`,
 		layoutId = Config.DefaultLayout,
+		storefrontId = Layouts:GetRandomStorefrontId(),
 		stands = {},
 		outfitStands = {},
 		GUID = HttpService:GenerateGUID(false),
@@ -481,14 +487,16 @@ local function Initialize()
 		local random = Random.new()
 
 		local function RandomShop(cframe: CFrame)
-			local shopDetails = DataService:ShopFromShareCode(random:NextInteger(10, 20)):Await()
+			local shopDetails = DataService:ShopFromShareCode(random:NextInteger(10, 60)):Await()
 			if not shopDetails then
 				return
 			end
 			LoadShop(cframe, shopDetails, "Server")
 		end
 
+		-- RandomShop(MallCFrames.shops[1])
 		-- RandomShop(MallCFrames.shops[2])
+		-- RandomShop(MallCFrames.shops[3])
 		for _, cframe in MallCFrames.shops do
 			RandomShop(cframe)
 		end

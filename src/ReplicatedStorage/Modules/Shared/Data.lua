@@ -45,6 +45,7 @@ export type Shop = {
 	thumbId: number,
 	logoId: number?,
 	layoutId: string, -- Not using Layouts.LayoutId here because the data could become invalid if layouts change. So we need to verify when loading it.
+	storefrontId: string, -- Same as above
 
 	-- Colours must be hex strings, Color3 cannot be stored in datastore
 	primaryColor: string,
@@ -56,10 +57,12 @@ export type Shop = {
 	stands: { Stand },
 	outfitStands: { OutfitStand },
 }
+
 local shopTemplate: Shop = {
 	name = "Untitled Shop",
 	thumbId = Config.DefaultShopThumbnail,
 	layoutId = Config.DefaultLayout,
+	storefrontId = Layouts:GetRandomStorefrontId(),
 	GUID = HttpService:GenerateGUID(false),
 	stands = {},
 	outfitStands = {},
@@ -78,7 +81,7 @@ export type Data = {
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 11,
+	version = 12,
 	firstTime = true,
 }
 Data.dataTemplate = dataTemplate
@@ -95,7 +98,7 @@ function Data.TableToVector(vector: VectorTable): Vector3
 	return Vector3.new(vector.x, vector.y, vector.z)
 end
 
-function Data.Migrate(data: Data)
+function Data.Migrate(data: Data, ownerId: number)
 	if data.version == dataTemplate.version then
 		-- Data shape hasn't updated, no need to reconcile
 		return
@@ -106,6 +109,37 @@ function Data.Migrate(data: Data)
 		-- Renamed showcases to shops
 		data.shops = (data :: any).showcases or {};
 		(data :: any).showcases = nil
+	end
+
+	-- General migration
+	for k, v in pairs(dataTemplate) do
+		if not data[k] then
+			data[k] = v
+		end
+	end
+
+	for i, shop in data.shops do
+		for k, v in pairs(shopTemplate) do
+			if not shop[k] then
+				shop[k] = v
+			end
+		end
+
+		for i, stand in shop.stands do
+			for k, v in pairs(standTemplate) do
+				if not stand[k] then
+					stand[k] = v
+				end
+			end
+		end
+
+		for i, stand in shop.outfitStands do
+			for k, v in pairs(outfitStandTemplate) do
+				if not stand[k] then
+					stand[k] = v
+				end
+			end
+		end
 	end
 
 	if data.version < 11 then
@@ -151,34 +185,12 @@ function Data.Migrate(data: Data)
 		end
 	end
 
-	-- General migration
-	for k, v in pairs(dataTemplate) do
-		if not data[k] then
-			data[k] = v
-		end
-	end
-
-	for i, shop in data.shops do
-		for k, v in pairs(shopTemplate) do
-			if not shop[k] then
-				shop[k] = v
-			end
-		end
-
-		for i, stand in shop.stands do
-			for k, v in pairs(standTemplate) do
-				if not stand[k] then
-					stand[k] = v
-				end
-			end
-		end
-
-		for i, stand in shop.outfitStands do
-			for k, v in pairs(outfitStandTemplate) do
-				if not stand[k] then
-					stand[k] = v
-				end
-			end
+	if data.version < 12 then
+		-- added storefronts
+		for i, shop in data.shops do
+			local seed = i + ownerId
+			local randomStorefront = Layouts:GetRandomStorefrontId(seed)
+			shop.storefrontId = randomStorefront
 		end
 	end
 
@@ -228,6 +240,7 @@ function Data.ToDataShop(shop: Types.Shop): Shop
 	return {
 		thumbId = shop.thumbId,
 		layoutId = shop.layoutId,
+		storefrontId = shop.storefrontId,
 		name = shop.name,
 		primaryColor = shop.primaryColor:ToHex(),
 		accentColor = shop.accentColor:ToHex(),
@@ -271,12 +284,17 @@ function Data.FromDataShop(shop: Shop, ownerId: number): Types.Shop
 		then shop.layoutId :: LayoutData.LayoutId
 		else Config.DefaultLayout
 
+	local storefrontId: LayoutData.StorefrontId = if Layouts:StorefrontIdExists(shop.storefrontId)
+		then shop.storefrontId :: LayoutData.StorefrontId
+		else Layouts:GetRandomStorefrontId()
+
 	local texture: string = if Material:TextureExists(shop.texture) then shop.texture else Material:GetDefault()
 
 	return {
 		GUID = shop.GUID,
 		shareCode = shop.shareCode,
 		layoutId = layoutId,
+		storefrontId = storefrontId,
 		owner = ownerId,
 		stands = stands,
 		outfitStands = outfitStands,

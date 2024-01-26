@@ -528,9 +528,15 @@ local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMo
 	local layout = Layouts:GetLayout(shopDetails.layoutId)
 	local model = layout.modelTemplate:Clone()
 
-	--shopCFrame * attachment = shopCFrame
+	local storefront = Layouts:GetStorefront(shopDetails.storefrontId)
+	local storefrontModel = storefront.modelTemplate:Clone()
+
+	local label = storefront.getNameLabel(storefrontModel)
+	label.Text = shopDetails.name
 
 	model:PivotTo(shopCFrame * layout.attachment)
+	storefrontModel:PivotTo(shopCFrame * storefront.attachment)
+	storefrontModel.Parent = model
 	model.Parent = workspace
 
 	local shop = {

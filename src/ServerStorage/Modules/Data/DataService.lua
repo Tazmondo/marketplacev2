@@ -97,7 +97,7 @@ local function PlayerAdded(player: Player)
 	if profile ~= nil then
 		profile:AddUserId(player.UserId)
 
-		Data.Migrate(profile.Data)
+		Data.Migrate(profile.Data, player.UserId)
 
 		DataEvents.ReplicateData:FireClient(player, profile.Data)
 
@@ -161,7 +161,7 @@ function FetchOfflineData(userId: number)
 	local dataFuture = Future.new(function(userId): Data.Data?
 		local profile = ProfileStore:ViewProfileAsync(GetKey(userId))
 		if profile then
-			Data.Migrate(profile.Data)
+			Data.Migrate(profile.Data, userId)
 
 			-- Apply pending global updates when viewing the profile.
 			-- 	This allows sharecodes to be up to date when viewing a profile even if the owner has not logged on.
