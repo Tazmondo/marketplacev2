@@ -14,6 +14,7 @@ export type Nav = ScreenGui & {
 					UICorner: UICorner,
 				},
 			},
+			UIScale: UIScale,
 		},
 		Catalog: Frame & {
 			Frame: Frame & {

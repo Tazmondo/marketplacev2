@@ -21,6 +21,7 @@ local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
@@ -38,6 +39,8 @@ assert(shopPlaceholder and shopPlaceholder:IsA("Model"), "No shop placeholder fo
 
 local assetsFolder = assert(ReplicatedStorage:FindFirstChild("Assets")) :: Folder
 local highlightTemplate = assert(assetsFolder:FindFirstChild("ItemHighlight")) :: Highlight
+
+ShopController.ShopEntered = Signal() :: Signal.Signal<RenderedShop?>
 
 type RenderedStand = {
 	standPart: BasePart,
@@ -668,6 +671,7 @@ local function CheckCurrentShop()
 		return
 	end
 	currentEnteredShop = enteredShop
+	ShopController.ShopEntered:Fire(enteredShop)
 
 	-- move faster outside of shops
 	local targetWalkspeed = if enteredShop == nil then Config.MallSpeed else Config.ShopSpeed
