@@ -64,6 +64,9 @@ local Config = {
 	-- The total cut of our 40% commission that owners will receive.
 	-- E.g. 0.75 = 30% of the item
 	OwnerCut = 0.75,
+
+	MallSpeed = 24,
+	ShopSpeed = 18,
 }
 
 assert(PrimaryColors[Config.DefaultPrimaryColor:ToHex()], "Default primary color was not a valid color")

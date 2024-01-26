@@ -584,6 +584,10 @@ local function CheckCurrentShop()
 	if not char then
 		return
 	end
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if not humanoid then
+		return
+	end
 
 	local charPos = char:GetPivot().Position
 
@@ -599,8 +603,12 @@ local function CheckCurrentShop()
 	if enteredShop == currentEnteredShop then
 		return
 	end
-
 	currentEnteredShop = enteredShop
+
+	-- move faster outside of shops
+	local targetWalkspeed = if enteredShop == nil then Config.MallSpeed else Config.ShopSpeed
+	TweenService:Create(humanoid, TweenInfo.new(0.25, Enum.EasingStyle.Quad), { WalkSpeed = targetWalkspeed }):Play()
+
 	if enteredShop and enteredShop.mode == "Edit" then
 		ShopEditUI:Display(enteredShop.details)
 	else
@@ -640,6 +648,12 @@ function ShopController:Initialize()
 	RunService.PostSimulation:Connect(PostSimulation)
 
 	ShopEvents.LoadShop:SetClientListener(HandleLoadShop)
+
+	Players.LocalPlayer.CharacterAdded:Once(function(char)
+		-- since the walk speed setter doesn't work on the first pass
+		local humanoid = char:WaitForChild("Humanoid") :: Humanoid
+		humanoid.WalkSpeed = Config.MallSpeed
+	end)
 end
 
 ShopController:Initialize()
