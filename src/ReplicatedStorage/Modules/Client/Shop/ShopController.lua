@@ -11,6 +11,7 @@ local AccessoryCache = require(ReplicatedStorage.Modules.Client.AccessoryCache)
 local CatalogUI = require(ReplicatedStorage.Modules.Client.UI.CatalogUI)
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
+local ProfileUI = require(ReplicatedStorage.Modules.Client.UI.ProfileUI)
 local ShopEditUI = require(ReplicatedStorage.Modules.Client.UI.ShopEditUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
@@ -110,8 +111,12 @@ local function GetNextStandId()
 	return standId
 end
 
+local function GetTeleportCFrame(shopCFrame: CFrame): CFrame
+	return shopCFrame * CFrame.new(0, 5, -10) * CFrame.Angles(0, math.pi, 0)
+end
+
 local function RenderPlaceholderShop(cframe: CFrame)
-	local shopType = MallCFrames.GetCFrameType(cframe)
+	local shopType: typeof(MallCFrames.GetCFrameType(CFrame.new())) = MallCFrames.GetCFrameType(cframe)
 	if shopType == nil then
 		return
 	end
@@ -130,6 +135,23 @@ local function RenderPlaceholderShop(cframe: CFrame)
 
 	local pivotFromFront = frontAttachment.CFrame:ToObjectSpace(placeholder:GetPivot())
 	placeholder:PivotTo(cframe:ToWorldSpace(pivotFromFront))
+
+	if shopType == "Shop" then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Claim"
+		prompt.ObjectText = "Shop"
+		prompt.RequiresLineOfSight = false
+		prompt.MaxActivationDistance = 30
+
+		prompt.Parent = frontAttachment
+
+		prompt.Triggered:Connect(function()
+			local selectedShop = ProfileUI:SelectShop():Await()
+			if selectedShop then
+				ShopEvents.ClaimShop:FireServer(cframe, selectedShop.GUID)
+			end
+		end)
+	end
 
 	placeholder.Parent = workspace
 
@@ -666,6 +688,15 @@ local function CheckCurrentShop()
 			break
 		end
 	end
+	if not enteredShop then
+		for _, shop in placeholderShops do
+			local origin, size = shop.model:GetBoundingBox()
+			if Util.PointInBounds(charPos, origin, size) then
+				char:PivotTo(GetTeleportCFrame(shop.cframe))
+				break
+			end
+		end
+	end
 
 	if enteredShop == currentEnteredShop then
 		return
@@ -706,7 +737,7 @@ function ShopController:LoadDynamicShopFromCode(code: number)
 		LoadDynamicShop(details)
 		local char = Players.LocalPlayer.Character
 		if char and dynamicShop then
-			char:PivotTo(dynamicShop.cframe * CFrame.new(0, 5, -10) * CFrame.Angles(0, math.pi, 0))
+			char:PivotTo(GetTeleportCFrame(dynamicShop.cframe))
 		end
 	end, code)
 end

@@ -1,3 +1,4 @@
+--!nolint LocalShadow
 local ShopService = {}
 
 local HttpService = game:GetService("HttpService")
@@ -41,7 +42,7 @@ type ActiveShop = {
 	thumbId: number,
 }
 
-local shopTable: { ActiveShop } = {}
+local activeShops: { ActiveShop } = {}
 
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
@@ -227,7 +228,7 @@ local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.Spa
 		logoId = shopDetails.logoId,
 	}
 
-	table.insert(shopTable, shop)
+	table.insert(activeShops, shop)
 
 	ShopEvents.LoadShop:FireAllClients(cframe, ToNetworkShop(shop))
 
@@ -235,9 +236,9 @@ local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.Spa
 end
 
 local function UnloadShop(place: ActiveShop)
-	local index = table.find(shopTable, place)
+	local index = table.find(activeShops, place)
 	if index then
-		table.remove(shopTable, index)
+		table.remove(activeShops, index)
 		ShopEvents.LoadShop:FireAllClients(place.cframe)
 	else
 		warn(debug.traceback("Tried to unload a place without it existing in the place table! Should never occur."))
@@ -275,7 +276,7 @@ local function HandleCreatePlace(player: Player)
 end
 
 local function GetEditableShop(player: Player): ActiveShop?
-	local shop = TableUtil.Find(shopTable, function(shop)
+	local shop = TableUtil.Find(activeShops, function(shop)
 		return shop.mode == "Player" and shop.owner == player.UserId
 	end)
 	if not shop then
@@ -448,6 +449,40 @@ local function HandleDeleteShop(player: Player, guid: string)
 	end)
 end
 
+local function HandleClaimShop(player: Player, shopCFrame: CFrame, guid: string)
+	local data = DataService:ReadData(player):Await()
+	if not data then
+		return
+	end
+
+	local realCFrame = MallCFrames.GetShopCFrame(shopCFrame)
+	if not realCFrame then
+		warn("Tried to claim an invalid CFrame!")
+		return
+	end
+
+	local shop = TableUtil.Find(data.shops, function(shop)
+		return shop.GUID == guid
+	end)
+	if not shop then
+		warn("Tried to claim a mall without a valid shop")
+		return
+	end
+
+	local existingShop = TableUtil.Find(activeShops, function(shop)
+		return (shop.cframe.Position - realCFrame.Position).Magnitude < 5 or shop.owner == player.UserId
+	end)
+	if existingShop then
+		if existingShop.owner == player.UserId then
+			UnloadShop(existingShop)
+		else
+			return
+		end
+	end
+
+	LoadShop(realCFrame, Data.FromDataShop(shop, player.UserId), "Player")
+end
+
 local function PlayerAdded(player: Player)
 	local loaded = LoadedService:GetLoadedFuture(player):Await()
 	if not loaded then
@@ -455,14 +490,14 @@ local function PlayerAdded(player: Player)
 	end
 
 	-- Replicate all active shops
-	for i, shop in shopTable do
+	for i, shop in activeShops do
 		ShopEvents.LoadShop:FireClient(player, shop.cframe, ToNetworkShop(shop))
 	end
 end
 
 local function PlayerRemoving(player: Player)
 	-- Unclaim their shop
-	local claimedShop = TableUtil.Find(shopTable, function(shop)
+	local claimedShop = TableUtil.Find(activeShops, function(shop)
 		return shop.mode == "Player" and shop.owner == player.UserId
 	end)
 	if claimedShop then
@@ -473,6 +508,9 @@ end
 local function Initialize()
 	ShopEvents.CreateShop:SetServerListener(HandleCreatePlace)
 	ShopEvents.DeleteShop:SetServerListener(HandleDeleteShop)
+
+	ShopEvents.ClaimShop:SetServerListener(HandleClaimShop)
+
 	ShopEvents.UpdateStand:SetServerListener(HandleUpdateStand)
 	ShopEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
 	ShopEvents.UpdateSettings:SetServerListener(HandleUpdateShopSettings)
@@ -497,9 +535,9 @@ local function Initialize()
 		-- RandomShop(MallCFrames.shops[1])
 		-- RandomShop(MallCFrames.shops[2])
 		-- RandomShop(MallCFrames.shops[3])
-		for _, cframe in MallCFrames.shops do
-			RandomShop(cframe)
-		end
+		-- for _, cframe in MallCFrames.shops do
+		-- 	RandomShop(cframe)
+		-- end
 	end)
 end
 

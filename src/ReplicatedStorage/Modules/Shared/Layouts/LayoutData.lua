@@ -28,16 +28,16 @@ export type StorefrontId =
 	| "Storefront 10"
 
 local storeFrontData: { [StorefrontId]: number } = {
-	["Storefront 1"] = 15688473519,
-	["Storefront 2"] = 15688473519,
-	["Storefront 3"] = 15688473519,
-	["Storefront 4"] = 15688473519,
-	["Storefront 5"] = 15688473519,
-	["Storefront 6"] = 15688473519,
-	["Storefront 7"] = 15688473519,
-	["Storefront 8"] = 15688473519,
-	["Storefront 9"] = 15688473519,
-	["Storefront 10"] = 15688473519,
+	["Storefront 1"] = 16139933518,
+	["Storefront 2"] = 16139933726,
+	["Storefront 3"] = 16139934005,
+	["Storefront 4"] = 16139934245,
+	["Storefront 5"] = 16139934469,
+	["Storefront 6"] = 16139934694,
+	["Storefront 7"] = 16139933199,
+	["Storefront 8"] = 16139935206,
+	["Storefront 9"] = 16139935464,
+	["Storefront 10"] = 16139935740,
 }
 
 return {
