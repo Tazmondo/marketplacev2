@@ -103,8 +103,8 @@ function RandomFeed.GetFeed(desiredLength: number?)
 end
 
 -- Pre-load some random shops
-task.spawn(function()
-	print("Pre-loaded random shops: ", RandomFeed.GetFeed(3):Await())
-end)
+-- task.spawn(function()
+-- 	print("Pre-loaded random shops: ", RandomFeed.GetFeed(3):Await())
+-- end)
 
 return RandomFeed
