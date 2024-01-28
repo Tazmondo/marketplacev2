@@ -5,19 +5,24 @@ local ShopEditUI = {}
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local ProfileUI = require(script.Parent.ProfileUI)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local ShopSettingsUI = require(script.Parent.ShopSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Base64 = require(ReplicatedStorage.Packages.Base64)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().ControllerEdit
 
 local activeShop: Types.Shop? = nil
 local selectedTexture: string? = nil
+
+ShopEditUI.ShopSelected = Signal() :: Signal.Signal<Data.Shop>
 
 local function SelectButton(button: Instance?, visible: boolean)
 	local wrapper = gui.Wrapper
@@ -202,6 +207,15 @@ local function SwitchLayout(id: LayoutData.LayoutId)
 	ShopEvents.UpdateLayout:FireServer(id)
 end
 
+local function OpenShops()
+	ProfileUI:SelectShop():After(function(shop)
+		if not shop then
+			return
+		end
+		ShopEditUI.ShopSelected:Fire(shop)
+	end)
+end
+
 -- Should only be called once
 local function PopulateLayoutFrame()
 	local frame = gui.LayoutPicker.ScrollingFrame
@@ -238,6 +252,7 @@ function ShopEditUI:Initialize()
 
 	gui.Wrapper.CurrentLayout.Activated:Connect(ToggleLayoutFrame)
 	gui.Wrapper.ShopSettings.Activated:Connect(ShowSettings)
+	gui.Wrapper.Profile.Activated:Connect(OpenShops)
 
 	PopulateLayoutFrame()
 

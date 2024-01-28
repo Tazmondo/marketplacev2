@@ -115,6 +115,10 @@ local function GetTeleportCFrame(shopCFrame: CFrame): CFrame
 	return shopCFrame * CFrame.new(0, 5, -10) * CFrame.Angles(0, math.pi, 0)
 end
 
+local function ClaimShop(cframe: CFrame, guid: string)
+	ShopEvents.ClaimShop:FireServer(cframe, guid)
+end
+
 local function RenderPlaceholderShop(cframe: CFrame)
 	local shopType: typeof(MallCFrames.GetCFrameType(CFrame.new())) = MallCFrames.GetCFrameType(cframe)
 	if shopType == nil then
@@ -148,7 +152,7 @@ local function RenderPlaceholderShop(cframe: CFrame)
 		prompt.Triggered:Connect(function()
 			local selectedShop = ProfileUI:SelectShop():Await()
 			if selectedShop then
-				ShopEvents.ClaimShop:FireServer(cframe, selectedShop.GUID)
+				ClaimShop(cframe, selectedShop.GUID)
 			end
 		end)
 	end
@@ -751,6 +755,13 @@ function ShopController:Initialize()
 	RunService.PostSimulation:Connect(PostSimulation)
 
 	ShopEvents.LoadShop:SetClientListener(HandleLoadShop)
+
+	ShopEditUI.ShopSelected:Connect(function(shop)
+		if not currentEnteredShop or currentEnteredShop.mode ~= "Edit" or not shop then
+			return
+		end
+		ClaimShop(currentEnteredShop.cframe, shop.GUID)
+	end)
 
 	for _, shopCFrame in MallCFrames.shops do
 		RenderPlaceholderShop(shopCFrame)

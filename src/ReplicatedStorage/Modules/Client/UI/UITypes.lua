@@ -210,31 +210,6 @@ export type Nav = ScreenGui & {
 
 export type Main = ScreenGui & {
 	Profile: Frame & {
-		Total: Frame & {
-			UIPadding: UIPadding,
-			Close: Frame & {
-				UIListLayout: UIListLayout,
-				List: ImageButton & {
-					UICorner: UICorner,
-				},
-				Grid: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UIListLayout: UIListLayout,
-			Frame: Frame & {
-				UIListLayout: UIListLayout,
-				Frame: Frame & {
-					UIListLayout: UIListLayout,
-					ImageLabel: ImageLabel,
-					Amount: TextLabel,
-				},
-				TextLabel: TextLabel & {
-					UITextSizeConstraint: UITextSizeConstraint,
-				},
-			},
-			UISizeConstraint: UISizeConstraint,
-		},
 		UIPadding: UIPadding,
 		UIListLayout: UIListLayout,
 		UICorner: UICorner,
@@ -282,25 +257,19 @@ export type Main = ScreenGui & {
 		},
 		UISizeConstraint: UISizeConstraint,
 		Title: Frame & {
-			Title: Frame & {
-				UIListLayout: UIListLayout,
-				TextLabel: TextLabel,
-			},
-			Avatar: Frame & {
-				UIListLayout: UIListLayout,
-				ImageButton: ImageButton & {
-					UICorner: UICorner,
-				},
-			},
-			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
 			Close: Frame & {
 				UIListLayout: UIListLayout,
 				ImageButton: ImageButton & {
 					UICorner: UICorner,
 				},
 			},
+			UIListLayout: UIListLayout,
 			UISizeConstraint: UISizeConstraint,
-			UIPadding: UIPadding,
+			Title: Frame & {
+				UIListLayout: UIListLayout,
+				MyShops: TextLabel,
+			},
 		},
 	},
 	Welcome: Frame & {
@@ -441,11 +410,27 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
+			Gold: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Violet: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			Purple: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
 			DarkRed: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Lilaiq: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Red: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -457,7 +442,23 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
+			DeepBlue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			Orange: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Turquois: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			PastelGreen: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Pink: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -465,12 +466,20 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
+			IslandBlue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			UICorner: UICorner,
+			Moss: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			LightGray: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Pink: ImageButton & {
+			Cloud: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -487,7 +496,7 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Cloud: ImageButton & {
+			LightBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -495,7 +504,7 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			LightBlue: ImageButton & {
+			PastelOrange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -546,11 +555,27 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
+			Gold: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Midnight: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			Purple: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
 			DarkRed: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Lilaiq: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			White: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -562,16 +587,19 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
+			Turquois: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
 			Orange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Blue: ImageButton & {
+			Red: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			UICorner: UICorner,
-			LightGray: ImageButton & {
+			Violet: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -579,7 +607,28 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			LightBlue: ImageButton & {
+			Blue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			IslandBlue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			UICorner: UICorner,
+			DeepBlue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			LightGray: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Cloud: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+			},
+			Moss: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -592,7 +641,7 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Cloud: ImageButton & {
+			PastelGreen: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
@@ -600,11 +649,11 @@ export type Main = ScreenGui & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			Midnight: ImageButton & {
+			PastelOrange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},
-			White: ImageButton & {
+			LightBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
 			},

@@ -235,11 +235,13 @@ local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.Spa
 	return shop
 end
 
-local function UnloadShop(place: ActiveShop)
+local function UnloadShop(place: ActiveShop, beingReplaced: boolean)
 	local index = table.find(activeShops, place)
 	if index then
 		table.remove(activeShops, index)
-		ShopEvents.LoadShop:FireAllClients(place.cframe)
+		if not beingReplaced then
+			ShopEvents.LoadShop:FireAllClients(place.cframe)
+		end
 	else
 		warn(debug.traceback("Tried to unload a place without it existing in the place table! Should never occur."))
 	end
@@ -436,7 +438,7 @@ end
 local function HandleDeleteShop(player: Player, guid: string)
 	local loadedShop = GetEditableShop(player)
 	if loadedShop and loadedShop.GUID == guid then
-		UnloadShop(loadedShop)
+		UnloadShop(loadedShop, false)
 	end
 
 	DataService:WriteData(player, function(data)
@@ -471,14 +473,25 @@ local function HandleClaimShop(player: Player, shopCFrame: CFrame, guid: string)
 		return
 	end
 
-	local existingShop = TableUtil.Find(activeShops, function(shop)
-		return (shop.cframe.Position - realCFrame.Position).Magnitude < 5 or shop.owner == player.UserId
+	local existingShopPosition = TableUtil.Find(activeShops, function(shop)
+		return (shop.cframe.Position - realCFrame.Position).Magnitude < 5
 	end)
-	if existingShop then
-		if existingShop.owner == player.UserId then
-			UnloadShop(existingShop)
-		else
+	if existingShopPosition then
+		if existingShopPosition.owner ~= player.UserId then
+			-- Tried to load at a position owned by someone else
 			return
+		end
+
+		-- The player owns the shop at this position, so we can unload and replace it.
+		UnloadShop(existingShopPosition, true)
+	elseif not existingShopPosition then
+		local playerOldShop = TableUtil.Find(activeShops, function(shop)
+			return shop.owner == player.UserId
+		end)
+
+		if playerOldShop then
+			-- Unload the player's old shop
+			UnloadShop(playerOldShop, false)
 		end
 	end
 
@@ -503,7 +516,7 @@ local function PlayerRemoving(player: Player)
 		return shop.mode == "Player" and shop.owner == player.UserId
 	end)
 	if claimedShop then
-		UnloadShop(claimedShop)
+		UnloadShop(claimedShop, false)
 	end
 end
 
