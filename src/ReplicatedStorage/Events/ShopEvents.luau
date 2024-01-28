@@ -60,6 +60,10 @@ return {
 		return Layouts:GuardLayoutId(layoutId)
 	end),
 
+	UpdateStorefront = Red.SharedEvent("Shop_UpdateStorefront", function(storefrontId)
+		return Layouts:GuardStorefrontId(storefrontId)
+	end),
+
 	GetAccessoryModel = Red.Function("Shop_GetAccessory", function(id)
 		return Guard.Number(id)
 	end, function(model)

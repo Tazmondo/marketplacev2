@@ -435,6 +435,18 @@ local function HandleUpdateShopLayout(player: Player, layoutId: LayoutData.Layou
 	SaveShop(shop)
 end
 
+local function HandleUpdateShopStorefront(player: Player, layoutId: LayoutData.StorefrontId)
+	local shop = GetEditableShop(player)
+	if not shop then
+		return
+	end
+	local newStorefront = Layouts:GetStorefront(layoutId)
+	shop.storefront = newStorefront
+
+	ShopEvents.LoadShop:FireAllClients(shop.cframe, ToNetworkShop(shop))
+	SaveShop(shop)
+end
+
 local function HandleDeleteShop(player: Player, guid: string)
 	local loadedShop = GetEditableShop(player)
 	if loadedShop and loadedShop.GUID == guid then
@@ -531,6 +543,9 @@ local function Initialize()
 	ShopEvents.UpdateSettings:SetServerListener(HandleUpdateShopSettings)
 	ShopEvents.UpdateLayout:SetServerListener(function(player, id)
 		HandleUpdateShopLayout(player, id :: LayoutData.LayoutId)
+	end)
+	ShopEvents.UpdateStorefront:SetServerListener(function(player, id)
+		HandleUpdateShopStorefront(player, id :: LayoutData.StorefrontId)
 	end)
 
 	Players.PlayerAdded:Connect(PlayerAdded)

@@ -79,6 +79,11 @@ local function ToggleLayoutFrame()
 	SelectButton(gui.Wrapper.CurrentLayout, visible)
 end
 
+local function ToggleStorefrontFrame()
+	local visible = SelectFrame(gui.StorefrontPicker)
+	SelectButton(gui.Wrapper.Storefront, visible)
+end
+
 local function ShowSettings()
 	if ShopSettingsUI:IsOpen() then
 		ShopSettingsUI:Close()
@@ -131,6 +136,16 @@ local function UpdateLayoutSelection(layoutId: string)
 		if layout:IsA("ImageButton") then
 			local outline = assert(layout:FindFirstChild("SelectedOutline"), "Layout did not have outline") :: UIStroke
 			outline.Enabled = layout.Name == layoutId
+		end
+	end
+end
+
+local function UpdateStorefrontSelection(storefrontId: string)
+	for i, storefront in gui.StorefrontPicker.ScrollingFrame:GetChildren() do
+		if storefront:IsA("ImageButton") then
+			local outline =
+				assert(storefront:FindFirstChild("SelectedOutline"), "Layout did not have outline") :: UIStroke
+			outline.Enabled = storefront.Name == storefrontId
 		end
 	end
 end
@@ -207,6 +222,11 @@ local function SwitchLayout(id: LayoutData.LayoutId)
 	ShopEvents.UpdateLayout:FireServer(id)
 end
 
+local function SwitchStorefront(id: LayoutData.StorefrontId)
+	UpdateStorefrontSelection(id)
+	ShopEvents.UpdateStorefront:FireServer(id)
+end
+
 local function OpenShops()
 	ProfileUI:SelectShop():After(function(shop)
 		if not shop then
@@ -241,6 +261,26 @@ local function PopulateLayoutFrame()
 	end
 end
 
+local function PopulateStorefrontFrame()
+	local frame = gui.StorefrontPicker.ScrollingFrame
+	local template = frame.Layout
+	template.Visible = false
+	local storefronts = Layouts:GetStorefronts()
+
+	for id, storefront in storefronts do
+		local newStorefront = template:Clone()
+		newStorefront.Visible = true
+		newStorefront.Image = `rbxassetid://{storefront.displayThumbId}`
+		newStorefront.Name = id
+
+		newStorefront.Activated:Connect(function()
+			SwitchStorefront(storefront.id)
+		end)
+
+		newStorefront.Parent = frame
+	end
+end
+
 function ShopEditUI:Initialize()
 	gui.Visible = false
 	SelectFrame()
@@ -249,12 +289,13 @@ function ShopEditUI:Initialize()
 	gui.Wrapper.CurrentPrimaryColor.Activated:Connect(TogglePrimaryColor)
 	gui.Wrapper.CurrentAccentColor.Activated:Connect(ToggleAccentColor)
 	gui.Wrapper.CurrentTexture.Activated:Connect(ToggleTexture)
-
 	gui.Wrapper.CurrentLayout.Activated:Connect(ToggleLayoutFrame)
+	gui.Wrapper.Storefront.Activated:Connect(ToggleStorefrontFrame)
 	gui.Wrapper.ShopSettings.Activated:Connect(ShowSettings)
 	gui.Wrapper.Profile.Activated:Connect(OpenShops)
 
 	PopulateLayoutFrame()
+	PopulateStorefrontFrame()
 
 	-- Not the prettiest but gets the job done
 	for i, child in gui.PrimaryColorPicker:GetChildren() do
