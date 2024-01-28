@@ -321,8 +321,6 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 		shop.renderedOutfitStands[roundedPosition] = renderedStand
 
 		if stand and stand.description then
-			prompt.Parent = modelPart
-
 			CharacterCache:LoadWithDescription(stand.description):After(function(outfit)
 				if not outfit then
 					return
@@ -364,6 +362,8 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 			if stand and stand.description then
 				prompt.ActionText = "Remove Outfit"
 				prompt.ObjectText = "Stand"
+				prompt.Parent = modelPart
+
 				prompt.Triggered:Connect(function()
 					ShopEvents.UpdateOutfitStand:FireServer(roundedPosition, nil)
 				end)
@@ -371,6 +371,8 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 				SetDisplayVisibility(model, true)
 				prompt.ActionText = "Add Outfit"
 				prompt.ObjectText = "Stand"
+				prompt.Parent = modelPart
+
 				prompt.Triggered:Connect(function()
 					local outfit = CatalogUI:SelectOutfit():Await()
 					if outfit then
@@ -383,6 +385,8 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 			if stand and stand.description then
 				prompt.ActionText = ""
 				prompt.ObjectText = ""
+				prompt.Parent = modelPart
+
 				prompt.Triggered:Connect(function()
 					CatalogUI:DisplayOutfit(HumanoidDescription.Deserialize(stand.description))
 				end)
