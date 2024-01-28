@@ -32,6 +32,12 @@ ConfirmUI.Confirmations = {
 		Proceed = "Delete",
 		Cancel = "Cancel",
 	},
+	SwitchLayout = {
+		Title = "Switch Layout",
+		Content = "Switching layouts will CLEAR your stands in this shop!!! You cannot undo this. Are you sure you'd like to switch?",
+		Proceed = "Switch",
+		Cancel = "Keep my stands",
+	},
 }
 
 ConfirmUI.InputRequests = {

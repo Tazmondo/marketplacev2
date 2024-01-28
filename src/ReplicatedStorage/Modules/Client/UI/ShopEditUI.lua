@@ -5,6 +5,7 @@ local ShopEditUI = {}
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local ConfirmUI = require(script.Parent.ConfirmUI)
 local ProfileUI = require(script.Parent.ProfileUI)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local ShopSettingsUI = require(script.Parent.ShopSettingsUI)
@@ -14,6 +15,7 @@ local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Base64 = require(ReplicatedStorage.Packages.Base64)
+local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local UILoader = require(script.Parent.UILoader)
 
@@ -218,8 +220,15 @@ function ShopEditUI:Display(shop: Types.Shop)
 end
 
 local function SwitchLayout(id: LayoutData.LayoutId)
-	UpdateLayoutSelection(id)
-	ShopEvents.UpdateLayout:FireServer(id)
+	return Future.new(function()
+		local confirmed = ConfirmUI:Confirm(ConfirmUI.Confirmations.SwitchLayout):Await()
+		if not confirmed then
+			return
+		end
+
+		UpdateLayoutSelection(id)
+		ShopEvents.UpdateLayout:FireServer(id)
+	end)
 end
 
 local function SwitchStorefront(id: LayoutData.StorefrontId)
