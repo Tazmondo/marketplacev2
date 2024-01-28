@@ -19,7 +19,7 @@ local gui = UILoader:GetMain().ControllerEdit
 local activeShop: Types.Shop? = nil
 local selectedTexture: string? = nil
 
-function SelectButton(button: Instance?, visible: boolean)
+local function SelectButton(button: Instance?, visible: boolean)
 	local wrapper = gui.Wrapper
 	for i, v in wrapper:GetChildren() do
 		local outline = v:FindFirstChild("SelectedOutline") :: UIStroke?
@@ -33,7 +33,7 @@ function SelectButton(button: Instance?, visible: boolean)
 	end
 end
 
-function SelectFrame(frame: Instance?)
+local function SelectFrame(frame: Instance?)
 	local ret = false
 
 	for i, v in gui:GetChildren() do
@@ -54,45 +54,27 @@ function SelectFrame(frame: Instance?)
 	return ret
 end
 
-function TogglePrimaryColor()
+local function TogglePrimaryColor()
 	local visible = SelectFrame(gui.PrimaryColorPicker)
 	SelectButton(gui.Wrapper.CurrentPrimaryColor, visible)
 end
 
-function ToggleAccentColor()
+local function ToggleAccentColor()
 	local visible = SelectFrame(gui.AccentColorPicker)
 	SelectButton(gui.Wrapper.CurrentAccentColor, visible)
 end
 
-function ToggleTexture()
+local function ToggleTexture()
 	local visible = SelectFrame(gui.TexturePicker)
 	SelectButton(gui.Wrapper.CurrentTexture, visible)
 end
 
-function ToggleLayoutFrame()
+local function ToggleLayoutFrame()
 	local visible = SelectFrame(gui.LayoutPicker)
 	SelectButton(gui.Wrapper.CurrentLayout, visible)
 end
 
-function PickPrimaryColor(color: Color3)
-	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = color
-	UpdatePrimaryColourPickerSelection(color)
-	Update()
-end
-
-function PickAccentColor(color: Color3)
-	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = color
-	UpdateAccentColourPickerSelection(color)
-	Update()
-end
-
-function PickTexture(texture: string)
-	UpdateTextureSelection(texture)
-	selectedTexture = texture
-	Update()
-end
-
-function ShowSettings()
+local function ShowSettings()
 	if ShopSettingsUI:IsOpen() then
 		ShopSettingsUI:Close()
 		SelectButton(gui.Wrapper.ShopSettings, false)
@@ -107,7 +89,7 @@ function ShowSettings()
 	end
 end
 
-function UpdatePrimaryColourPickerSelection(color: Color3)
+local function UpdatePrimaryColourPickerSelection(color: Color3)
 	for i, child in gui.PrimaryColorPicker:GetChildren() do
 		if child:IsA("ImageButton") then
 			local outline = assert(child:FindFirstChild("SelectedOutline"), "Button did not have outline") :: UIStroke
@@ -116,7 +98,7 @@ function UpdatePrimaryColourPickerSelection(color: Color3)
 	end
 end
 
-function UpdateAccentColourPickerSelection(color: Color3)
+local function UpdateAccentColourPickerSelection(color: Color3)
 	for i, child in gui.AccentColorPicker:GetChildren() do
 		if child:IsA("ImageButton") then
 			local outline = assert(child:FindFirstChild("SelectedOutline"), "Button did not have outline") :: UIStroke
@@ -125,7 +107,7 @@ function UpdateAccentColourPickerSelection(color: Color3)
 	end
 end
 
-function UpdateTextureSelection(texture: string)
+local function UpdateTextureSelection(texture: string)
 	for i, child in gui.TexturePicker:GetChildren() do
 		if child:IsA("ImageButton") then
 			local outline = assert(child:FindFirstChild("SelectedOutline"), "Button did not have outline") :: UIStroke
@@ -139,7 +121,7 @@ function UpdateTextureSelection(texture: string)
 	end
 end
 
-function UpdateLayoutSelection(layoutId: string)
+local function UpdateLayoutSelection(layoutId: string)
 	for i, layout in gui.LayoutPicker.ScrollingFrame:GetChildren() do
 		if layout:IsA("ImageButton") then
 			local outline = assert(layout:FindFirstChild("SelectedOutline"), "Layout did not have outline") :: UIStroke
@@ -148,7 +130,7 @@ function UpdateLayoutSelection(layoutId: string)
 	end
 end
 
-function Update()
+local function Update()
 	if not activeShop or not selectedTexture then
 		return
 	end
@@ -163,6 +145,24 @@ function Update()
 	})
 end
 
+local function PickPrimaryColor(color: Color3)
+	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = color
+	UpdatePrimaryColourPickerSelection(color)
+	Update()
+end
+
+local function PickAccentColor(color: Color3)
+	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = color
+	UpdateAccentColourPickerSelection(color)
+	Update()
+end
+
+local function PickTexture(texture: string)
+	UpdateTextureSelection(texture)
+	selectedTexture = texture
+	Update()
+end
+
 function ShopEditUI:Hide()
 	gui.Visible = false
 	activeShop = nil
@@ -170,7 +170,7 @@ function ShopEditUI:Hide()
 	ShopSettingsUI:Close()
 end
 
-function GenerateDeeplink(ownerId: number, GUID: string)
+local function GenerateDeeplink(ownerId: number, GUID: string)
 	local data: Types.LaunchData = {
 		ownerId = ownerId,
 		GUID = GUID,
@@ -197,13 +197,13 @@ function ShopEditUI:Display(shop: Types.Shop)
 	UpdateLayoutSelection(shop.layoutId)
 end
 
-function SwitchLayout(id: LayoutData.LayoutId)
+local function SwitchLayout(id: LayoutData.LayoutId)
 	UpdateLayoutSelection(id)
 	ShopEvents.UpdateLayout:FireServer(id)
 end
 
 -- Should only be called once
-function PopulateLayoutFrame()
+local function PopulateLayoutFrame()
 	local frame = gui.LayoutPicker.ScrollingFrame
 	local template = frame.Layout
 	template.Visible = false
