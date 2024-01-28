@@ -92,6 +92,30 @@ local function ProcessGlobalUpdate(profile: Profile, update: GlobalUpdateData): 
 	return false
 end
 
+local function UpdateLeaderstats(player: Player, data: Data.Data)
+	local stats = player:FindFirstChild("leaderstats") :: Folder?
+	if not stats then
+		local newStats = Instance.new("Folder")
+		newStats.Name = "leaderstats"
+		newStats.Parent = player
+
+		stats = newStats
+	end
+	assert(stats)
+
+	local purchases = stats:FindFirstChild("Purchases") :: IntValue?
+	if not purchases then
+		local newPurchases = Instance.new("IntValue")
+		newPurchases.Name = "Purchases"
+		newPurchases.Parent = stats
+
+		purchases = newPurchases
+	end
+	assert(purchases)
+
+	purchases.Value = data.purchases
+end
+
 local function PlayerAdded(player: Player)
 	local profile = ProfileStore:LoadProfileAsync(GetKey(player.UserId))
 	if profile ~= nil then
@@ -130,6 +154,7 @@ local function PlayerAdded(player: Player)
 		end)
 
 		if player.Parent == Players then
+			UpdateLeaderstats(player, profile.Data)
 			profiles[player] = profile
 		else
 			profile:Release()
@@ -248,6 +273,7 @@ function DataService:WriteData(player: Player, mutate: (Data.Data) -> ())
 			warn(debug.traceback("Data transform function yielded!"))
 		end
 
+		UpdateLeaderstats(player, data)
 		DataEvents.ReplicateData:FireClient(player, data)
 	end)
 end

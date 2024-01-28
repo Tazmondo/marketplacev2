@@ -76,13 +76,15 @@ export type Data = {
 	outfits: { Outfit },
 	version: number,
 	firstTime: boolean,
+	purchases: number,
 }
 
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 12,
+	version = 13,
 	firstTime = true,
+	purchases = 0,
 }
 Data.dataTemplate = dataTemplate
 

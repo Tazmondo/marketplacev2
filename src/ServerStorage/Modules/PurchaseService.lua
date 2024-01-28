@@ -4,7 +4,9 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
+local DataService = require(ServerStorage.Modules.Data.DataService)
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
@@ -30,6 +32,10 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 	if not itemDetails or not itemDetails.price then
 		return
 	end
+
+	DataService:WriteData(player, function(data)
+		data.purchases += 1
+	end)
 
 	local cut = math.floor(itemDetails.price * 0.4 * Config.OwnerCut)
 
