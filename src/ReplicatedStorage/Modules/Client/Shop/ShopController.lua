@@ -120,13 +120,13 @@ local function ClaimShop(cframe: CFrame, guid: string)
 end
 
 local function RenderPlaceholderShop(cframe: CFrame)
-	local shopType: typeof(MallCFrames.GetCFrameType(CFrame.new())) = MallCFrames.GetCFrameType(cframe)
-	if shopType == nil then
+	local shop = MallCFrames.GetShop(cframe)
+	if not shop then
 		return
 	end
 
 	local placeholder
-	if shopType == "Dynamic" then
+	if shop.type == "Dynamic" then
 		placeholder = dynamicPlaceholder:Clone()
 	else
 		placeholder = shopPlaceholder:Clone()
@@ -140,7 +140,7 @@ local function RenderPlaceholderShop(cframe: CFrame)
 	local pivotFromFront = frontAttachment.CFrame:ToObjectSpace(placeholder:GetPivot())
 	placeholder:PivotTo(cframe:ToWorldSpace(pivotFromFront))
 
-	if shopType == "Shop" then
+	if shop.type ~= "Dynamic" then
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.ActionText = "Claim"
 		prompt.ObjectText = "Shop"
@@ -608,8 +608,8 @@ local function LoadDynamicShop(shopDetails: Types.Shop)
 		DestroyShop(dynamicShop)
 	end
 
-	local shopCFrame = MallCFrames.dynamicShop
-	local shop = NewShop(shopCFrame, shopDetails, "View")
+	local mallShop = MallCFrames.dynamicShop
+	local shop = NewShop(mallShop.cframe, shopDetails, "View")
 	dynamicShop = shop
 	table.insert(renderedShops, shop)
 end
@@ -764,9 +764,9 @@ function ShopController:Initialize()
 	end)
 
 	for _, shopCFrame in MallCFrames.shops do
-		RenderPlaceholderShop(shopCFrame)
+		RenderPlaceholderShop(shopCFrame.cframe)
 	end
-	RenderPlaceholderShop(MallCFrames.dynamicShop)
+	RenderPlaceholderShop(MallCFrames.dynamicShop.cframe)
 
 	Players.LocalPlayer.CharacterAdded:Once(function(char)
 		-- since the walk speed setter doesn't work on the first pass

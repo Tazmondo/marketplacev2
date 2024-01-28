@@ -9,6 +9,7 @@ local TextService = game:GetService("TextService")
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local DataService = require(script.Parent.Data.DataService)
 local LoadedService = require(script.Parent.LoadedService)
+local SponsoredShops = require(script.Parent.SponsoredShops)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
@@ -47,6 +48,12 @@ local activeShops: { ActiveShop } = {}
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Expected ReplicatedStorage.AccessoryReplication folder.")
+
+local function GetActiveShopAtCFrame(cframe: CFrame): ActiveShop?
+	return TableUtil.Find(activeShops, function(shop)
+		return (shop.cframe.Position - cframe.Position).Magnitude < 5
+	end)
+end
 
 local function ToNetworkShop(shop: ActiveShop): ShopEvents.LoadShopSettings
 	local networkShop = {
@@ -235,6 +242,7 @@ local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.Spa
 	return shop
 end
 
+-- If being replaced is true, then it wont unload on the client
 local function UnloadShop(place: ActiveShop, beingReplaced: boolean)
 	local index = table.find(activeShops, place)
 	if index then
@@ -471,8 +479,8 @@ local function HandleClaimShop(player: Player, shopCFrame: CFrame, guid: string)
 		return
 	end
 
-	local realCFrame = MallCFrames.GetShopCFrame(shopCFrame)
-	if not realCFrame then
+	local mallShop = MallCFrames.GetShop(shopCFrame)
+	if not mallShop then
 		warn("Tried to claim an invalid CFrame!")
 		return
 	end
@@ -485,9 +493,7 @@ local function HandleClaimShop(player: Player, shopCFrame: CFrame, guid: string)
 		return
 	end
 
-	local existingShopPosition = TableUtil.Find(activeShops, function(shop)
-		return (shop.cframe.Position - realCFrame.Position).Magnitude < 5
-	end)
+	local existingShopPosition = GetActiveShopAtCFrame(mallShop.cframe)
 	if existingShopPosition then
 		if existingShopPosition.owner ~= player.UserId then
 			-- Tried to load at a position owned by someone else
@@ -507,7 +513,7 @@ local function HandleClaimShop(player: Player, shopCFrame: CFrame, guid: string)
 		end
 	end
 
-	LoadShop(realCFrame, Data.FromDataShop(shop, player.UserId), "Player")
+	LoadShop(mallShop.cframe, Data.FromDataShop(shop, player.UserId), "Player")
 end
 
 local function PlayerAdded(player: Player)
@@ -552,22 +558,31 @@ local function Initialize()
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 
 	task.spawn(function()
-		local random = Random.new()
+		local sponsoredShops = TableUtil.Filter(MallCFrames.shops, function(shop)
+			return shop.type == "Sponsored"
+		end)
 
-		local function RandomShop(cframe: CFrame)
-			local shopDetails = DataService:ShopFromShareCode(random:NextInteger(10, 60)):Await()
-			if not shopDetails then
+		local codes = TableUtil.Shuffle(SponsoredShops)
+		local randomShops = TableUtil.Shuffle(sponsoredShops)
+
+		for _, code in codes do
+			local details = DataService:ShopFromShareCode(code):Await()
+			if not details then
+				continue
+			end
+
+			local shop = table.remove(randomShops) -- pop
+			if not shop then
 				return
 			end
-			LoadShop(cframe, shopDetails, "Server")
-		end
 
-		-- RandomShop(MallCFrames.shops[1])
-		-- RandomShop(MallCFrames.shops[2])
-		-- RandomShop(MallCFrames.shops[3])
-		-- for _, cframe in MallCFrames.shops do
-		-- 	RandomShop(cframe)
-		-- end
+			local existingShop = GetActiveShopAtCFrame(shop.cframe)
+			if existingShop then
+				UnloadShop(existingShop, true)
+			end
+
+			LoadShop(shop.cframe, details, "Server")
+		end
 	end)
 end
 

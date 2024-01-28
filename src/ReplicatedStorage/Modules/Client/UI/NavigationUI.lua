@@ -57,7 +57,7 @@ local function PostSimulation()
 		return
 	end
 
-	local isClose = (char:GetPivot().Position - MallCFrames.dynamicShop.Position).Magnitude < 30
+	local isClose = (char:GetPivot().Position - MallCFrames.dynamicShop.cframe.Position).Magnitude < 30
 	if isClose ~= closeToDynamic then
 		closeToDynamic = isClose
 		RenderShopsButton()
@@ -72,7 +72,13 @@ function NavigationUI:Initialize()
 	RunService.PostSimulation:Connect(PostSimulation)
 
 	ShopController.ShopEntered:Connect(function(shop)
-		insideDynamic = shop ~= nil and MallCFrames.GetCFrameType(shop.cframe) == "Dynamic"
+		if shop == nil then
+			insideDynamic = false
+		else
+			local mallShop = MallCFrames.GetShop(shop.cframe)
+			insideDynamic = mallShop ~= nil and mallShop.type == "Dynamic"
+		end
+
 		RenderShopsButton()
 	end)
 end

@@ -1,0 +1,60 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Base36 = require(ReplicatedStorage.Modules.Shared.Base36)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
+
+local sponsoredCodes = {
+	"9",
+	"C",
+	"O",
+	"U",
+	"10",
+	"14",
+	"18",
+	"1C",
+	"1I",
+	"1J",
+	"1L",
+	"1M",
+	"1O",
+	"1Q",
+	"1R",
+	"1V",
+	"1W",
+	"20",
+	"21",
+	"22",
+	"23",
+	"26",
+	"28",
+	"2B",
+	"2C",
+	"2F",
+	"2I",
+	"2J",
+	"2K",
+	"2M",
+	"2P",
+	"2S",
+	"2V",
+	"2W",
+	"2Y",
+	"2Z",
+	"30",
+	"33",
+	"34",
+	"35",
+	"37",
+	"3B",
+	"3D",
+	"3F",
+	"3G",
+	"3H",
+	"3J",
+	"3K",
+	"3L",
+}
+
+local numericCodes = TableUtil.Map(sponsoredCodes, Base36.Decode)
+
+return numericCodes
