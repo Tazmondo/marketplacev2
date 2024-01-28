@@ -1,4 +1,4 @@
 local cam = workspace.CurrentCamera
 assert(cam, "No camera!")
 
-cam.FieldOfView = 80
+-- cam.FieldOfView = 80
