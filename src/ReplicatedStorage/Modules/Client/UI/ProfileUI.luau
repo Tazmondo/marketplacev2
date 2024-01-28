@@ -8,6 +8,7 @@ local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain()
@@ -18,6 +19,7 @@ local shopTemplate = shopList.Row
 local create = gui.CreateShop
 
 local ShopSelected: Signal.Signal<Data.Shop> = Signal()
+local ShopCreated = Signal()
 
 local function SelectShop(shop: Data.Shop)
 	ShopSelected:Fire(shop)
@@ -65,8 +67,16 @@ function HideCreateShop()
 end
 
 function CreateShop()
-	ShopEvents.CreateShop:FireServer()
-	HideCreateShop()
+	ShopEvents.CreateShop:Call():After(function(success, guid)
+		if not success then
+			return
+		end
+
+		if guid then
+			ShopCreated:Fire(guid)
+		end
+	end)
+	ProfileUI:Hide()
 end
 
 function ProfileUI:SelectShop()
@@ -77,6 +87,21 @@ function ProfileUI:SelectShop()
 			return ShopSelected:Wait()
 		end)
 
+		local createdFuture = Future.new(function(): Data.Shop?
+			local guid = ShopCreated:Wait()
+			local targetShop
+			while not targetShop do
+				targetShop = TableUtil.Find(DataController:GetData():Unwrap().shops, function(shop)
+					return shop.GUID == guid
+				end)
+				if not targetShop then
+					DataController.Updated:Wait()
+				end
+			end
+
+			return targetShop
+		end)
+
 		local closedFuture = Future.new(function(): Data.Shop?
 			while profile.Visible or create.Visible do
 				profile:GetPropertyChangedSignal("Visible"):Wait()
@@ -84,7 +109,7 @@ function ProfileUI:SelectShop()
 			return
 		end)
 
-		local selectedShop = Future.Any({ selectedFuture, closedFuture }):Await()
+		local selectedShop = Future.Any({ selectedFuture, createdFuture, closedFuture }):Await()
 		return selectedShop
 	end)
 end

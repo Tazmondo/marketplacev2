@@ -245,7 +245,7 @@ local function UnloadShop(place: ActiveShop)
 	end
 end
 
-local function HandleCreatePlace(player: Player)
+local function HandleCreatePlace(player: Player): string?
 	local data = DataService:ReadData(player):Await()
 	if not data then
 		return
@@ -273,6 +273,8 @@ local function HandleCreatePlace(player: Player)
 	DataService:WriteData(player, function(data)
 		table.insert(data.shops, Data.ToDataShop(newShop))
 	end)
+
+	return newShop.GUID
 end
 
 local function GetEditableShop(player: Player): ActiveShop?
@@ -506,7 +508,7 @@ local function PlayerRemoving(player: Player)
 end
 
 local function Initialize()
-	ShopEvents.CreateShop:SetServerListener(HandleCreatePlace)
+	ShopEvents.CreateShop:SetCallback(HandleCreatePlace)
 	ShopEvents.DeleteShop:SetServerListener(HandleDeleteShop)
 
 	ShopEvents.ClaimShop:SetServerListener(HandleClaimShop)

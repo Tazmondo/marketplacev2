@@ -30,8 +30,10 @@ local function GuardUpdateSettings(settings: unknown)
 end
 
 return {
-	CreateShop = Red.SharedEvent("Shop_CreateShop", function()
+	CreateShop = Red.Function("Shop_CreateShop", function()
 		return
+	end, function(guid)
+		return Guard.Optional(Guard.String)(guid)
 	end),
 
 	DeleteShop = Red.SharedEvent("Shop_DeleteShop", function(guid)
