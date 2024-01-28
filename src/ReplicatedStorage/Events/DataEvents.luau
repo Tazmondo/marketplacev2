@@ -29,4 +29,10 @@ return {
 	end, function(shop)
 		return shop :: Types.Shop?
 	end),
+
+	GenerateShareCode = Red.Function("GenerateShareCode", function(guid)
+		return Guard.String(guid)
+	end, function(code)
+		return Guard.Optional(Guard.Number)(code)
+	end),
 }

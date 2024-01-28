@@ -253,7 +253,7 @@ function DataService:WriteData(player: Player, mutate: (Data.Data) -> ())
 end
 
 local shareCodeRateLimit = Util.RateLimit(1, 6)
-function DataService:GenerateNextShareCode(player: Player, targetId: number, guid: string)
+local function GenerateNextShareCode(player: Player, targetId: number, guid: string)
 	return Future.new(function(player: Player): number?
 		local data = DataService:ReadOfflineData(targetId):Await()
 		if not data then
@@ -410,6 +410,22 @@ local function HandleGetShopDetails(player: Player, shareCode: number): Types.Ne
 	}
 end
 
+local function HandleGenerateShareCode(player: Player, guid: string): number?
+	local data = DataService:ReadData(player):Await()
+	if not data then
+		return
+	end
+
+	local shop = TableUtil.Find(data.shops, function(shop)
+		return shop.GUID == guid
+	end)
+	if not shop or shop.shareCode ~= nil then
+		return
+	end
+	local code = GenerateNextShareCode(player, player.UserId, guid):Await()
+	return code
+end
+
 local function HandleGetShop(player: Player, shareCode: number): Types.Shop?
 	local shop, owner = ShopFromShareCode(shareCode):Await()
 	if not shop or not owner then
@@ -453,6 +469,7 @@ function DataService:Initialize()
 	DataEvents.DeleteOutfit:SetServerListener(HandleDeleteOutfit)
 	DataEvents.GetShopDetails:SetCallback(HandleGetShopDetails)
 	DataEvents.GetShop:SetCallback(HandleGetShop)
+	DataEvents.GenerateShareCode:SetCallback(HandleGenerateShareCode)
 end
 
 DataService:Initialize()

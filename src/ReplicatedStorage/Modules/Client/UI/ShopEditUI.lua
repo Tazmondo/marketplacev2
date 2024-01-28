@@ -2,19 +2,19 @@
 
 local ShopEditUI = {}
 
-local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local ConfirmUI = require(script.Parent.ConfirmUI)
 local ProfileUI = require(script.Parent.ProfileUI)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
+local Base36 = require(ReplicatedStorage.Modules.Shared.Base36)
 local ShopSettingsUI = require(script.Parent.ShopSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
-local Base64 = require(ReplicatedStorage.Packages.Base64)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local UILoader = require(script.Parent.UILoader)
@@ -84,6 +84,11 @@ end
 local function ToggleStorefrontFrame()
 	local visible = SelectFrame(gui.StorefrontPicker)
 	SelectButton(gui.Wrapper.Storefront, visible)
+end
+
+local function ToggleShareFrame()
+	local visible = SelectFrame(gui.ShareLink)
+	SelectButton(gui.Wrapper.Share, visible)
 end
 
 local function ShowSettings()
@@ -192,15 +197,38 @@ function ShopEditUI:Hide()
 	ShopSettingsUI:Close()
 end
 
-local function GenerateDeeplink(ownerId: number, GUID: string)
-	local data: Types.LaunchData = {
-		ownerId = ownerId,
-		GUID = GUID,
-	}
-	local json = HttpService:JSONEncode(data)
-	local b64 = Base64.encode(json)
+local function RenderShareFrame(shareCode: number?)
+	local frame = gui.ShareLink
+	if shareCode then
+		frame.TextBox.Visible = true
+		frame.TextBox.Text = Base36.Encode(shareCode)
+		frame.Generate.Visible = false
+	else
+		frame.Generate.Visible = true
+		frame.TextBox.Visible = false
+	end
+end
 
-	return `https://www.roblox.com/games/start?placeId={game.PlaceId}&launchData={b64}`
+local function GenerateShareCode(guid: string)
+	return Future.new(function()
+		local frame = gui.ShareLink
+
+		frame.Generate.TextLabel.Text = "Generating..."
+		frame.Generate.Active = false
+		frame.Generate.AutoButtonColor = false
+
+		local success, code = DataEvents.GenerateShareCode:Call(guid):Await()
+
+		frame.Generate.TextLabel.Text = "Generate"
+		frame.Generate.Active = true
+		frame.Generate.AutoButtonColor = true
+
+		if not success then
+			return
+		end
+
+		RenderShareFrame(code)
+	end)
 end
 
 function ShopEditUI:Display(shop: Types.Shop)
@@ -211,12 +239,11 @@ function ShopEditUI:Display(shop: Types.Shop)
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = shop.primaryColor
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = shop.accentColor
 
-	gui.ShareLink.TextBox.Text = GenerateDeeplink(shop.owner, shop.GUID)
-
 	UpdatePrimaryColourPickerSelection(shop.primaryColor)
 	UpdateAccentColourPickerSelection(shop.accentColor)
 	UpdateTextureSelection(shop.texture)
 	UpdateLayoutSelection(shop.layoutId)
+	RenderShareFrame(shop.shareCode)
 end
 
 local function SwitchLayout(id: LayoutData.LayoutId)
@@ -301,7 +328,14 @@ function ShopEditUI:Initialize()
 	gui.Wrapper.CurrentLayout.Activated:Connect(ToggleLayoutFrame)
 	gui.Wrapper.Storefront.Activated:Connect(ToggleStorefrontFrame)
 	gui.Wrapper.ShopSettings.Activated:Connect(ShowSettings)
+	gui.Wrapper.Share.Activated:Connect(ToggleShareFrame)
 	gui.Wrapper.Profile.Activated:Connect(OpenShops)
+
+	gui.ShareLink.Generate.Activated:Connect(function()
+		if activeShop then
+			GenerateShareCode(activeShop.GUID)
+		end
+	end)
 
 	PopulateLayoutFrame()
 	PopulateStorefrontFrame()

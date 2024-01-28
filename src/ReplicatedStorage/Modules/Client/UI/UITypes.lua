@@ -358,6 +358,11 @@ export type Main = ScreenGui & {
 		},
 		UICorner: UICorner,
 		Wrapper: Frame & {
+			Share: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				UIPadding: UIPadding,
+			},
 			CurrentAccentColor: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
@@ -514,19 +519,23 @@ export type Main = ScreenGui & {
 			},
 		},
 		ShareLink: Frame & {
-			UIPadding: UIPadding,
-			Thumb: ImageLabel,
-			UICorner: UICorner,
 			Details: Frame & {
 				UIListLayout: UIListLayout,
 				Title: TextLabel,
 				Body: TextLabel,
 			},
+			UIPadding: UIPadding,
+			Thumb: ImageLabel,
+			UICorner: UICorner,
+			Generate: TextButton & {
+				UIListLayout: UIListLayout,
+				TextLabel: TextLabel,
+				UICorner: UICorner,
+			},
 			UIListLayout: UIListLayout,
 			TextBox: TextBox & {
-				UICorner: UICorner,
-				UIStroke: UIStroke,
 				UIPadding: UIPadding,
+				UICorner: UICorner,
 			},
 		},
 		LayoutPicker: Frame & {
