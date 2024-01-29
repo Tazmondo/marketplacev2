@@ -40,6 +40,10 @@ function Util.RoundedVector(vector: Vector3)
 	return Vector3.new(math.round(vector.X), math.round(vector.Y), math.round(vector.Z))
 end
 
+function Util.AbsoluteVector(vector: Vector3)
+	return Vector3.new(math.abs(vector.X), math.abs(vector.Y), math.abs(vector.Z))
+end
+
 function Util.PrettyPrint(table: { [any]: any })
 	local out = "{\n"
 	for k, v in table do
