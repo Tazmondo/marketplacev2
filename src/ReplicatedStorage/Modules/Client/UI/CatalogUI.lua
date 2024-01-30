@@ -884,6 +884,10 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 				end
 			end)
 
+			itemElement.Buy.Activated:Connect(function()
+				PurchaseEvents.Asset:FireServer(id, shopOwner)
+			end)
+
 			itemElement.Parent = outfitUI.Wearing.ListWrapper.List
 
 			DataFetch.GetItemDetails(id, Players.LocalPlayer):After(function(details)
