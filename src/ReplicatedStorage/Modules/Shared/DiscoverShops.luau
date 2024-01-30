@@ -5,6 +5,7 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local categoryCodes: { [string]: { string } } = {
 	["Unique Shops"] = {
 		"9",
+		"6O",
 		"C",
 		"O",
 		"U",
@@ -92,10 +93,12 @@ local categoryCodes: { [string]: { string } } = {
 		"3J",
 		"30",
 		"3Y",
+		"6O",
 	},
 
 	["Girls Shops"] = {
 		"A",
+		"60",
 		"D",
 		"E",
 		"2",

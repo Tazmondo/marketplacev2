@@ -1,16 +1,18 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
-export type LayoutId = "Shop 1" | "Shop 2" | "Shop 3" | "Shop 4" | "Shop 5" | "Shop 6" | "Shop 7"
+export type LayoutId = "Shop 1" | "Shop 2" | "Shop 3" | "Shop 4" | "Shop 5" | "Shop 6" | "Shop 7" | "Shop 8" | "Shop 9"
 
 local layoutData: { [LayoutId]: number } = {
-	["Shop 1"] = 15688473519,
-	["Shop 2"] = 15688473638,
-	["Shop 3"] = 15688473772,
-	["Shop 4"] = 15693431898,
-	["Shop 5"] = 15998005134,
-	["Shop 6"] = 15998007352,
-	["Shop 7"] = 16000178420,
+	["Shop 1"] = 16140057720,
+	["Shop 2"] = 16140054788,
+	["Shop 3"] = 16140055046,
+	["Shop 4"] = 16140055688,
+	["Shop 5"] = 16140057174,
+	["Shop 6"] = 16164780151,
+	["Shop 7"] = 16140056545,
+	["Shop 8"] = 16164871642,
+	["Shop 9"] = 16164871261,
 }
 
 TableUtil.Lock(layoutData)
