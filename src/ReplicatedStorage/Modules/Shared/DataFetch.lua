@@ -155,14 +155,14 @@ end
 
 function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 	return Future.new(function(assetId): Item?
+		if ownership ~= nil and not cachedOwnedItems[ownership] then
+			cachedOwnedItems[ownership] = {}
+		end
+
 		local cached = cachedItems[assetId]
 		if cached then
 			if ownership == nil then
 				return cached
-			end
-
-			if not cachedOwnedItems[ownership] then
-				cachedOwnedItems[ownership] = {}
 			end
 
 			local cachedOwnedItem = cachedOwnedItems[ownership][assetId]
