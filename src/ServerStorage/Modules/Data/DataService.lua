@@ -371,6 +371,7 @@ local function GetShareCodeData(code: number)
 			end)
 
 			if not success or not codeData then
+				shareCodeCache[code] = false
 				return nil
 			end
 

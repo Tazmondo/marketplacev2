@@ -18,24 +18,25 @@ local EXPIRATION = 60 * 60 * 24 * 21 -- 3 weeks
 local pendingPurchases: { [Player]: number } = {}
 
 local function HandlePromptFinished(player: Player, assetId: number, purchased: boolean)
-	local ownerId = pendingPurchases[player]
-	if not ownerId then
-		return
-	end
-	pendingPurchases[player] = nil
-
 	if not purchased then
-		return
-	end
-
-	local itemDetails = DataFetch.GetItemDetails(assetId):Await()
-	if not itemDetails or not itemDetails.price then
+		pendingPurchases[player] = nil
 		return
 	end
 
 	DataService:WriteData(player, function(data)
 		data.purchases += 1
 	end)
+
+	local ownerId = pendingPurchases[player]
+	if not ownerId then
+		return
+	end
+	pendingPurchases[player] = nil
+
+	local itemDetails = DataFetch.GetItemDetails(assetId):Await()
+	if not itemDetails or not itemDetails.price then
+		return
+	end
 
 	local cut = math.floor(itemDetails.price * 0.4 * Config.OwnerCut)
 
