@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Util = require(script.Parent.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 type AssetProductInfo = {
@@ -72,6 +73,8 @@ export type BundleBodyParts = {
 	Torso: number?,
 	Head: number?,
 }
+
+DataFetch.ItemBought = Signal()
 
 local cachedItems: { [number]: Item } = {}
 local cachedOwnedItems: { [Player]: { [number]: Item } } = {}
@@ -330,8 +333,28 @@ function DataFetch.GetBundleBodyParts(bundleId: number)
 	end)
 end
 
-Players.PlayerRemoving:Connect(function(player)
-	cachedOwnedItems[player] = nil
-end)
+local function Initialize()
+	Players.PlayerRemoving:Connect(function(player)
+		cachedOwnedItems[player] = nil
+	end)
+
+	MarketplaceService.PromptPurchaseFinished:Connect(function(player, id, purchased)
+		if not purchased then
+			return
+		end
+
+		if not cachedOwnedItems[player] then
+			cachedOwnedItems[player] = {}
+		end
+
+		if cachedOwnedItems[player][id] then
+			cachedOwnedItems[player][id].owned = true
+		end
+
+		DataFetch.ItemBought:Fire(player, id, purchased)
+	end)
+end
+
+Initialize()
 
 return DataFetch

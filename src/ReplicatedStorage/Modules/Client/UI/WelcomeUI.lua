@@ -8,9 +8,9 @@ local gui = UILoader:GetMain().Welcome
 
 function WelcomeUI:Initialize()
 	gui.Visible = false
-	gui.Frame.Actions.PrimaryButton.Activated:Connect(function()
-		gui.Visible = false
-	end)
+	-- gui.Frame.Actions.PrimaryButton.Activated:Connect(function()
+	-- 	gui.Visible = false
+	-- end)
 
 	task.spawn(function()
 		local data = DataController:GetData():Await()

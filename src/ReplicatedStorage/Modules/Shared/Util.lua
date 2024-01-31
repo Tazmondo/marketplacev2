@@ -202,4 +202,35 @@ function Util.PointInBounds(point: Vector3, origin: CFrame, size: Vector3)
 	return rx >= -hsx and rx <= hsx and ry >= -hsy and ry <= hsy and rz >= -hsz and rz <= hsz
 end
 
+function Util.RenderList<T, U>(
+	parent: Instance,
+	template: T & GuiObject,
+	dataList: { U },
+	templateCallback: (i: number, item: T, data: U, destroyed: () -> boolean) -> ()
+)
+	template.Visible = false
+
+	for _, instance in parent:GetChildren() do
+		if instance:GetAttribute("Temporary") then
+			instance:SetAttribute("Destroyed", true)
+			instance:Destroy()
+		end
+	end
+
+	local function destroyed(instance: Instance)
+		return instance:GetAttribute("Destroyed") == true
+	end
+
+	for i, data in dataList do
+		local item = template:Clone()
+		item:SetAttribute("Temporary", true)
+
+		templateCallback(i, item, data, function()
+			return destroyed(item)
+		end)
+
+		item.Parent = parent
+	end
+end
+
 return Util
