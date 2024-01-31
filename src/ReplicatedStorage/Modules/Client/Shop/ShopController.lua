@@ -694,9 +694,11 @@ local function CheckCurrentShop()
 
 		-- idk why u need to do it like this ngl, but it is what it is
 		-- makes it easier to edit storefronts as you can still edit while standing outside the shop
-		local extraLength = Util.AbsoluteVector(
-			origin:VectorToObjectSpace(Util.AbsoluteVector(shop.cframe:VectorToObjectSpace(Vector3.new(0, 0, 30))))
-		)
+		local extraLength = if shop.mode == "Edit"
+			then Util.AbsoluteVector(
+				origin:VectorToObjectSpace(Util.AbsoluteVector(shop.cframe:VectorToObjectSpace(Vector3.new(0, 0, 30))))
+			)
+			else Vector3.zero
 
 		if Util.PointInBounds(charPos, origin, size + extraLength) then
 			enteredShop = shop
