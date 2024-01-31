@@ -9,10 +9,10 @@ local Future = require(ReplicatedStorage.Packages.Future)
 
 local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 
-local cache: { [string]: Model } = {}
+local cache: { [string]: Future.Future<Model?> } = {}
 
 function CharacterCache:LoadWithDescription(description: HumanoidDescription | Types.SerializedDescription)
-	return Future.new(function(): Model?
+	return Future.new(function()
 		local serialized = if typeof(description) == "Instance"
 			then HumanoidDescription.Serialize(description)
 			else description
@@ -20,19 +20,25 @@ function CharacterCache:LoadWithDescription(description: HumanoidDescription | T
 		local stringDescription = HumanoidDescription.Stringify(serialized)
 		local cachedModel = cache[stringDescription]
 		if cachedModel then
-			return cachedModel:Clone()
+			local model = cachedModel:Await()
+			return if model then model:Clone() else nil
 		end
 
-		local success, model = AvatarEvents.GenerateModel:Call(serialized):Await()
-		if success and model then
-			local cloned = model:Clone()
-			model:Destroy()
+		local future = Future.new(function(): Model?
+			local success, model = AvatarEvents.GenerateModel:Call(serialized):Await()
+			if success and model then
+				local cloned = model:Clone()
+				model:Destroy()
 
-			cache[stringDescription] = cloned
-			return cloned:Clone()
-		else
-			return nil
-		end
+				return cloned
+			else
+				return nil
+			end
+		end)
+
+		cache[stringDescription] = future
+		local model = future:Await()
+		return if model then model:Clone() else nil
 	end)
 end
 
