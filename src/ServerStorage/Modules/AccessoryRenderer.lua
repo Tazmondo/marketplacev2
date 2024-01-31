@@ -131,6 +131,9 @@ local function ReplicateAsset(player: Player, assetId: number): Model?
 		model = generatedModel:Clone()
 	end
 
+	if player.Parent ~= Players then
+		return
+	end
 	model.Parent = player.PlayerGui
 	Debris:AddItem(model, 30)
 	return model
