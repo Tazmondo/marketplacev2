@@ -214,37 +214,23 @@ export type Main = ScreenGui & {
 		UICorner: UICorner,
 		Frame: Frame & {
 			UIListLayout: UIListLayout,
-			ItemWrapper: ImageLabel & {
-				UICorner: UICorner,
-				UIStroke: UIStroke,
-				ImageFrame: Frame & {
-					Frame: Frame & {
-						UIListLayout: UIListLayout,
-						ItemImage: ImageLabel & {
-							UICorner: UICorner,
-						},
-					},
-				},
-				IsLimited: TextLabel & {
-					UIListLayout: UIListLayout,
-					UICorner: UICorner,
-					ImageLabel: ImageLabel,
-				},
-			},
 			Frame: Frame & {
 				UIListLayout: UIListLayout,
 				Try: TextButton & {
 					UIListLayout: UIListLayout,
-					UISizeConstraint: UISizeConstraint,
 					TextLabel: TextLabel,
 					UICorner: UICorner,
 				},
 				Buy: TextButton & {
 					UIListLayout: UIListLayout,
-					UISizeConstraint: UISizeConstraint,
 					TextLabel: TextLabel,
 					UICorner: UICorner,
 				},
+			},
+			Details: Frame & {
+				UIListLayout: UIListLayout,
+				Item: TextLabel,
+				Creator: TextLabel,
 			},
 		},
 		UISizeConstraint: UISizeConstraint,
@@ -1004,6 +990,7 @@ export type Main = ScreenGui & {
 		},
 	},
 	Cart: Frame & {
+		UICorner: UICorner,
 		Wrapper: Frame & {
 			UIListLayout: UIListLayout,
 			Results: Frame & {
@@ -1050,7 +1037,7 @@ export type Main = ScreenGui & {
 				},
 			},
 		},
-		UICorner: UICorner,
+		UISizeConstraint: UISizeConstraint,
 	},
 	Sponsor: Frame & {
 		Sponsor: Frame & {

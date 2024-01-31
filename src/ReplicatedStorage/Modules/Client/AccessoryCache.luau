@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
+local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Future = require(ReplicatedStorage.Packages.Future)
 local AccessoryCache = {}
 
@@ -25,6 +26,8 @@ function AccessoryCache:Get(id: number)
 			if not model then
 				return nil
 			end
+
+			model:AddTag(Config.RenderedAccessoryTag)
 
 			local cloned = model:Clone()
 

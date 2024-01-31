@@ -33,6 +33,8 @@ local Config = {
 	AccentColorTag = "AccentColor",
 	TextureTag = "Texture",
 
+	RenderedAccessoryTag = "RenderedAccessory",
+
 	StandRotationSpeed = math.rad(30),
 	StandBobSpeed = 0.2,
 	DefaultScale = 2.5,

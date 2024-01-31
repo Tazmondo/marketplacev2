@@ -28,8 +28,10 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Accessory replication folder did not exist.")
 
-local renderedAccessoryFolder = Instance.new("Folder", workspace)
-renderedAccessoryFolder.Name = "Rendered Accessories"
+local renderedAccessoryFolder = assert(
+	workspace:FindFirstChild("Rendered Accessories"),
+	"Workspace did not have rendered accessories folder."
+) :: Folder
 
 local placeholderFolder = ReplicatedStorage.Assets["Shop Placeholders"] :: Folder
 local dynamicPlaceholder = placeholderFolder:FindFirstChild("DynamicPlaceholder")
@@ -455,6 +457,7 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 				else
 					model.Parent = renderedAccessoryFolder
 					renderedStand.renderModel = model
+					model:SetAttribute("OwnerId", shop.details.owner)
 
 					-- Set this here, so that the placeholder is still there until the model has loaded
 					SetDisplayVisibility(part, false)
@@ -507,6 +510,7 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 				prompt.Triggered:Connect(function()
 					CartController:ToggleInCart(stand.assetId, shop.details.owner)
 				end)
+				-- prompt.Enabled = false
 			end
 		end
 	end
