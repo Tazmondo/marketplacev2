@@ -9,8 +9,9 @@ local AvatarEvents = require(ReplicatedStorage.Events.AvatarEvents)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
+local Future = require(ReplicatedStorage.Packages.Future)
 
-local accessoryCache: { [number]: Model } = {}
+local accessoryCache: { [number]: Future.Future<Model?> } = {}
 
 local function HandleUpdateAccessories(player: Player, serDescription: Types.SerializedDescription)
 	local description = HumanoidDescription.Deserialize(serDescription)
@@ -63,72 +64,75 @@ end
 -- When using Players:CreateHumanoidModelFromDescription with R15 rigs, it generates accessories using MeshParts
 -- So we can use this to generate a MeshPart and normalize its size.
 local function ReplicateAsset(player: Player, assetId: number): Model?
+	local model
+
 	if accessoryCache[assetId] then
-		local model = accessoryCache[assetId]:Clone()
-		model.Parent = player.PlayerGui
-		Debris:AddItem(model, 30)
-
-		return model
+		local template = accessoryCache[assetId]:Await()
+		if not template then
+			return
+		end
+		model = template:Clone()
 	end
 
-	local description = Instance.new("HumanoidDescription")
-	description.FaceAccessory = tostring(assetId)
-	local playerModel = Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R15)
-	if player.Parent == nil then
-		return
+	if not model then
+		local modelFuture = Future.new(function(assetId): Model?
+			local description = Instance.new("HumanoidDescription")
+			description.FaceAccessory = tostring(assetId)
+			local playerModel = Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R15)
+
+			local accessory = playerModel:FindFirstChildOfClass("Accessory")
+			if not accessory then
+				return
+			end
+			local meshPart = accessory:FindFirstChildOfClass("MeshPart")
+			if not meshPart then
+				warn(`Accessory generated without meshpart {assetId}`)
+				return
+			end
+
+			-- Rotation offset of the model from the player
+			-- This allows us to set the pivot so the orientation when CFraming is the same as if it was attached to a player
+			-- I.e. the front of the model faces forwards.
+			-- Need to parent to workspace too otherwise it doesn't return the correct value
+			-- Parenting to the camera means they won't get replicated to the client unnecessarily too.
+			playerModel.Parent = workspace.CurrentCamera
+			local pivot = playerModel:GetPivot():ToObjectSpace(meshPart.CFrame).Rotation:Inverse()
+			meshPart.PivotOffset = pivot
+
+			local model = Instance.new("Model")
+			meshPart.Parent = model
+			model.PrimaryPart = meshPart
+			model.Name = tostring(assetId)
+
+			playerModel:Destroy()
+
+			local vectorSize = meshPart.Size
+			local maxSize = math.max(vectorSize.X, vectorSize.Y, vectorSize.Z)
+
+			-- Scale meshpart so it fits within a 1x1x1 cube
+			local scale = 1 / maxSize
+
+			local wrapLayer = meshPart:FindFirstChildOfClass("WrapLayer")
+			if wrapLayer then
+				wrapLayer:Destroy()
+			end
+
+			model:ScaleTo(scale)
+
+			return model
+		end, assetId)
+
+		accessoryCache[assetId] = modelFuture
+		local generatedModel = modelFuture:Await()
+		if not generatedModel then
+			return
+		end
+
+		model = generatedModel:Clone()
 	end
 
-	-- Was already cached while yielding
-	if accessoryCache[assetId] then
-		local model = accessoryCache[assetId]:Clone()
-		model.Parent = player.PlayerGui
-		Debris:AddItem(model, 30)
-
-		return model
-	end
-
-	local accessory = playerModel:FindFirstChildOfClass("Accessory")
-	if not accessory then
-		return
-	end
-	local meshPart = accessory:FindFirstChildOfClass("MeshPart")
-	if not meshPart then
-		warn(`Accessory generated without meshpart {assetId}`)
-		return
-	end
-
-	-- Rotation offset of the model from the player
-	-- This allows us to set the pivot so the orientation when CFraming is the same as if it was attached to a player
-	-- I.e. the front of the model faces forwards.
-	-- Need to parent to workspace too otherwise it doesn't return the correct value
-	-- Parenting to the camera means they won't get replicated to the client unnecessarily too.
-	playerModel.Parent = workspace.CurrentCamera
-	local pivot = playerModel:GetPivot():ToObjectSpace(meshPart.CFrame).Rotation:Inverse()
-	meshPart.PivotOffset = pivot
-
-	local model = Instance.new("Model")
-	meshPart.Parent = model
-	model.PrimaryPart = meshPart
-	model.Name = tostring(assetId)
-
-	playerModel:Destroy()
-
-	local vectorSize = meshPart.Size
-	local maxSize = math.max(vectorSize.X, vectorSize.Y, vectorSize.Z)
-
-	-- Scale meshpart so it fits within a 1x1x1 cube
-	local scale = 1 / maxSize
-
-	local wrapLayer = meshPart:FindFirstChildOfClass("WrapLayer")
-	if wrapLayer then
-		wrapLayer:Destroy()
-	end
-
-	model:ScaleTo(scale)
-	accessoryCache[assetId] = model:Clone()
 	model.Parent = player.PlayerGui
 	Debris:AddItem(model, 30)
-
 	return model
 end
 

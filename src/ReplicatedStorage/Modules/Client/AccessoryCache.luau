@@ -4,21 +4,17 @@ local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local Future = require(ReplicatedStorage.Packages.Future)
 local AccessoryCache = {}
 
-local cache: { [number]: Model } = {}
+local cache: { [number]: Future.Future<Model?> } = {}
 
 function AccessoryCache:Get(id: number)
-	return Future.new(function(id): Model?
-		if cache[id] then
-			return cache[id]:Clone()
-		end
+	local cached = cache[id]
+	if cached then
+		return cached
+	end
 
+	local future = Future.new(function(id): Model?
 		-- The model is parented to playergui so it can be sent to the client
 		local success, model = ShopEvents.GetAccessoryModel:Call(id):Await()
-
-		-- If the cache was updated while we were fetching
-		if cache[id] then
-			return cache[id]:Clone()
-		end
 
 		if not success then
 			warn(model)
@@ -36,11 +32,13 @@ function AccessoryCache:Get(id: number)
 			end
 		end
 
-		cache[id] = cloned
 		model:Destroy()
 
 		return cloned:Clone()
 	end, id)
+
+	cache[id] = future
+	return future
 end
 
 return AccessoryCache
