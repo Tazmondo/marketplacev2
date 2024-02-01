@@ -43,7 +43,7 @@ type State = {
 local HOVERSCALE = 1.15
 local state: State = {}
 
-local function SetHover(part: BasePart?)
+local function SetHover(part: BasePart?, model: Model?)
 	if state.hovered then
 		if part and state.hovered.part == part then
 			return
@@ -56,12 +56,7 @@ local function SetHover(part: BasePart?)
 		end
 	end
 
-	if part then
-		local model = part.Parent
-		if not model or not model:IsA("Model") then
-			return
-		end
-
+	if part and model then
 		local highlight = highlightTemplate:Clone()
 
 		local type: ItemType = if model:HasTag(Config.RenderedAccessoryTag)
@@ -197,18 +192,29 @@ local function HandleMouseMove(inputObject: InputObject)
 
 	local raycast = workspace:Raycast(ray.Origin, ray.Direction * 200, params)
 	if not raycast then
-		SetHover(nil)
+		SetHover()
 		return
 	end
 
 	local hitPart = raycast.Instance :: BasePart
 	local model = hitPart.Parent
-	if not model or (not model:HasTag(Config.RenderedAccessoryTag) and not model:HasTag(Config.RenderedOutfitTag)) then
-		SetHover(nil)
+
+	-- Allow for clicking on accessories on outfits
+	if model and model:IsA("Accessory") then
+		print(model, if model.Parent then model.Parent:HasTag(Config.RenderedOutfitTag) else nil)
+		model = model.Parent
+	end
+
+	if
+		not model
+		or not model:IsA("Model")
+		or (not model:HasTag(Config.RenderedAccessoryTag) and not model:HasTag(Config.RenderedOutfitTag))
+	then
+		SetHover()
 		return
 	end
 
-	SetHover(hitPart)
+	SetHover(hitPart, model)
 end
 
 local function HandleClick(inputObject: InputObject)
