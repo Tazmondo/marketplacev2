@@ -17,6 +17,7 @@ local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
+local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().ControllerEdit
@@ -248,9 +249,23 @@ end
 
 local function SwitchLayout(id: LayoutData.LayoutId)
 	return Future.new(function()
-		local confirmed = ConfirmUI:Confirm(ConfirmUI.Confirmations.SwitchLayout):Await()
-		if not confirmed then
+		if not activeShop then
 			return
+		end
+
+		local filledStands = TableUtil.Filter(activeShop.stands, function(stand)
+			return stand.assetId ~= nil
+		end)
+		local filledOutfits = TableUtil.Filter(activeShop.outfitStands, function(outfit)
+			return outfit.description ~= nil
+		end)
+
+		-- Don't need to show switch prompt if the shop is not filled in at all.
+		if #filledStands + #filledOutfits > 0 then
+			local confirmed = ConfirmUI:Confirm(ConfirmUI.Confirmations.SwitchLayout):Await()
+			if not confirmed then
+				return
+			end
 		end
 
 		UpdateLayoutSelection(id)
