@@ -34,6 +34,7 @@ local Config = {
 	TextureTag = "Texture",
 
 	RenderedAccessoryTag = "RenderedAccessory",
+	RenderedOutfitTag = "RenderedOutfit",
 
 	StandRotationSpeed = math.rad(30),
 	StandBobSpeed = 0.2,

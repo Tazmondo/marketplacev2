@@ -5,6 +5,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
+local CatalogUI = require(ReplicatedStorage.Modules.Client.UI.CatalogUI)
 local UILoader = require(ReplicatedStorage.Modules.Client.UI.UILoader)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
@@ -20,8 +21,11 @@ local renderedAccessoryFolder = assert(
 
 local gui = UILoader:GetMain().Hover
 
+type ItemType = "Item" | "Outfit"
+
 type State = {
 	hovered: {
+		type: ItemType,
 		part: BasePart,
 		model: Model,
 		highlight: Highlight,
@@ -45,7 +49,7 @@ local function SetHover(part: BasePart?)
 			return
 		else
 			state.hovered.highlight:Destroy()
-			if not state.selected or state.selected.part ~= state.hovered.part then
+			if state.hovered.type == "Item" and (not state.selected or state.selected.part ~= state.hovered.part) then
 				state.hovered.model:ScaleTo(state.hovered.model:GetScale() / HOVERSCALE)
 			end
 			state.hovered = nil
@@ -53,18 +57,29 @@ local function SetHover(part: BasePart?)
 	end
 
 	if part then
-		local highlight = highlightTemplate:Clone()
-		highlight.Parent = part
-
 		local model = part.Parent
 		if not model or not model:IsA("Model") then
 			return
 		end
 
-		if not state.selected or state.selected.part ~= part then
+		local highlight = highlightTemplate:Clone()
+
+		local type: ItemType = if model:HasTag(Config.RenderedAccessoryTag)
+			then "Item"
+			elseif model:HasTag(Config.RenderedOutfitTag) then "Outfit"
+			else error("No valid tag found.")
+
+		if type == "Outfit" then
+			highlight.Parent = model
+		else
+			highlight.Parent = part
+		end
+
+		if type == "Item" and (not state.selected or state.selected.part ~= part) then
 			model:ScaleTo(model:GetScale() * HOVERSCALE)
 		end
 		state.hovered = {
+			type = type,
 			highlight = highlight,
 			part = part,
 			model = model,
@@ -188,7 +203,7 @@ local function HandleMouseMove(inputObject: InputObject)
 
 	local hitPart = raycast.Instance :: BasePart
 	local model = hitPart.Parent
-	if not model or not model:HasTag(Config.RenderedAccessoryTag) then
+	if not model or (not model:HasTag(Config.RenderedAccessoryTag) and not model:HasTag(Config.RenderedOutfitTag)) then
 		SetHover(nil)
 		return
 	end
@@ -210,8 +225,17 @@ local function HandleClick(inputObject: InputObject)
 		return
 	end
 
-	local hitPart = state.hovered.part
-	SetSelected(hitPart)
+	if state.hovered.type == "Item" then
+		local hitPart = state.hovered.part
+		SetSelected(hitPart)
+	elseif state.hovered.type == "Outfit" then
+		local humanoid = state.hovered.model:FindFirstChildOfClass("Humanoid") :: Humanoid
+		local description =
+			assert(humanoid:FindFirstChildOfClass("HumanoidDescription"), "Outfit model had no description")
+		CatalogUI:DisplayOutfit(description)
+	else
+		error("Invalid item type")
+	end
 end
 
 local function HandleInputBegan(inputObject: InputObject, processed: boolean)

@@ -338,6 +338,7 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 				end
 
 				outfit.Name = ""
+				outfit:AddTag(Config.RenderedOutfitTag)
 				SetDisplayVisibility(model, false)
 
 				local humanoid = outfit:FindFirstChildOfClass("Humanoid") :: Humanoid
