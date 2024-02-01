@@ -8,12 +8,11 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local DataService = require(ServerStorage.Modules.Data.DataService)
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
-local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 
 local purchaseMemory = MemoryStoreService:GetSortedMap("Rewards")
 
-local EXPIRATION = 60 * 60 * 24 * 21 -- 3 weeks
+local EXPIRATION = 60 * 60 * 24 * 44 -- 44 days (max is 45, doing one less in case there's an error when setting over the maximum)
 
 local pendingPurchases: { [Player]: number } = {}
 
@@ -38,7 +37,13 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 		return
 	end
 
-	local cut = math.floor(itemDetails.price * 0.4 * Config.OwnerCut)
+	local experienceCut = 0.4
+	if itemDetails.standType and itemDetails.standType ~= "Accessory" then
+		-- Classic clothing only gives us 10%, while all other assets give 40%
+		experienceCut = 0.1
+	end
+
+	local cut = math.floor(itemDetails.price * experienceCut)
 
 	purchaseMemory:UpdateAsync(`{ownerId}`, function(data: number?, sortKey: number?)
 		data = data or 0

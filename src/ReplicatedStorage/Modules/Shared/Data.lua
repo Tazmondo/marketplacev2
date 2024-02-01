@@ -24,11 +24,13 @@ export type VectorTable = {
 
 export type Stand = {
 	assetId: number,
+	type: Types.StandType,
 	roundedPosition: VectorTable,
 }
 local standTemplate: Stand = {
 	assetId = 2041985255,
 	roundedPosition = { x = 0, y = 0, z = 0 },
+	type = "Accessory",
 }
 
 export type OutfitStand = {
@@ -82,7 +84,7 @@ export type Data = {
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 13,
+	version = 14,
 	firstTime = true,
 	purchases = 0,
 }
@@ -168,6 +170,7 @@ function Data.Migrate(data: Data, ownerId: number)
 				table.insert(migratedStands, {
 					assetId = oldStand.assetId,
 					roundedPosition = Data.VectorToTable(position),
+					type = (oldStand.type or "Accessory" :: Types.StandType) :: Types.StandType, -- double cast necessary here
 				})
 			end
 
@@ -200,10 +203,11 @@ function Data.Migrate(data: Data, ownerId: number)
 end
 
 function Data.ToDataStand(stand: Types.Stand): Stand?
-	if stand.assetId then
+	if stand.item then
 		return {
-			assetId = stand.assetId,
+			assetId = stand.item.id,
 			roundedPosition = Data.VectorToTable(stand.roundedPosition),
+			type = stand.item.type,
 		}
 	else
 		return nil
@@ -257,8 +261,11 @@ end
 
 function Data.FromDataStand(stand: Stand): Types.Stand
 	return {
-		assetId = stand.assetId,
 		roundedPosition = Data.TableToVector(stand.roundedPosition),
+		item = {
+			id = stand.assetId,
+			type = stand.type,
+		},
 	}
 end
 

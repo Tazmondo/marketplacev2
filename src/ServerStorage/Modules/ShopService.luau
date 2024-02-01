@@ -12,6 +12,7 @@ local LoadedService = require(script.Parent.LoadedService)
 local SponsoredShops = require(script.Parent.SponsoredShops)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
+local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
@@ -113,9 +114,10 @@ local function SaveShop(shop: ActiveShop)
 	local filteredStands: { Data.Stand } = {}
 
 	for _, stand in shop.stands do
-		if stand.assetId and validPositions[stand.roundedPosition] then
+		if stand.item and validPositions[stand.roundedPosition] then
 			table.insert(filteredStands, {
-				assetId = stand.assetId,
+				assetId = stand.item.id,
+				type = stand.item.type,
 				roundedPosition = Data.VectorToTable(stand.roundedPosition),
 			})
 		end
@@ -170,8 +172,8 @@ local function PopulateLayoutStands(
 			table.insert(outputStands, stand)
 		else
 			table.insert(outputStands, {
-				assetId = nil,
 				roundedPosition = position,
+				item = nil,
 			})
 		end
 	end
@@ -318,12 +320,24 @@ local function HandleUpdateStand(player: Player, roundedPosition: Vector3, asset
 		return
 	end
 
-	if stand.assetId == assetId then
+	if stand.item and stand.item.id == assetId then
 		-- Asset did not change
 		return
 	end
 
-	stand.assetId = assetId
+	if assetId then
+		local details = DataFetch.GetItemDetails(assetId):Await()
+		if details and details.standType then
+			stand.item = {
+				id = assetId,
+				type = details.standType,
+			}
+		else
+			-- todo: notify player the item failed to fetch or something
+		end
+	else
+		stand.item = nil
+	end
 
 	ShopEvents.LoadShop:FireAllClients(shop.cframe, ToNetworkShop(shop))
 	SaveShop(shop)
@@ -558,6 +572,10 @@ local function Initialize()
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 
 	task.spawn(function()
+		-- if 1 == 1 then
+		-- 	return
+		-- end
+
 		local sponsoredShops = TableUtil.Filter(MallCFrames.shops, function(shop)
 			return shop.type == "Sponsored"
 		end)

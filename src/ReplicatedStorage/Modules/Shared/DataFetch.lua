@@ -3,6 +3,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Types = require(script.Parent.Types)
 local Util = require(script.Parent.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
@@ -60,6 +61,7 @@ export type Item = {
 	name: string,
 	assetId: number,
 	assetType: Enum.AvatarAssetType,
+	standType: Types.StandType?,
 	price: number?,
 	owned: boolean?,
 	limited: Limited?,
@@ -104,6 +106,10 @@ local validAssets: { [Enum.AvatarAssetType]: true? } = {
 	[Enum.AvatarAssetType.RightLeg] = true,
 	[Enum.AvatarAssetType.Head] = true,
 	[Enum.AvatarAssetType.Torso] = true,
+
+	[Enum.AvatarAssetType.TShirt] = true,
+	[Enum.AvatarAssetType.Shirt] = true,
+	[Enum.AvatarAssetType.Pants] = true,
 }
 
 local validBodyParts = {
@@ -113,6 +119,27 @@ local validBodyParts = {
 	[Enum.AvatarAssetType.RightLeg] = true,
 	[Enum.AvatarAssetType.Head] = true,
 	[Enum.AvatarAssetType.Torso] = true,
+}
+
+local itemStandTypes: { [Enum.AvatarAssetType]: Types.StandType? } = {
+	[Enum.AvatarAssetType.TShirt] = "TShirt",
+	[Enum.AvatarAssetType.Shirt] = "Shirt",
+	[Enum.AvatarAssetType.Pants] = "Pants",
+	[Enum.AvatarAssetType.Hat] = "Accessory",
+	[Enum.AvatarAssetType.HairAccessory] = "Accessory",
+	[Enum.AvatarAssetType.FaceAccessory] = "Accessory",
+	[Enum.AvatarAssetType.NeckAccessory] = "Accessory",
+	[Enum.AvatarAssetType.ShoulderAccessory] = "Accessory",
+	[Enum.AvatarAssetType.FrontAccessory] = "Accessory",
+	[Enum.AvatarAssetType.BackAccessory] = "Accessory",
+	[Enum.AvatarAssetType.WaistAccessory] = "Accessory",
+	[Enum.AvatarAssetType.TShirtAccessory] = "Accessory",
+	[Enum.AvatarAssetType.ShirtAccessory] = "Accessory",
+	[Enum.AvatarAssetType.PantsAccessory] = "Accessory",
+	[Enum.AvatarAssetType.JacketAccessory] = "Accessory",
+	[Enum.AvatarAssetType.SweaterAccessory] = "Accessory",
+	[Enum.AvatarAssetType.ShortsAccessory] = "Accessory",
+	[Enum.AvatarAssetType.DressSkirtAccessory] = "Accessory",
 }
 
 local validAssetNames: { [string]: true? } = {}
@@ -219,10 +246,13 @@ function DataFetch.GetItemDetails(assetId: number, ownership: Player?)
 
 		local assetType = assetTypeIdMap[details.AssetTypeId]
 
+		local standType: Types.StandType? = itemStandTypes[assetType]
+
 		local item: Item = {
 			assetId = assetId,
 			name = details.Name,
 			assetType = assetType,
+			standType = standType,
 			creator = details.Creator.Name or "Roblox",
 			price = price,
 			owned = if ownership then ownedSuccess and owned else nil,

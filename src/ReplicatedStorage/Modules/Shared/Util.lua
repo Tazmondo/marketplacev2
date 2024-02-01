@@ -233,4 +233,8 @@ function Util.RenderList<T, U>(
 	end
 end
 
+function Util.ExhaustiveMatch(value: never): never
+	error(`Value passed to exhaustive match: {value}`)
+end
+
 return Util

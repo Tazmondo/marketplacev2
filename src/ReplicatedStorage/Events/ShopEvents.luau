@@ -17,6 +17,11 @@ export type UpdateSettings = {
 
 export type LoadShopSettings = { shop: Types.Shop, spawnMode: Types.SpawnMode }?
 
+export type GetClothingSettings = {
+	id: number,
+	type: Types.StandType,
+}
+
 local function GuardUpdateSettings(settings: unknown)
 	local value: any = settings
 	return {
@@ -64,8 +69,12 @@ return {
 		return Layouts:GuardStorefrontId(storefrontId)
 	end),
 
-	GetAccessoryModel = Red.Function("Shop_GetAccessory", function(id)
-		return Guard.Number(id)
+	GetStandItem = Red.Function("Shop_GetClothingModel", function(data)
+		local data: any = data
+		return {
+			id = Guard.Number(data.id),
+			type = Types.GuardStandType(data.type),
+		} :: GetClothingSettings
 	end, function(model)
 		return model :: Model?
 	end),

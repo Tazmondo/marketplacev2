@@ -12,13 +12,13 @@ function WelcomeUI:Initialize()
 	-- 	gui.Visible = false
 	-- end)
 
-	task.spawn(function()
-		local data = DataController:GetData():Await()
+	-- task.spawn(function()
+	-- 	local data = DataController:GetData():Await()
 
-		if data.firstTime then
-			gui.Visible = true
-		end
-	end)
+	-- 	if data.firstTime then
+	-- 		gui.Visible = true
+	-- 	end
+	-- end)
 end
 
 WelcomeUI:Initialize()

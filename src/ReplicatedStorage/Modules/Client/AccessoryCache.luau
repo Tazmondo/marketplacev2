@@ -2,12 +2,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Future = require(ReplicatedStorage.Packages.Future)
 local AccessoryCache = {}
 
 local cache: { [number]: Future.Future<Model?> } = {}
 
-function AccessoryCache:Get(id: number)
+function AccessoryCache:Get(id: number, type: Types.StandType)
 	return Future.new(function()
 		local cached = cache[id]
 		if cached then
@@ -15,9 +16,9 @@ function AccessoryCache:Get(id: number)
 			return if model then model:Clone() else nil
 		end
 
-		local future = Future.new(function(id): Model?
+		local future = Future.new(function(id, type): Model?
 			-- The model is parented to playergui so it can be sent to the client
-			local success, model = ShopEvents.GetAccessoryModel:Call(id):Await()
+			local success, model = ShopEvents.GetStandItem:Call({ id = id, type = type }):Await()
 
 			if not success then
 				warn(model)
@@ -40,7 +41,7 @@ function AccessoryCache:Get(id: number)
 			model:Destroy()
 
 			return cloned:Clone()
-		end, id)
+		end, id, type)
 
 		cache[id] = future
 		local model = future:Await()

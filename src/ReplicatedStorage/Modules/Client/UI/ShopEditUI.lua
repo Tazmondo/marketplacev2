@@ -254,7 +254,7 @@ local function SwitchLayout(id: LayoutData.LayoutId)
 		end
 
 		local filledStands = TableUtil.Filter(activeShop.stands, function(stand)
-			return stand.assetId ~= nil
+			return stand.item ~= nil
 		end)
 		local filledOutfits = TableUtil.Filter(activeShop.outfitStands, function(outfit)
 			return outfit.description ~= nil

@@ -49,7 +49,10 @@ type RenderedStand = {
 	standPart: BasePart,
 	roundedPosition: Vector3,
 	standId: number,
-	assetId: number?,
+	item: {
+		id: number,
+		type: Types.StandType,
+	}?,
 	prompt: ProximityPrompt,
 
 	hoverPosition: number,
@@ -63,6 +66,7 @@ type RenderedStand = {
 	-- Since fetching the model is asynchronous, we need this in case a stand is destroyed
 	-- Before the model is fetched, so the code knows not to parent the model
 	destroyed: boolean,
+	[string]: never,
 }
 
 type RenderedOutfit = {
@@ -78,6 +82,7 @@ type RenderedOutfit = {
 	-- Since fetching the model is asynchronous, we need this in case a stand is destroyed
 	-- Before the model is fetched, so the code knows not to parent the model
 	destroyed: boolean,
+	[string]: never,
 }
 
 type ShopMode = "View" | "Edit"
@@ -90,11 +95,13 @@ type RenderedShop = {
 	mode: ShopMode,
 	details: Types.Shop,
 	destroyed: boolean,
+	[string]: never,
 }
 
 type PlaceholderShop = {
 	model: Model,
 	cframe: CFrame,
+	[string]: never,
 }
 
 -- Subtract from the placeholder pivot to get the ground position
@@ -218,9 +225,9 @@ local function SetDisplayVisibility(display: BasePart | Model, isVisible: boolea
 	end
 end
 
-local function GetAccessory(assetId: number, scale: number?)
-	return Future.new(function(assetId: number, scale: number?): Model?
-		local accessory = AccessoryCache:Get(assetId):Await()
+local function GetStandItemModel(assetId: number, type: Types.StandType, scale: number?)
+	return Future.new(function(assetId: number, type: Types.StandType, scale: number?): Model?
+		local accessory = AccessoryCache:Get(assetId, type):Await()
 		if not accessory then
 			return nil
 		end
@@ -229,7 +236,7 @@ local function GetAccessory(assetId: number, scale: number?)
 		accessory:ScaleTo(insertedScale * Config.DefaultScale * (scale or 1))
 
 		return accessory
-	end, assetId, scale)
+	end, assetId, type, scale)
 end
 
 local function DestroyStand(shop: RenderedShop, stand: RenderedStand)
@@ -413,7 +420,10 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 
 		local existingStand = shop.renderedStands[roundedPosition]
 		if existingStand then
-			if existingStand.assetId == (if stand then stand.assetId else nil) then
+			if
+				(if existingStand.item then existingStand.item.id else nil)
+				== (if stand and stand.item then stand.item.id else nil)
+			then
 				continue
 			else
 				DestroyStand(shop, existingStand)
@@ -431,7 +441,7 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 		local _, rotY, _ = part.CFrame:ToEulerAnglesYXZ()
 
 		local renderedStand: RenderedStand = {
-			assetId = if stand then stand.assetId else nil,
+			item = if stand then stand.item else nil,
 			standPart = part,
 			roundedPosition = roundedPosition,
 			prompt = prompt,
@@ -447,8 +457,8 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 		}
 		shop.renderedStands[roundedPosition] = renderedStand
 
-		if stand and stand.assetId then
-			GetAccessory(stand.assetId, standScale):After(function(model)
+		if stand and stand.item then
+			GetStandItemModel(stand.item.id, stand.item.type, standScale):After(function(model)
 				if not model then
 					return
 				end
@@ -462,18 +472,19 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 
 					-- Set this here, so that the placeholder is still there until the model has loaded
 					SetDisplayVisibility(part, false)
-					local meshPart = model:FindFirstChildOfClass("MeshPart")
-					if not meshPart then
-						warn(`Model inserted without meshpart: {stand.assetId}`)
+					local promptParentPart = model:FindFirstChild("HumanoidRootPart")
+						or model:FindFirstChildOfClass("MeshPart")
+					if not promptParentPart then
+						warn(`Model inserted without valid prompt parent: {stand.item.id}`)
 						return
 					end
 
 					prompt.PromptShown:Connect(function()
-						highlightTemplate:Clone().Parent = meshPart
+						highlightTemplate:Clone().Parent = promptParentPart
 					end)
 
 					prompt.PromptHidden:Connect(function()
-						local highlight = meshPart:FindFirstChild(highlightTemplate.Name)
+						local highlight = promptParentPart:FindFirstChild(highlightTemplate.Name)
 						if highlight then
 							highlight:Destroy()
 						end
@@ -483,7 +494,7 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 		end
 
 		if shop.mode == "Edit" then
-			if stand and stand.assetId then
+			if stand and stand.item then
 				prompt.ActionText = "Remove Item"
 				prompt.ObjectText = "Stand"
 				prompt.Parent = part
@@ -504,12 +515,12 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 			end
 		else
 			SetDisplayVisibility(part, false)
-			if stand and stand.assetId then
+			if stand and stand.item then
 				prompt.ActionText = ""
 				prompt.ObjectText = ""
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					CartController:ToggleInCart(stand.assetId, shop.details.owner)
+					CartController:ToggleInCart(stand.item.id, shop.details.owner)
 				end)
 				-- prompt.Enabled = false
 			end

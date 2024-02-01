@@ -4,9 +4,21 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Guard = require(ReplicatedStorage.Packages.Guard)
 
+-- Classic clothing
+export type StandType = "Accessory" | "TShirt" | "Shirt" | "Pants"
+local function GuardStandType(value: unknown): StandType
+	local value: any = value
+
+	assert(value == "Accessory" or value == "TShirt" or value == "Shirt" or value == "Pants")
+	return value
+end
 export type Stand = {
-	assetId: number?,
+	item: {
+		id: number,
+		type: StandType,
+	}?,
 	roundedPosition: Vector3,
+	[string]: never,
 }
 
 export type SerializedDescription = { string | number }
@@ -14,6 +26,7 @@ export type SerializedDescription = { string | number }
 export type OutfitStand = {
 	description: SerializedDescription?,
 	roundedPosition: Vector3,
+	[string]: never,
 }
 
 export type Shop = {
@@ -30,6 +43,7 @@ export type Shop = {
 	shareCode: number?,
 	stands: { Stand },
 	outfitStands: { OutfitStand },
+	[string]: never,
 }
 
 export type SpawnMode = "Server" | "Player"
@@ -44,11 +58,13 @@ export type NetworkShopDetails = {
 	accentColor: Color3,
 	GUID: string,
 	shareCode: number?,
+	[string]: never,
 }
 
 export type Outfit = {
 	name: string,
 	description: HumanoidDescription,
+	[string]: never,
 }
 
 export type LaunchData = {
@@ -88,4 +104,5 @@ end
 return {
 	GuardFeed = GuardFeed,
 	GuardHumanoidDescriptionAccessory = GuardHumanoidDescriptionAccessory,
+	GuardStandType = GuardStandType,
 }
