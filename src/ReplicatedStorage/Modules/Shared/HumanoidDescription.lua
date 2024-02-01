@@ -41,14 +41,14 @@ TableUtil.Lock(HumanoidDescription.defaultBodyParts)
 
 export type BodyParts = typeof(HumanoidDescription.defaultBodyParts)
 
-local function SerializeAccessories(description: HumanoidDescription): string
+local function SerializeAccessories(accessories: { Types.HumanoidDescriptionAccessory }): string
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
 
-	local accessories = TableUtil.Map(description:GetAccessories(true), function(accessory)
+	local serializedAccessories = TableUtil.Map(accessories, function(accessory)
 		return { accessory.AssetId, accessory.Order or 1, accessory.AccessoryType.Value }
 	end)
 
-	return HttpService:JSONEncode(accessories)
+	return HttpService:JSONEncode(serializedAccessories)
 end
 
 local function DeserializeAccessories(accessoryJson: string): { Types.HumanoidDescriptionAccessory }
@@ -82,7 +82,7 @@ end
 function HumanoidDescription.Serialize(description: HumanoidDescription): Types.SerializedDescription
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE!
 	return {
-		SerializeAccessories(description),
+		SerializeAccessories(description:GetAccessories(true)),
 		description.BodyTypeScale,
 		description.DepthScale,
 		description.Face,
@@ -251,6 +251,41 @@ function HumanoidDescription.Equal(
 	local stringDesc2 = HumanoidDescription.Stringify(desc2)
 
 	return stringDesc1 == stringDesc2
+end
+
+-- Independent of accessory order. For use with outfit comparions, as the cart does not care about order when copying outfits to the cart.
+function HumanoidDescription.FuzzyEq(
+	desc1: HumanoidDescription | Types.SerializedDescription | nil,
+	desc2: HumanoidDescription | Types.SerializedDescription | nil
+)
+	if desc1 == nil and desc2 == nil then
+		return true
+	elseif desc1 == nil or desc2 == nil then
+		return false
+	end
+
+	local ser1 = if typeof(desc1) == "Instance" then HumanoidDescription.Serialize(desc1) else table.clone(desc1)
+	local ser2 = if typeof(desc2) == "Instance" then HumanoidDescription.Serialize(desc2) else table.clone(desc2)
+
+	local function normalizeOrder(serDes: Types.SerializedDescription)
+		local accessories = DeserializeAccessories(serDes[1] :: string)
+		local normalizedAccessories = TableUtil.Map(accessories, function(accessory)
+			return {
+				AccessoryType = accessory.AccessoryType,
+				AssetId = accessory.AssetId,
+				IsLayered = accessory.IsLayered,
+				Order = 1,
+				Puffiness = accessory.Puffiness,
+			}
+		end)
+
+		serDes[1] = SerializeAccessories(normalizedAccessories)
+	end
+
+	normalizeOrder(ser1)
+	normalizeOrder(ser2)
+
+	return HumanoidDescription.Equal(ser1, ser2)
 end
 
 function HumanoidDescription.ExtractBodyParts(description: HumanoidDescription): BodyParts

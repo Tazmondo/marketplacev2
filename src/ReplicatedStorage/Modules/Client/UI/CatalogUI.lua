@@ -461,7 +461,7 @@ function RenderOutfits()
 
 		local function Equipped(stroke: UIStroke, base: HumanoidDescription)
 			local description = CartController:GetDescription():Await()
-			stroke.Enabled = HumanoidDescription.Equal(description, base)
+			stroke.Enabled = HumanoidDescription.FuzzyEq(description, base)
 		end
 
 		task.spawn(Equipped, row.UIStroke, outfit.description)
@@ -801,7 +801,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 		local partialButton = outfitUI.Previews.Partial
 
 		-- If body parts don't change, we don't need this partial button
-		partialButton.Visible = not HumanoidDescription.Equal(partialDescription, outfit)
+		partialButton.Visible = not HumanoidDescription.FuzzyEq(partialDescription, outfit)
 
 		local fullButton = outfitUI.Previews.Full
 
@@ -906,7 +906,6 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 		end
 
 		local function RenderEquipped()
-			print(CartController:GetCartItems())
 			for i, itemElement in outfitUI.Wearing.ListWrapper.List:GetChildren() :: { typeof(itemTemplate) } do
 				if itemElement:GetAttribute("Temporary") then
 					local inCart = CartController:IsEquipped(itemElement:GetAttribute("AssetId"))
@@ -920,9 +919,11 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 			end
 
 			local updatedDescription = CartController:GetDescription():Await()
-			currentButton.UIStroke.Enabled = HumanoidDescription.Equal(currentDescription, updatedDescription)
-			partialButton.UIStroke.Enabled = HumanoidDescription.Equal(partialDescription, updatedDescription)
-			fullButton.UIStroke.Enabled = HumanoidDescription.Equal(outfit, updatedDescription)
+
+			-- Use fuzzy here as the order may differ between applied outfit, and rendered outfit, after selecting it.
+			currentButton.UIStroke.Enabled = HumanoidDescription.FuzzyEq(currentDescription, updatedDescription)
+			partialButton.UIStroke.Enabled = HumanoidDescription.FuzzyEq(partialDescription, updatedDescription)
+			fullButton.UIStroke.Enabled = HumanoidDescription.FuzzyEq(outfit, updatedDescription)
 		end
 
 		RenderEquipped()
