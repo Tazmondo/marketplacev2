@@ -16,11 +16,23 @@ export type CartItem = {
 	shopOwner: number?,
 }
 
+export type ClassicItem = {
+	id: number,
+	equipped: boolean,
+	shopOwner: number?,
+}
+
 -- O(1) lookup time but also ordered
 local cartItems: { CartItem } = {}
 local cartSet: { [number]: true? } = {}
 local cachedDescription: Future.Future<HumanoidDescription>? = nil
 local bodyDescriptionTable = table.clone(HumanoidDescription.defaultBodyParts)
+
+local classicClothing = {
+	TShirt = nil :: ClassicItem?,
+	Shirt = nil :: ClassicItem?,
+	Pants = nil :: ClassicItem?,
+}
 
 local lastEquippedPackage: number? = nil
 
@@ -85,6 +97,16 @@ local function GetDescription()
 		HumanoidDescription.ApplyToDescription(description, GetEquippedAccessories():Await())
 		HumanoidDescription.ApplyBodyParts(description, bodyDescriptionTable)
 
+		description.Shirt = if classicClothing.Shirt and classicClothing.Shirt.equipped
+			then classicClothing.Shirt.id
+			else 0
+		description.Pants = if classicClothing.Pants and classicClothing.Pants.equipped
+			then classicClothing.Pants.id
+			else 0
+		description.GraphicTShirt = if classicClothing.TShirt and classicClothing.TShirt.equipped
+			then classicClothing.TShirt.id
+			else 0
+
 		return description
 	end)
 end
@@ -143,6 +165,30 @@ function CartController:ToggleInCart(id: number, shopOwner: number?)
 	else
 		table.remove(cartItems, index)
 		cartSet[id] = nil
+	end
+
+	UpdateCharacter()
+end
+
+function CartController:ToggleClassicClothing(
+	id: number,
+	type: "TShirt" | "Shirt" | "Pants",
+	shopOwner: number?,
+	force: boolean?
+)
+	local existingId: ClassicItem? = classicClothing[type]
+
+	if existingId and existingId.id == id then
+		existingId.equipped = if force ~= nil then force else not existingId.equipped
+		existingId.shopOwner = shopOwner
+	elseif force ~= false then
+		classicClothing[type] = {
+			id = id,
+			equipped = true,
+			shopOwner = shopOwner,
+		}
+	else
+		classicClothing[type] = nil
 	end
 
 	UpdateCharacter()
@@ -231,6 +277,10 @@ function CartController:GetCartItems()
 	return output
 end
 
+function CartController:GetClassicClothing()
+	return table.clone(classicClothing)
+end
+
 function CartController:Reset()
 	return Future.new(function()
 		local success, description =
@@ -244,15 +294,12 @@ function CartController:Reset()
 	end)
 end
 
-function CartController:UseDescription(description: HumanoidDescription, shopOwner: number?)
+local function ApplyDescription(description: HumanoidDescription, shopOwner: number?)
 	cartItems = {}
 	cartSet = {}
 
 	for i, accessory in description:GetAccessories(true) do
-		local newItem = NewCartItem(accessory.AssetId, shopOwner)
-		newItem.equipped = true
-		table.insert(cartItems, newItem)
-
+		table.insert(cartItems, NewCartItem(accessory.AssetId, shopOwner))
 		cartSet[accessory.AssetId] = true
 	end
 
@@ -260,27 +307,57 @@ function CartController:UseDescription(description: HumanoidDescription, shopOwn
 	for _, part in Enum.BodyPart:GetEnumItems() :: { Enum.BodyPart } do
 		local id = bodyDescriptionTable[part.Name]
 		if id ~= 0 then
-			local newItem = NewCartItem(id, shopOwner, part)
-			newItem.equipped = true
-			table.insert(cartItems, newItem)
+			table.insert(cartItems, NewCartItem(id, shopOwner, part))
 			cartSet[id] = true
 		end
 	end
 
-	lastEquippedPackage = nil
+	classicClothing.TShirt = if description.GraphicTShirt ~= 0
+		then { id = description.GraphicTShirt, equipped = true, shopOwner = shopOwner }
+		else nil
+	classicClothing.Pants = if description.Pants ~= 0
+		then { id = description.Pants, equipped = true, shopOwner = shopOwner }
+		else nil
+	classicClothing.Shirt = if description.Shirt ~= 0
+		then { id = description.Shirt, equipped = true, shopOwner = shopOwner }
+		else nil
 
+	lastEquippedPackage = nil
+end
+
+function CartController:UseDescription(description: HumanoidDescription, shopOwner: number?)
+	ApplyDescription(description, shopOwner)
 	UpdateCharacter()
 end
 
-function CartController:IsInCart(id: number)
-	return cartSet[id] == true or lastEquippedPackage == id
+function CartController:IsInCart(id: number): boolean
+	local function classicInCart(clothing)
+		local item = classicClothing[clothing]
+		return item and item.id == id
+	end
+
+	return cartSet[id] == true
+		or lastEquippedPackage == id
+		or classicInCart("Pants")
+		or classicInCart("Shirt")
+		or classicInCart("TShirt")
 end
 
 function CartController:IsEquipped(id: number): boolean
-	return CartController:IsInCart(id)
-		and TableUtil.Find(cartItems, function(item)
-			return item.id == id and item.equipped
-		end) ~= nil
+	local function classicEquipped(clothing)
+		local item = classicClothing[clothing]
+		return item and item.equipped and item.id == id
+	end
+
+	return classicEquipped("Pants")
+		or classicEquipped("Shirt")
+		or classicEquipped("TShirt")
+		or (
+			CartController:IsInCart(id)
+			and TableUtil.Find(cartItems, function(item)
+				return item.id == id and item.equipped
+			end) ~= nil
+		)
 end
 
 function CartController:ToggleEquipped(id: number, force: boolean?)
@@ -304,6 +381,15 @@ function CartController:ClearUnequippedItems()
 		end
 		return item.equipped
 	end)
+
+	-- local newClothing = {}
+	-- for type, item in classicClothing do
+	-- 	if item.equipped then
+	-- 		newClothing[type] = item
+	-- 	end
+	-- end
+
+	-- classicClothing = newClothing
 end
 
 local function InitialCharacterLoad(char: Model)
@@ -311,23 +397,7 @@ local function InitialCharacterLoad(char: Model)
 	local character = player.Character or player.CharacterAdded:Wait()
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 
-	cartItems = {}
-	cartSet = {}
-
-	local description = humanoid:GetAppliedDescription()
-	for i, accessory in description:GetAccessories(true) do
-		table.insert(cartItems, NewCartItem(accessory.AssetId))
-		cartSet[accessory.AssetId] = true
-	end
-
-	bodyDescriptionTable = HumanoidDescription.ExtractBodyParts(description)
-	for _, part in Enum.BodyPart:GetEnumItems() :: { Enum.BodyPart } do
-		local id = bodyDescriptionTable[part.Name]
-		if id ~= 0 then
-			table.insert(cartItems, NewCartItem(id, nil, part))
-			cartSet[id] = true
-		end
-	end
+	ApplyDescription(humanoid:GetAppliedDescription())
 
 	CartController.CartUpdated:Fire(cartItems)
 end

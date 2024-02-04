@@ -1,3 +1,4 @@
+--!nolint LocalShadow
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)

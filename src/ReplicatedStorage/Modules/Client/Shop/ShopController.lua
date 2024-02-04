@@ -509,7 +509,7 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 				prompt.Triggered:Connect(function()
 					local selectedItem = CatalogUI:SelectItem():Await()
 					if selectedItem then
-						ShopEvents.UpdateStand:FireServer(roundedPosition, selectedItem)
+						ShopEvents.UpdateStand:FireServer(roundedPosition, selectedItem.id)
 					end
 				end)
 			end
@@ -520,7 +520,11 @@ local function CreateStands(shop: RenderedShop, positionMap: { [Vector3]: BasePa
 				prompt.ObjectText = ""
 				prompt.Parent = part
 				prompt.Triggered:Connect(function()
-					CartController:ToggleInCart(stand.item.id, shop.details.owner)
+					if stand.item.type == "Accessory" then
+						CartController:ToggleInCart(stand.item.id, shop.details.owner)
+					else
+						CartController:ToggleClassicClothing(stand.item.id, stand.item.type, shop.details.owner)
+					end
 				end)
 				-- prompt.Enabled = false
 			end
@@ -665,7 +669,7 @@ local function RenderStands(dt: number)
 		for roundedPosition, stand in shop.renderedStands do
 			local model = stand.renderModel
 
-			if not model then
+			if not model or not stand.item then
 				continue
 			end
 
@@ -684,7 +688,10 @@ local function RenderStands(dt: number)
 			end
 
 			local hoverAlpha = GetTweenedStandAlpha(stand.hoverPosition)
-			local position = stand.standPart.Position + Vector3.new(0, 0.5 + 0.5 * hoverAlpha, 0)
+			local positionOffset = if stand.item.type == "Accessory" then 0 else 0.8
+			local position = stand.standPart.Position
+				+ Vector3.new(0, 0.5 + 0.5 * hoverAlpha, 0)
+				+ Vector3.new(0, positionOffset, 0)
 			model:PivotTo(CFrame.new(position) * CFrame.Angles(0, stand.rotation, 0))
 		end
 	end

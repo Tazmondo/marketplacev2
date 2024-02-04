@@ -30,7 +30,17 @@ type UseMode = "Wear" | "Select"
 type DisplayMode = "Marketplace" | "Inventory" | "OutfitPane"
 type Category = "Clothing" | "Accessories" | "Characters" | "Wearing"
 
-type ClothingCategory = "Dresses & Skirts" | "Jackets" | "Shirts" | "Shorts" | "Pants" | "Sweaters" | "T-Shirts"
+type ClothingCategory =
+	"Dresses & Skirts"
+	| "Jackets"
+	| "Shirts"
+	| "Shorts"
+	| "Pants"
+	| "Sweaters"
+	| "T-Shirts"
+	| "Classic T-Shirts"
+	| "Shirts"
+	| "Pants"
 type AccessoryCategory = "Back" | "Face" | "Front" | "Head" | "Hair" | "Neck" | "Waist" | "Shoulder"
 type SubCategory = ClothingCategory | AccessoryCategory | "Wearing" | "Outfits" | "Characters"
 type SearchResult = {
@@ -67,6 +77,9 @@ local clothingOrder = {
 	Pants = 5,
 	Shorts = 6,
 	["Dresses & Skirts"] = 7,
+	["Classic T-Shirts"] = 8,
+	["Classic Shirts"] = 9,
+	["Classic Pants"] = 10,
 }
 
 local wearingOrder = {
@@ -88,6 +101,9 @@ local categories = {
 			Pants = Enum.AvatarAssetType.PantsAccessory,
 			Sweaters = Enum.AvatarAssetType.SweaterAccessory,
 			["T-Shirts"] = Enum.AvatarAssetType.TShirtAccessory,
+			["Classic T-Shirts"] = Enum.AvatarAssetType.TShirt,
+			["Classic Shirts"] = Enum.AvatarAssetType.Shirt,
+			["Classic Pants"] = Enum.AvatarAssetType.Pants,
 		},
 		Accessories = {
 			Back = Enum.AvatarAssetType.BackAccessory,
@@ -100,7 +116,7 @@ local categories = {
 			Shoulder = Enum.AvatarAssetType.ShoulderAccessory,
 		},
 		Characters = {
-			Characters = newproxy(),
+			Characters = newproxy(), -- use newproxy so we just have some unique value for comparisons
 		},
 	},
 	Inventory = {
@@ -113,7 +129,7 @@ local categories = {
 
 CatalogUI.VisibilityUpdated = Signal()
 
-local ItemSelected: Signal.Signal<number> = Signal()
+local ItemSelected: Signal.Signal<number, Types.StandType> = Signal()
 local OutfitSelected: Signal.Signal<HumanoidDescription> = Signal()
 
 local previewing = false
@@ -239,7 +255,7 @@ function RefreshResults()
 
 		item.IsLimited.Visible = isLimited
 
-		if CartController:IsInCart(result.Id) then
+		if CartController:IsEquipped(result.Id) then
 			item.Buy.Visible = true
 			item.Buy.TextLabel.Text = tostring(
 				if result.HasResellers and result.LowestResalePrice
@@ -262,10 +278,19 @@ function RefreshResults()
 		item.Activated:Connect(function()
 			if result.ItemType == "Asset" then
 				if currentUseMode == "Wear" then
-					CartController:ToggleInCart(result.Id)
+					if result.AssetType == "TShirt" or result.AssetType == "Shirt" or result.AssetType == "Pants" then
+						CartController:ToggleClassicClothing(result.Id, result.AssetType)
+					else
+						CartController:ToggleInCart(result.Id)
+					end
 					RefreshResults()
 				elseif currentUseMode == "Select" then
-					ItemSelected:Fire(result.Id)
+					local type: Types.StandType = if result.AssetType == "TShirt"
+							or result.AssetType == "Shirt"
+							or result.AssetType == "Pants"
+						then result.AssetType
+						else "Accessory"
+					ItemSelected:Fire(result.Id, type)
 				end
 			elseif result.ItemType == "Bundle" then
 				if currentUseMode == "Wear" then
@@ -504,39 +529,42 @@ function RenderWearing()
 
 	local cart = CartController:GetCartItems()
 
-	for i, cartItem in ipairs(cart) do
-		local id = cartItem.id
-		local equipped = cartItem.equipped
-
+	local function renderItem(
+		layoutOrder: number,
+		id: number,
+		equipped: boolean,
+		type: Types.StandType | Enum.BodyPart,
+		shopOwner: number?
+	)
 		local item = template:Clone()
 
 		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
 
 		item.Visible = true
 		item:SetAttribute("Temporary", true)
-		item.LayoutOrder = (if cartItem.bodyPart then 1000 else 0) + #cart - i -- so most recent additions are at the top, and body parts are at the bottom
+		item.LayoutOrder = layoutOrder -- so most recent additions are at the top, and body parts are at the bottom
 		item.UIStroke.Enabled = equipped
 
 		item.Activated:Connect(function()
 			-- Toggle equip
 			if currentUseMode == "Wear" then
 				item.UIStroke.Enabled = not item.UIStroke.Enabled
-				if not cartItem.bodyPart then
-					CartController:ToggleEquipped(id)
-				elseif cartItem.bodyPart then
-					CartController:EquipBodyPart(
-						cartItem.bodyPart,
-						if item.UIStroke.Enabled then id else nil,
-						cartItem.shopOwner
-					)
+				if typeof(type) ~= "EnumItem" then
+					if type == "Accessory" then
+						CartController:ToggleEquipped(id)
+					else
+						CartController:ToggleClassicClothing(id, type)
+					end
+				elseif typeof(type) == "EnumItem" then
+					CartController:EquipBodyPart(type, if item.UIStroke.Enabled then id else nil, shopOwner)
 				end
-			elseif currentUseMode == "Select" and not cartItem.bodyPart then
-				ItemSelected:Fire(id)
+			elseif currentUseMode == "Select" and typeof(type) ~= "EnumItem" then
+				ItemSelected:Fire(id, type)
 			end
 		end)
 
 		item.Buy.Activated:Connect(function()
-			PurchaseEvents.Asset:FireServer(id, cartItem.shopOwner)
+			PurchaseEvents.Asset:FireServer(id, shopOwner)
 		end)
 
 		item.Parent = template.Parent
@@ -562,6 +590,21 @@ function RenderWearing()
 
 			item.IsLimited.Visible = details.limited ~= nil
 		end)
+	end
+
+	for i, cartItem in ipairs(cart) do
+		local order = (if cartItem.bodyPart then 1000 else 0) + #cart - i
+		renderItem(
+			order,
+			cartItem.id,
+			cartItem.equipped,
+			if cartItem.bodyPart then cartItem.bodyPart else "Accessory",
+			cartItem.shopOwner
+		)
+	end
+
+	for clothing, item in CartController:GetClassicClothing() do
+		renderItem(-100, item.id, item.equipped, clothing :: Types.StandType)
 	end
 end
 
@@ -847,6 +890,20 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 			end
 		end
 
+		local function addClothing(description: HumanoidDescription)
+			if description.GraphicTShirt ~= 0 then
+				itemSet[description.GraphicTShirt] = "TShirt"
+			end
+			if description.Shirt ~= 0 then
+				itemSet[description.Shirt] = "Shirt"
+			end
+			if description.Pants ~= 0 then
+				itemSet[description.Pants] = "Pants"
+			end
+		end
+		addClothing(currentDescription)
+		addClothing(outfit)
+
 		if outfitPaneTracker ~= tracker then
 			return
 		end
@@ -866,14 +923,26 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 			itemElement.Owned.Visible = false
 			itemElement:SetAttribute("Temporary", true)
 			itemElement:SetAttribute("AssetId", id)
-			itemElement:SetAttribute("Accessory", typeof(itemType) == "string")
+			itemElement:SetAttribute("Purchaseable", typeof(itemType) == "string")
 			itemElement.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
 
-			itemElement.LayoutOrder = if typeof(itemType) == "string" then 0 else 1000
+			local layoutOrder
+			if typeof(itemType) == "string" then
+				if itemType == "Accessory" then
+					layoutOrder = 0
+				else
+					layoutOrder = -100
+				end
+			else
+				layoutOrder = 1000
+			end
+			itemElement.LayoutOrder = layoutOrder
 
 			itemElement.Activated:Connect(function()
 				if itemType == "Accessory" then
 					CartController:ToggleInCart(id, shopOwner)
+				elseif itemType == "TShirt" or itemType == "Shirt" or itemType == "Pants" then
+					CartController:ToggleClassicClothing(id, itemType, shopOwner)
 				else
 					assert(typeof(itemType) == "EnumItem")
 					if itemElement.UIStroke.Enabled then
@@ -913,7 +982,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 
 					itemElement.UIStroke.Enabled = inCart
 					if owned ~= nil then
-						itemElement.Buy.Visible = not owned and inCart and itemElement:GetAttribute("Accessory")
+						itemElement.Buy.Visible = not owned and inCart and itemElement:GetAttribute("Purchaseable")
 					end
 				end
 			end
@@ -1112,20 +1181,21 @@ end
 
 local selectTracker = newproxy()
 function CatalogUI:SelectItem()
-	return Future.new(function(): number?
+	return Future.new(function(): { id: number, type: Types.StandType }?
 		local tracker = newproxy()
 		selectTracker = tracker
 		CatalogUI:Hide()
 
 		CatalogUI:Display("Marketplace", "Select", true)
 
-		local selectedItem: number? = nil
+		local selectedId: number? = nil
+		local selectedType: Types.StandType? = nil
 		local parentThread = coroutine.running()
 		local selectedThread: thread
 		local visibilityThread: thread
 
 		selectedThread = task.spawn(function()
-			selectedItem = ItemSelected:Wait()
+			selectedId, selectedType = ItemSelected:Wait()
 			task.cancel(visibilityThread)
 			coroutine.resume(parentThread)
 		end)
@@ -1141,7 +1211,14 @@ function CatalogUI:SelectItem()
 		if selectTracker == tracker then
 			CatalogUI:Hide()
 
-			return selectedItem
+			if selectedId and selectedType then
+				return {
+					id = selectedId,
+					type = selectedType,
+				}
+			else
+				return nil
+			end
 		else
 			return nil
 		end

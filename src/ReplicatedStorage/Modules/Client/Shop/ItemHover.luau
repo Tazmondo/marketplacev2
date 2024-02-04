@@ -281,7 +281,25 @@ local function HandleTry()
 		return
 	end
 
-	CartController:ToggleInCart(state.selected.id, state.selected.shopOwner)
+	DataFetch.GetItemDetails(state.selected.id):After(function(data)
+		if not data then
+			return
+		end
+		if
+			data.assetType == Enum.AvatarAssetType.TShirt
+			or data.assetType == Enum.AvatarAssetType.Shirt
+			or data.assetType == Enum.AvatarAssetType.Pants
+		then
+			CartController:ToggleClassicClothing(
+				state.selected.id,
+				data.assetType.Name :: "Pants" | "Shirt" | "TShirt",
+				state.selected.shopOwner
+			)
+		else
+			CartController:ToggleInCart(state.selected.id, state.selected.shopOwner)
+		end
+	end)
+
 	SetSelected()
 end
 
