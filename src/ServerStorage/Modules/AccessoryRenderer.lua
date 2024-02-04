@@ -181,6 +181,15 @@ local function ReplicateClassicClothing(player: Player, data: ShopEvents.GetClot
 					Util.ExhaustiveMatch(data.type)
 				end
 
+				local color = Color3.fromHex("#EAB892")
+
+				description.HeadColor = color
+				description.TorsoColor = color
+				description.LeftArmColor = color
+				description.LeftLegColor = color
+				description.RightArmColor = color
+				description.RightLegColor = color
+
 				local model = Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R6)
 				local humanoid = assert(model:FindFirstChildOfClass("Humanoid"), "Inserted rig had no humanoid")
 				local HRP = assert(humanoid.RootPart, "Humanoid had no root part")
