@@ -60,6 +60,7 @@ local function SetHover(part: BasePart?, model: Model?)
 		local highlight = highlightTemplate:Clone()
 
 		local type: ItemType = if model:HasTag(Config.RenderedAccessoryTag)
+				or model:HasTag(Config.RenderedClassicClothingTag)
 			then "Item"
 			elseif model:HasTag(Config.RenderedOutfitTag) then "Outfit"
 			else error("No valid tag found.")
@@ -201,14 +202,17 @@ local function HandleMouseMove(inputObject: InputObject)
 
 	-- Allow for clicking on accessories on outfits
 	if model and model:IsA("Accessory") then
-		print(model, if model.Parent then model.Parent:HasTag(Config.RenderedOutfitTag) else nil)
 		model = model.Parent
 	end
 
 	if
 		not model
 		or not model:IsA("Model")
-		or (not model:HasTag(Config.RenderedAccessoryTag) and not model:HasTag(Config.RenderedOutfitTag))
+		or (
+			not model:HasTag(Config.RenderedAccessoryTag)
+			and not model:HasTag(Config.RenderedOutfitTag)
+			and not model:HasTag(Config.RenderedClassicClothingTag)
+		)
 	then
 		SetHover()
 		return

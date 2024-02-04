@@ -197,7 +197,7 @@ local function ReplicateClassicClothing(player: Player, data: ShopEvents.GetClot
 				HRP.Anchored = true
 				humanoid.EvaluateStateMachine = false
 				humanoid.BreakJointsOnDeath = false
-				model.Name = ""
+				model.Name = tostring(data.id)
 
 				local vectorSize = model:GetExtentsSize()
 				local maxSize = math.max(vectorSize.X, vectorSize.Y, vectorSize.Z)

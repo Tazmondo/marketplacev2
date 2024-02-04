@@ -133,6 +133,15 @@ function CartController:GetDescription()
 end
 
 function CartController:RemoveFromCart(id: number)
+	-- pairs silenced type bug
+	for key, data in pairs(classicClothing) do
+		if data.id == id then
+			classicClothing[key] = nil
+			UpdateCharacter()
+			return
+		end
+	end
+
 	local _, index = TableUtil.Find(cartItems, function(item)
 		return item.id == id
 	end)

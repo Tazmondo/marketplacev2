@@ -8,27 +8,48 @@ local CartController = require(ReplicatedStorage.Modules.Client.CartController)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
-local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local UILoader = require(script.Parent.UILoader)
 
 local gui = UILoader:GetMain().Cart
 
-local function HandleCartUpdated(cartItems: { CartController.CartItem })
+local function HandleCartUpdated()
 	local list = gui.Wrapper.Results.ListWrapper.List
 	local template = list.ItemWrapper
 
-	local unOwnedItems = TableUtil.Filter(cartItems, function(item)
-		if not item.equipped then
-			return false
-		end
+	type data = {
+		id: number,
+		shopOwner: number?,
+	}
 
+	local cartItems = CartController:GetCartItems()
+	local classicClothing = CartController:GetClassicClothing()
+
+	local cartData: { data } = {}
+
+	local function addItem(item)
+		if not item.equipped then
+			return
+		end
 		local details = DataFetch.GetItemDetails(item.id, Players.LocalPlayer):Await()
-		return details ~= nil and details.owned ~= true
-	end)
+		if details ~= nil and details.owned ~= true then
+			table.insert(cartData, {
+				id = item.id,
+				shopOwner = item.shopOwner,
+			})
+		end
+	end
+
+	for _, item in cartItems do
+		addItem(item)
+	end
+
+	for _, item in classicClothing do
+		addItem(item)
+	end
 
 	type itemTemplate = typeof(template)
 
-	local function render(i: number, item: itemTemplate, data: CartController.CartItem, destroyed: () -> boolean)
+	local function render(i: number, item: itemTemplate, data: data, destroyed: () -> boolean)
 		local assetData = DataFetch.GetItemDetails(data.id, Players.LocalPlayer):Await()
 		if destroyed() then
 			return
@@ -40,7 +61,7 @@ local function HandleCartUpdated(cartItems: { CartController.CartItem })
 
 		item.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(data.id, "150")
 		item.IsLimited.Visible = assetData.limited ~= nil
-		item.LayoutOrder = #unOwnedItems - i
+		item.LayoutOrder = #cartData - i
 
 		if assetData.price then
 			item.Buy.TextLabel.Text = tostring(assetData.price)
@@ -58,11 +79,11 @@ local function HandleCartUpdated(cartItems: { CartController.CartItem })
 		item.Visible = true
 	end
 
-	Util.RenderList(list, template, unOwnedItems, function(...)
+	Util.RenderList(list, template, cartData, function(...)
 		task.spawn(render, ...)
 	end)
 
-	gui.Visible = #unOwnedItems > 0
+	gui.Visible = #cartData > 0
 end
 
 local function Initialize()
@@ -71,7 +92,7 @@ local function Initialize()
 	CartController.CartUpdated:Connect(HandleCartUpdated)
 
 	DataFetch.ItemBought:Connect(function()
-		HandleCartUpdated(CartController:GetCartItems())
+		HandleCartUpdated()
 	end)
 end
 

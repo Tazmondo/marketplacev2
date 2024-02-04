@@ -28,7 +28,11 @@ function AccessoryCache:Get(id: number, type: Types.StandType)
 				return nil
 			end
 
-			model:AddTag(Config.RenderedAccessoryTag)
+			if type == "Accessory" then
+				model:AddTag(Config.RenderedAccessoryTag)
+			else
+				model:AddTag(Config.RenderedClassicClothingTag)
+			end
 
 			local cloned = model:Clone()
 
