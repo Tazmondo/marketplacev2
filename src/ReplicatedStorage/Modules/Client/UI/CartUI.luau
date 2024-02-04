@@ -63,6 +63,10 @@ local function HandleCartUpdated()
 		item.IsLimited.Visible = assetData.limited ~= nil
 		item.LayoutOrder = #cartData - i
 
+		if not assetData.price then
+			item.LayoutOrder += 1000
+		end
+
 		if assetData.price then
 			item.Buy.TextLabel.Text = tostring(assetData.price)
 			item.Buy.Activated:Connect(function()
