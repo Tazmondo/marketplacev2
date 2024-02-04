@@ -1,30 +1,62 @@
 local PurchaseService = {}
 
 local MarketplaceService = game:GetService("MarketplaceService")
-local MemoryStoreService = game:GetService("MemoryStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
 local DataService = require(ServerStorage.Modules.Data.DataService)
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
+local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
-
-local purchaseMemory = MemoryStoreService:GetSortedMap("Rewards")
-
-local EXPIRATION = 60 * 60 * 24 * 44 -- 44 days (max is 45, doing one less in case there's an error when setting over the maximum)
+local Future = require(ReplicatedStorage.Packages.Future)
 
 local pendingPurchases: { [Player]: number } = {}
+
+-- How long after the last purchase is made it will send the request out
+local UPDATEDELAY = 60
+
+type Update = {
+	amount: number,
+	owner: number,
+	updateThread: thread,
+}
+
+local outgoingUpdates: { [number]: Update } = {}
+
+local function SendUpdate(owner: number, amount: number)
+	return Future.new(function()
+		outgoingUpdates[owner] = nil
+		local success = DataService:SendEarnedUpdate(owner, amount):Await()
+
+		-- If it failed to save then just put it back into the queue
+		if not success then
+			RegisterUpdate(owner, amount)
+		end
+	end)
+end
+
+function RegisterUpdate(owner: number, amount: number)
+	local existing = outgoingUpdates[owner]
+	if existing then
+		amount += existing.amount
+		task.cancel(existing.updateThread)
+	end
+
+	local newData = {
+		owner = owner,
+		amount = amount,
+		updateThread = task.delay(UPDATEDELAY, SendUpdate, owner, amount),
+	}
+
+	outgoingUpdates[owner] = newData
+end
 
 local function HandlePromptFinished(player: Player, assetId: number, purchased: boolean)
 	if not purchased then
 		pendingPurchases[player] = nil
 		return
 	end
-
-	DataService:WriteData(player, function(data)
-		data.purchases += 1
-	end)
 
 	local ownerId = pendingPurchases[player]
 	if not ownerId then
@@ -43,15 +75,14 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 		experienceCut = 0.1
 	end
 
-	local cut = math.floor(itemDetails.price * experienceCut)
+	local cut = math.floor(itemDetails.price * experienceCut * Config.OwnerCut)
 
-	purchaseMemory:UpdateAsync(`{ownerId}`, function(data: number?, sortKey: number?)
-		data = data or 0
-		assert(data)
+	DataService:WriteData(player, function(data)
+		data.purchases += 1
+		data.totalSpent += itemDetails.price
+	end)
 
-		local newData = data + cut
-		return newData, newData
-	end, EXPIRATION)
+	RegisterUpdate(ownerId, cut)
 end
 
 local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwner: number?)
@@ -67,11 +98,20 @@ local function PlayerRemoving(player: Player)
 	pendingPurchases[player] = nil
 end
 
+local function HandleGameClose()
+	-- clone it so removal from the table doesnt break the loop
+	for _, update in table.clone(outgoingUpdates) do
+		task.cancel(update.updateThread)
+		SendUpdate(update.owner, update.amount):Await()
+	end
+end
+
 function PurchaseService:Initialize()
 	MarketplaceService.PromptPurchaseFinished:Connect(HandlePromptFinished)
 	PurchaseEvents.Asset:SetServerListener(HandlePurchaseAssetEvent)
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
+	game:BindToClose(HandleGameClose)
 end
 
 PurchaseService:Initialize()

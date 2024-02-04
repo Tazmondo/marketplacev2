@@ -42,7 +42,12 @@ type ShareCodeUpdate = {
 	guid: string,
 }
 
-type GlobalUpdateData = ShareCodeUpdate
+type EarnedUpdate = {
+	type: "Earned",
+	amount: number,
+}
+
+type GlobalUpdateData = ShareCodeUpdate | EarnedUpdate
 
 local profiles: { [Player]: Profile } = {}
 local cachedShops: { [number]: CachedProfile? } = {}
@@ -84,14 +89,6 @@ local function UpdateShareCode(data: Data.Data, code: number, owner: number, gui
 	shop.shareCode = code
 end
 
-local function ProcessGlobalUpdate(profile: Profile, update: GlobalUpdateData): boolean
-	if update.type == "ShareCode" then
-		UpdateShareCode(profile.Data, update.code, update.player, update.guid)
-	end
-
-	return false
-end
-
 local function UpdateLeaderstats(player: Player, data: Data.Data)
 	local stats = player:FindFirstChild("leaderstats") :: Folder?
 	if not stats then
@@ -113,7 +110,36 @@ local function UpdateLeaderstats(player: Player, data: Data.Data)
 	end
 	assert(purchases)
 
+	local earned = stats:FindFirstChild("Earned") :: IntValue?
+	if not earned then
+		local newEarned = Instance.new("IntValue")
+		newEarned.Name = "Earned"
+		newEarned.Parent = stats
+
+		earned = newEarned
+	end
+	assert(earned)
+
 	purchases.Value = data.purchases
+	earned.Value = data.totalEarned
+end
+
+local function ProcessGlobalUpdate(profile: Profile, update: GlobalUpdateData): boolean
+	if update.type == "ShareCode" then
+		UpdateShareCode(profile.Data, update.code, update.player, update.guid)
+		return true
+	elseif update.type == "Earned" then
+		print("Processing update", update)
+
+		local amount = update.amount
+		local data = profile.Data
+
+		data.currentEarned += amount
+		data.totalEarned += amount
+		return true
+	end
+
+	return false
 end
 
 local function PlayerAdded(player: Player)
@@ -135,10 +161,11 @@ local function PlayerAdded(player: Player)
 			profile.GlobalUpdates:LockActiveUpdate(update[1])
 		end
 
+		-- note that locking an active update does not immediately put it in the locked updates
+		-- it marks it as "pending" , and it is locked on the next autosave
 		for _, update in profile.GlobalUpdates:GetLockedUpdates() do
 			local id = update[1]
 			local data = update[2]
-
 			ProcessGlobalUpdate(profile, data)
 			profile.GlobalUpdates:ClearLockedUpdate(id)
 		end
@@ -149,6 +176,10 @@ local function PlayerAdded(player: Player)
 
 		profile.GlobalUpdates:ListenToNewLockedUpdate(function(updateId, data: GlobalUpdateData)
 			ProcessGlobalUpdate(profile, data)
+
+			-- processglobalupdate does not notify of updates, as it may run before the profile has loaded
+			-- so we manually update here, which will update leaderstats and replicate to client
+			DataService:WriteData(player, function() end)
 
 			profile.GlobalUpdates:ClearLockedUpdate(updateId)
 		end)
@@ -280,7 +311,7 @@ end
 
 local shareCodeRateLimit = Util.RateLimit(1, 6)
 local function GenerateNextShareCode(player: Player, targetId: number, guid: string)
-	return Future.new(function(player: Player): number?
+	return Future.new(function(): number?
 		local data = DataService:ReadOfflineData(targetId):Await()
 		if not data then
 			return
@@ -308,8 +339,8 @@ local function GenerateNextShareCode(player: Player, targetId: number, guid: str
 		end
 
 		local targetPlayer = Players:GetPlayerByUserId(targetId)
-		if targetPlayer and DataService:IsDataLoaded(player) then
-			DataService:WriteData(player, function(data)
+		if targetPlayer and DataService:IsDataLoaded(targetPlayer) then
+			DataService:WriteData(targetPlayer, function(data)
 				UpdateShareCode(data, nextNumber, targetId, guid)
 			end)
 		else
@@ -342,7 +373,7 @@ local function GenerateNextShareCode(player: Player, targetId: number, guid: str
 		UpdateShareCodeCache(nextNumber, targetId, guid)
 
 		return nextNumber
-	end, player)
+	end)
 end
 
 local function GetShareCodeData(code: number)
@@ -481,6 +512,43 @@ local function HandleDeleteOutfit(player: Player, name: string, serDescription: 
 		if outfitIndex then
 			table.remove(data.outfits, outfitIndex)
 		end
+	end)
+end
+
+function DataService:SendEarnedUpdate(owner: number, amount: number)
+	return Future.new(function(): boolean
+		local success, updates = pcall(function()
+			return ProfileStore:GlobalUpdateProfileAsync(GetKey(owner), function(globalUpdates)
+				local existingUpdate
+				for _, update in globalUpdates:GetActiveUpdates() do
+					local id = update[1]
+					local data = update[2] :: GlobalUpdateData
+					if data.type == "Earned" then
+						existingUpdate = {
+							id = id,
+							data = data,
+						}
+						break
+					end
+				end
+
+				if existingUpdate then
+					local data: EarnedUpdate = {
+						type = "Earned",
+						amount = existingUpdate.data.amount + amount,
+					}
+					globalUpdates:ChangeActiveUpdate(existingUpdate.id, data)
+				else
+					local data: EarnedUpdate = {
+						type = "Earned",
+						amount = amount,
+					}
+					globalUpdates:AddActiveUpdate(data)
+				end
+			end)
+		end)
+
+		return success == true and updates ~= nil
 	end)
 end
 

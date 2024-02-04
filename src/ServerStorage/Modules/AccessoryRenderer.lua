@@ -162,7 +162,6 @@ local function ReplicateClassicClothing(player: Player, data: ShopEvents.GetClot
 	return Future.new(function(player: Player, data: ShopEvents.GetClothingSettings): Model?
 		assert(data.type ~= "Accessory", "Tried to replicate classic clothing for an accessory")
 
-		print("making clothing model")
 		local templateModel: Model?
 
 		local clothingCache = cache[data.type]
