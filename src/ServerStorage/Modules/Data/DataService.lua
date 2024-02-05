@@ -175,13 +175,17 @@ local function PlayerAdded(player: Player)
 		end)
 
 		profile.GlobalUpdates:ListenToNewLockedUpdate(function(updateId, data: GlobalUpdateData)
-			ProcessGlobalUpdate(profile, data)
+			local success = ProcessGlobalUpdate(profile, data)
 
-			-- processglobalupdate does not notify of updates, as it may run before the profile has loaded
-			-- so we manually update here, which will update leaderstats and replicate to client
-			DataService:WriteData(player, function() end)
+			-- we may receive a globalupdate from a new server, which this old server does not know how to deal with
+			-- in this case we don't want to clear the update
+			if success then
+				-- processglobalupdate does not notify of updates, as it may run before the profile has loaded
+				-- so we manually update here, which will update leaderstats and replicate to client
+				DataService:WriteData(player, function() end)
 
-			profile.GlobalUpdates:ClearLockedUpdate(updateId)
+				profile.GlobalUpdates:ClearLockedUpdate(updateId)
+			end
 		end)
 
 		if player.Parent == Players then
