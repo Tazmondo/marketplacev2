@@ -1557,4 +1557,51 @@ export type Confirm = ScreenGui & {
 	},
 }
 
+export type Leaderboard = SurfaceGui & {
+	Profile: Frame & {
+		UIListLayout: UIListLayout,
+		Frame: Frame & {
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			List: ScrollingFrame & {
+				UIListLayout: UIListLayout,
+				Row: Frame & {
+					UIListLayout: UIListLayout,
+					UIPadding: UIPadding,
+					Thumb: ImageLabel & {
+						UICorner: UICorner,
+						UIStroke: UIStroke,
+					},
+					UICorner: UICorner,
+					Details: Frame & {
+						NameLabel: TextLabel,
+						Frame: Frame & {
+							Details: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIListLayout: UIListLayout,
+					},
+					UISizeConstraint: UISizeConstraint,
+					Rank: Frame & {
+						UIListLayout: UIListLayout,
+						TextLabel: TextLabel & {
+							UICorner: UICorner,
+						},
+					},
+				},
+			},
+		},
+		UIPadding: UIPadding,
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			UISizeConstraint: UISizeConstraint,
+			UIPadding: UIPadding,
+			Title: Frame & {
+				UIListLayout: UIListLayout,
+				MyShops: TextLabel,
+			},
+		},
+	},
+}
+
 return {}

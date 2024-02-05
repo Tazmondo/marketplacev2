@@ -225,7 +225,7 @@ function Util.RenderList<T, U>(
 		local item = template:Clone()
 		item:SetAttribute("Temporary", true)
 
-		templateCallback(i, item, data, function()
+		task.spawn(templateCallback, i, item, data, function()
 			return destroyed(item)
 		end)
 
