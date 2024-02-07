@@ -13,7 +13,9 @@ local CartController = require(ReplicatedStorage.Modules.Client.CartController)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
 local ProfileUI = require(ReplicatedStorage.Modules.Client.UI.ProfileUI)
 local ShopEditUI = require(ReplicatedStorage.Modules.Client.UI.ShopEditUI)
+local UITypes = require(ReplicatedStorage.Modules.Client.UI.UITypes)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
+local FormatNumber = require(ReplicatedStorage.Modules.Shared.FormatNumber)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local MallCFrames = require(ReplicatedStorage.Modules.Shared.MallCFrames)
@@ -36,6 +38,9 @@ local renderedAccessoryFolder = assert(
 local placeholderFolder = ReplicatedStorage.Assets["Shop Placeholders"] :: Folder
 local dynamicPlaceholder = placeholderFolder:FindFirstChild("DynamicPlaceholder")
 local shopPlaceholder = placeholderFolder:FindFirstChild("ShopPlaceholder")
+
+local shopSignTemplate = ReplicatedStorage.Assets:FindFirstChild("ShopInfo") :: Model
+assert(shopSignTemplate, "No shopsign model found in RS assets folder.")
 
 assert(dynamicPlaceholder and dynamicPlaceholder:IsA("Model"), "No dynamic shop placeholder found")
 assert(shopPlaceholder and shopPlaceholder:IsA("Model"), "No shop placeholder found")
@@ -575,6 +580,33 @@ local function LoadShopAppearance(shop: RenderedShop)
 	debug.profileend()
 end
 
+local function CreateShopSign(shop: Types.Shop)
+	local shopSign = shopSignTemplate:Clone()
+	local gui = shopSign:FindFirstChild("SurfaceGui", true) :: UITypes.ShopInfoGui
+	local guiDetails = gui.Profile.Frame.Profile
+	guiDetails.Details.NameLabel.Text = "Loading..."
+	guiDetails.Details.Details.Text = "Loading..."
+	guiDetails.Thumb.Image = Thumbs.GetHeadShot(shop.owner)
+
+	task.spawn(function()
+		local name = Players:GetNameFromUserIdAsync(shop.owner)
+		if shopSign.Parent ~= nil then
+			guiDetails.Details.NameLabel.Text = `@{name}`
+		end
+	end)
+
+	DataEvents.FetchEarned:Call(shop.owner):After(function(success, earned)
+		if not success or not earned or shopSign.Parent == nil then
+			guiDetails.Details.Details.Text = "Failed to fetch!"
+			return
+		end
+
+		guiDetails.Details.Details.Text = `R${FormatNumber.Simple.FormatCompact(earned)} Earned`
+	end)
+
+	return shopSign
+end
+
 local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMode): RenderedShop
 	DestroyPlaceholder(shopCFrame)
 
@@ -584,12 +616,18 @@ local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMo
 	local storefront = Layouts:GetStorefront(shopDetails.storefrontId)
 	local storefrontModel = storefront.modelTemplate:Clone()
 
+	local shopSign = CreateShopSign(shopDetails)
+
 	local label = storefront.getNameLabel(storefrontModel)
 	label.Text = shopDetails.name
 
 	model:PivotTo(shopCFrame * layout.attachment)
 	storefrontModel:PivotTo(shopCFrame * storefront.attachment)
 	storefrontModel.Parent = model
+
+	shopSign:PivotTo(shopCFrame) -- the pivot offset is already correctly set
+	shopSign.Parent = model
+
 	model.Parent = workspace
 
 	local shop = {

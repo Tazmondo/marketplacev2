@@ -35,4 +35,10 @@ return {
 	end, function(code)
 		return Guard.Optional(Guard.Number)(code)
 	end),
+
+	FetchEarned = Red.Function("Data_FetchEarned", function(id)
+		return Guard.Number(id)
+	end, function(earned)
+		return Guard.Optional(Guard.Number)(earned)
+	end),
 }

@@ -1604,4 +1604,30 @@ export type Leaderboard = SurfaceGui & {
 	},
 }
 
+export type ShopInfoGui = SurfaceGui & {
+	Profile: Frame & {
+		UIListLayout: UIListLayout,
+		Frame: Frame & {
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			Profile: Frame & {
+				UIPadding: UIPadding,
+				Thumb: ImageLabel & {
+					UICorner: UICorner,
+					UIStroke: UIStroke,
+				},
+				UICorner: UICorner,
+				Details: Frame & {
+					Details: TextLabel,
+					UIListLayout: UIListLayout,
+					NameLabel: TextLabel,
+				},
+				UIListLayout: UIListLayout,
+			},
+		},
+		UIPadding: UIPadding,
+		UICorner: UICorner,
+	},
+}
+
 return {}

@@ -50,7 +50,7 @@ type EarnedUpdate = {
 type GlobalUpdateData = ShareCodeUpdate | EarnedUpdate
 
 local profiles: { [Player]: Profile } = {}
-local cachedShops: { [number]: CachedProfile? } = {}
+local cachedProfiles: { [number]: CachedProfile? } = {}
 local shareCodeCache: { [number]: { owner: number, guid: string } | false } = {}
 
 local function GetKey(userId: number)
@@ -205,7 +205,7 @@ function PlayerRemoving(player: Player)
 		profile.Data.firstTime = false
 
 		-- Might not need to deep copy here, but doing it just to be safe.
-		cachedShops[player.UserId] = {
+		cachedProfiles[player.UserId] = {
 			cachedTime = tick(),
 			data = Future.new(function(): Data.Data?
 				return TableUtil.Copy(profile.Data, true)
@@ -213,6 +213,19 @@ function PlayerRemoving(player: Player)
 		}
 		profile:Release()
 	end
+end
+
+local function IsPlayerCached(id: number)
+	local player = Players:GetPlayerByUserId(id)
+	if player and profiles[player] then
+		return true
+	end
+
+	if cachedProfiles[id] then
+		return true
+	end
+
+	return false
 end
 
 function FetchOfflineData(userId: number)
@@ -240,7 +253,7 @@ function FetchOfflineData(userId: number)
 		return nil
 	end, userId)
 
-	cachedShops[userId] = {
+	cachedProfiles[userId] = {
 		cachedTime = tick(),
 		data = dataFuture,
 	}
@@ -257,7 +270,7 @@ function DataService:ReadOfflineData(userId: number, bypassCache: boolean?)
 			return profiles[player].Data
 		end
 
-		local cache = cachedShops[userId]
+		local cache = cachedProfiles[userId]
 		if cache and tick() - cache.cachedTime <= PLAYERCACHETIMEOUT and not bypassCache then
 			return cache.data:Await()
 		end
@@ -517,6 +530,21 @@ local function HandleDeleteOutfit(player: Player, name: string, serDescription: 
 	end)
 end
 
+local function HandleFetchEarned(player: Player, id: number): number?
+	if not IsPlayerCached(id) then
+		-- if the player is not cached then don't allow the client to request
+		-- this stops exploiters from spamming this endpoint and using up the request limit
+		return nil
+	end
+
+	local data = DataService:ReadOfflineData(id):Await()
+	if data then
+		return data.totalEarned
+	else
+		return nil
+	end
+end
+
 function DataService:SendEarnedUpdate(owner: number, amount: number)
 	return Future.new(function(): boolean
 		local success, updates = pcall(function()
@@ -567,6 +595,7 @@ function DataService:Initialize()
 	DataEvents.GetShopDetails:SetCallback(HandleGetShopDetails)
 	DataEvents.GetShop:SetCallback(HandleGetShop)
 	DataEvents.GenerateShareCode:SetCallback(HandleGenerateShareCode)
+	DataEvents.FetchEarned:SetCallback(HandleFetchEarned)
 end
 
 DataService:Initialize()
