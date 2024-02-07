@@ -87,7 +87,7 @@ export type Data = {
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 15,
+	version = 16,
 	firstTime = true,
 	purchases = 0,
 	totalSpent = 0,
@@ -108,19 +108,50 @@ function Data.TableToVector(vector: VectorTable): Vector3
 	return Vector3.new(vector.x, vector.y, vector.z)
 end
 
-function Data.Migrate(data: Data, ownerId: number)
-	if data.version == dataTemplate.version then
-		-- Data shape hasn't updated, no need to reconcile
-		return
-	end
+local function GreedyFillLayout(data: Data)
+	for _, shop in data.shops do
+		if not Layouts:LayoutIdExists(shop.layoutId) then
+			shop.layoutId = "Shop 1" :: LayoutData.LayoutId
+		end
+		local newLayout = Layouts:GetLayout(shop.layoutId :: LayoutData.LayoutId)
 
-	-- Specific migrations
-	if data.version < 10 then
-		-- Renamed showcases to shops
-		data.shops = (data :: any).showcases or {};
-		(data :: any).showcases = nil
-	end
+		local validStandPositions = newLayout.getValidStandPositions()
+		local validOutfitStandPositions = newLayout.getValidOutfitStandPositions()
 
+		local migratedStands: { Stand } = {}
+		local migratedOutfits: { OutfitStand } = {}
+		local oldStands = table.clone(shop.stands or {})
+		local oldOutfits = table.clone(shop.outfitStands or {})
+
+		for position, _ in validStandPositions do
+			local oldStand = table.remove(oldStands, #oldStands)
+			if not oldStand then
+				break
+			end
+			table.insert(migratedStands, {
+				assetId = oldStand.assetId,
+				roundedPosition = Data.VectorToTable(position),
+				type = (oldStand.type or "Accessory" :: Types.StandType) :: Types.StandType, -- double cast necessary here
+			})
+		end
+
+		for position, _ in validOutfitStandPositions do
+			local oldStand = table.remove(oldOutfits, #oldOutfits)
+			if not oldStand then
+				break
+			end
+			table.insert(migratedOutfits, {
+				description = oldStand.description,
+				roundedPosition = Data.VectorToTable(position),
+			})
+		end
+
+		shop.stands = migratedStands
+		shop.outfitStands = migratedOutfits
+	end
+end
+
+local function GeneralMigration(data: Data)
 	-- General migration
 	for k, v in pairs(dataTemplate) do
 		if not data[k] then
@@ -151,50 +182,22 @@ function Data.Migrate(data: Data, ownerId: number)
 			end
 		end
 	end
+end
 
-	if data.version < 11 then
-		-- Greedy fill new layouts with old layout data
-		for _, shop in data.shops do
-			if not Layouts:LayoutIdExists(shop.layoutId) then
-				shop.layoutId = "Shop 1" :: LayoutData.LayoutId
-			end
-			local newLayout = Layouts:GetLayout(shop.layoutId :: LayoutData.LayoutId)
-
-			local validStandPositions = newLayout.getValidStandPositions()
-			local validOutfitStandPositions = newLayout.getValidOutfitStandPositions()
-
-			local migratedStands: { Stand } = {}
-			local migratedOutfits: { OutfitStand } = {}
-			local oldStands = table.clone(shop.stands or {})
-			local oldOutfits = table.clone(shop.outfitStands or {})
-
-			for position, _ in validStandPositions do
-				local oldStand = table.remove(oldStands, #oldStands)
-				if not oldStand then
-					break
-				end
-				table.insert(migratedStands, {
-					assetId = oldStand.assetId,
-					roundedPosition = Data.VectorToTable(position),
-					type = (oldStand.type or "Accessory" :: Types.StandType) :: Types.StandType, -- double cast necessary here
-				})
-			end
-
-			for position, _ in validOutfitStandPositions do
-				local oldStand = table.remove(oldOutfits, #oldOutfits)
-				if not oldStand then
-					break
-				end
-				table.insert(migratedOutfits, {
-					description = oldStand.description,
-					roundedPosition = Data.VectorToTable(position),
-				})
-			end
-
-			shop.stands = migratedStands
-			shop.outfitStands = migratedOutfits
-		end
+function Data.Migrate(data: Data, ownerId: number)
+	if data.version == dataTemplate.version then
+		-- Data shape hasn't updated, no need to reconcile
+		return
 	end
+
+	-- Specific migrations
+	if data.version < 10 then
+		-- Renamed showcases to shops
+		data.shops = (data :: any).showcases or {};
+		(data :: any).showcases = nil
+	end
+
+	GeneralMigration(data)
 
 	if data.version < 12 then
 		-- added storefronts
@@ -203,6 +206,10 @@ function Data.Migrate(data: Data, ownerId: number)
 			local randomStorefront = Layouts:GetRandomStorefrontId(seed)
 			shop.storefrontId = randomStorefront
 		end
+	end
+
+	if data.version < 16 then
+		GreedyFillLayout(data)
 	end
 
 	data.version = dataTemplate.version

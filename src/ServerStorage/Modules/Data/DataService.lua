@@ -129,8 +129,6 @@ local function ProcessGlobalUpdate(profile: Profile, update: GlobalUpdateData): 
 		UpdateShareCode(profile.Data, update.code, update.player, update.guid)
 		return true
 	elseif update.type == "Earned" then
-		print("Processing update", update)
-
 		local amount = update.amount
 		local data = profile.Data
 
