@@ -31,12 +31,12 @@ local function SendUpdate(owner: number, amount: number)
 
 		-- If it failed to save then just put it back into the queue
 		if not success then
-			RegisterUpdate(owner, amount)
+			RegisterEarnedUpdate(owner, amount)
 		end
 	end)
 end
 
-function RegisterUpdate(owner: number, amount: number)
+function RegisterEarnedUpdate(owner: number, amount: number)
 	local existing = outgoingUpdates[owner]
 	if existing then
 		amount += existing.amount
@@ -58,10 +58,7 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 		return
 	end
 
-	local ownerId = pendingPurchases[player]
-	if not ownerId then
-		return
-	end
+	local ownerId: number? = pendingPurchases[player]
 	pendingPurchases[player] = nil
 
 	local itemDetails = DataFetch.GetItemDetails(assetId):Await()
@@ -82,7 +79,9 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 		data.totalSpent += itemDetails.price
 	end)
 
-	RegisterUpdate(ownerId, cut)
+	if ownerId then
+		RegisterEarnedUpdate(ownerId, cut)
+	end
 end
 
 local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwner: number?)
