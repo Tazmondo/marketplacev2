@@ -42,6 +42,8 @@ local shopPlaceholder = placeholderFolder:FindFirstChild("ShopPlaceholder")
 local shopSignTemplate = ReplicatedStorage.Assets:FindFirstChild("ShopInfo") :: Model
 assert(shopSignTemplate, "No shopsign model found in RS assets folder.")
 
+local randomTimerTemplate = ReplicatedStorage.Assets.UI.Timer :: UITypes.RandomTimer
+
 assert(dynamicPlaceholder and dynamicPlaceholder:IsA("Model"), "No dynamic shop placeholder found")
 assert(shopPlaceholder and shopPlaceholder:IsA("Model"), "No shop placeholder found")
 
@@ -90,18 +92,29 @@ type RenderedOutfit = {
 	[string]: never,
 }
 
-type ShopMode = "View" | "Edit"
+type ShopMode = "View" | "Edit" | "Random"
 
-type RenderedShop = {
+type BaseRenderedShop = {
 	renderedStands: { [Vector3]: RenderedStand },
 	renderedOutfitStands: { [Vector3]: RenderedOutfit },
 	cframe: CFrame, -- Not the pivot, but the mall cframe it is attached to.
 	currentModel: Model,
-	mode: ShopMode,
 	details: Types.Shop,
 	destroyed: boolean,
-	[string]: never,
 }
+
+type RegularShop = BaseRenderedShop & {
+	mode: "View" | "Edit",
+}
+
+type RandomShop = BaseRenderedShop & {
+	mode: "Random",
+	gui: UITypes.RandomTimer,
+	countdown: number,
+	paused: boolean,
+}
+
+type RenderedShop = RegularShop | RandomShop
 
 type PlaceholderShop = {
 	model: Model,
@@ -280,8 +293,8 @@ local function DestroyShop(shop: RenderedShop)
 	end
 
 	local index = assert(table.find(renderedShops, shop), "Destroyed shop without index.")
-	table.remove(renderedShops, index)
-	shop.destroyed = true
+	table.remove(renderedShops, index);
+	(shop :: BaseRenderedShop).destroyed = true
 	shop.currentModel:Destroy()
 
 	for _, stand in shop.renderedStands do
@@ -630,15 +643,37 @@ local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMo
 
 	model.Parent = workspace
 
-	local shop = {
-		cframe = shopCFrame,
-		currentModel = model,
-		details = shopDetails,
-		renderedStands = {},
-		renderedOutfitStands = {},
-		mode = mode,
-		destroyed = false,
-	}
+	local shop: RenderedShop
+
+	if mode == "Random" then
+		local gui = randomTimerTemplate:Clone()
+		gui.Parent = model
+
+		local newShop: RandomShop = {
+			cframe = shopCFrame,
+			currentModel = model,
+			details = shopDetails,
+			renderedStands = {},
+			renderedOutfitStands = {},
+			mode = mode,
+			destroyed = false,
+			gui = gui,
+			countdown = Config.RandomShopTimeout,
+			paused = false,
+		}
+		shop = newShop
+	else
+		local newShop: RegularShop = {
+			cframe = shopCFrame,
+			currentModel = model,
+			details = shopDetails,
+			renderedStands = {},
+			renderedOutfitStands = {},
+			mode = mode,
+			destroyed = false,
+		}
+		shop = newShop
+	end
 	LoadShopAppearance(shop)
 
 	local positionMap = {}
@@ -687,6 +722,7 @@ local function HandleLoadShop(shopCFrame: CFrame, options: ShopEvents.LoadShopSe
 	local mode: ShopMode = if options.shop.owner == Players.LocalPlayer.UserId
 			and options.spawnMode == "Player"
 		then "Edit"
+		elseif options.spawnMode == "Random" then "Random"
 		else "View"
 
 	local shop = NewShop(shopCFrame, options.shop, mode)
@@ -793,8 +829,33 @@ local function CheckCurrentShop()
 	end
 end
 
+local function TickRandomShops(dt: number)
+	for _, shop in renderedShops do
+		if shop.mode ~= "Random" then
+			continue
+		end
+
+		if not shop.paused then
+			shop.countdown = math.max(shop.countdown - dt, 0)
+		end
+		shop.gui.Frame.Timer.Progress.Size = UDim2.fromScale(shop.countdown / Config.RandomShopTimeout, 1)
+	end
+end
+
+local function HandleRandomShopTimer(cframe: CFrame, paused: boolean)
+	local existingShop = TableUtil.Find(renderedShops, function(shop)
+		return (shop.cframe.Position - cframe.Position).Magnitude < 5 and shop.mode == "Random"
+	end) :: RandomShop?
+
+	if existingShop then
+		existingShop.paused = paused
+		existingShop.countdown = Config.RandomShopTimeout
+	end
+end
+
 local function PreRender(dt: number)
 	RenderStands(dt)
+	TickRandomShops(dt)
 end
 
 local function PostSimulation()
@@ -825,6 +886,7 @@ function ShopController:Initialize()
 	RunService.PostSimulation:Connect(PostSimulation)
 
 	ShopEvents.LoadShop:SetClientListener(HandleLoadShop)
+	ShopEvents.SetRandomShopTimer:SetClientListener(HandleRandomShopTimer)
 
 	ShopEditUI.ShopSelected:Connect(function(shop)
 		if not currentEnteredShop or currentEnteredShop.mode ~= "Edit" or not shop then

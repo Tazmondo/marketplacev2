@@ -46,7 +46,7 @@ export type Shop = {
 	[string]: never,
 }
 
-export type SpawnMode = "Server" | "Player"
+export type SpawnMode = "Server" | "Player" | "Random"
 
 -- For displaying in UI
 export type NetworkShopDetails = {

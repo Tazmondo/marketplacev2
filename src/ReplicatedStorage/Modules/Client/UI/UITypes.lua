@@ -1630,4 +1630,25 @@ export type ShopInfoGui = SurfaceGui & {
 	},
 }
 
+export type RandomTimer = BillboardGui & {
+	Frame: Frame & {
+		Timer: Frame & {
+			Progress: Frame & {
+				UICorner: UICorner,
+				UIGradient: UIGradient,
+			},
+			UIListLayout: UIListLayout,
+			UIPadding: UIPadding,
+			UICorner: UICorner,
+		},
+		Title: Frame & {
+			UIListLayout: UIListLayout,
+			Label: TextLabel & {
+				UIStroke: UIStroke,
+			},
+		},
+		UIListLayout: UIListLayout,
+	},
+}
+
 return {}

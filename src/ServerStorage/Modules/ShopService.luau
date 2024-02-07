@@ -4,8 +4,11 @@ local ShopService = {}
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService("ServerStorage")
 local TextService = game:GetService("TextService")
 
+local RandomFeed = require(ServerStorage.Modules.Feed.RandomFeed)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local DataService = require(script.Parent.Data.DataService)
 local LoadedService = require(script.Parent.LoadedService)
@@ -20,6 +23,7 @@ local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local MallCFrames = require(ReplicatedStorage.Modules.Shared.MallCFrames)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
+local Future = require(ReplicatedStorage.Packages.Future)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 type ActiveShop = {
@@ -44,11 +48,18 @@ type ActiveShop = {
 	thumbId: number,
 }
 
+type RandomShop = {
+	cooldownTime: number,
+	activeShop: ActiveShop,
+}
+
 local activeShops: { ActiveShop } = {}
 
 -- Don't instance it at run-time as it can cause a race condition on client where sometimes it will find and sometimes it wont
 local accessoryReplication = ReplicatedStorage:FindFirstChild("AccessoryReplication") :: Folder
 assert(accessoryReplication, "Expected ReplicatedStorage.AccessoryReplication folder.")
+
+local placeholderShop = ReplicatedStorage.Assets["Shop Placeholders"].ShopPlaceholder :: Model
 
 local function GetActiveShopAtCFrame(cframe: CFrame): ActiveShop?
 	return TableUtil.Find(activeShops, function(shop)
@@ -208,7 +219,28 @@ local function PopulateLayoutOutfitStands(
 	return outputStands
 end
 
+-- If being replaced is true, then it wont unload on the client
+local function UnloadShop(place: ActiveShop, beingReplaced: boolean)
+	local index = table.find(activeShops, place)
+	if index then
+		table.remove(activeShops, index)
+		if not beingReplaced then
+			ShopEvents.LoadShop:FireAllClients(place.cframe)
+		end
+	else
+		warn(debug.traceback("Tried to unload a place without it existing in the place table! Should never occur."))
+	end
+end
+
 local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.SpawnMode)
+	local existingShop = TableUtil.Find(activeShops, function(shop)
+		return (shop.cframe.Position - cframe.Position).Magnitude < 5
+	end)
+
+	if existingShop then
+		UnloadShop(existingShop, true)
+	end
+
 	local layout = Layouts:GetLayout(shopDetails.layoutId)
 	local storefront = Layouts:GetStorefront(shopDetails.storefrontId)
 
@@ -242,19 +274,6 @@ local function LoadShop(cframe: CFrame, shopDetails: Types.Shop, mode: Types.Spa
 	ShopEvents.LoadShop:FireAllClients(cframe, ToNetworkShop(shop))
 
 	return shop
-end
-
--- If being replaced is true, then it wont unload on the client
-local function UnloadShop(place: ActiveShop, beingReplaced: boolean)
-	local index = table.find(activeShops, place)
-	if index then
-		table.remove(activeShops, index)
-		if not beingReplaced then
-			ShopEvents.LoadShop:FireAllClients(place.cframe)
-		end
-	else
-		warn(debug.traceback("Tried to unload a place without it existing in the place table! Should never occur."))
-	end
 end
 
 local function HandleCreatePlace(player: Player): string?
@@ -552,30 +571,8 @@ local function PlayerRemoving(player: Player)
 	end
 end
 
-local function Initialize()
-	ShopEvents.CreateShop:SetCallback(HandleCreatePlace)
-	ShopEvents.DeleteShop:SetServerListener(HandleDeleteShop)
-
-	ShopEvents.ClaimShop:SetServerListener(HandleClaimShop)
-
-	ShopEvents.UpdateStand:SetServerListener(HandleUpdateStand)
-	ShopEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
-	ShopEvents.UpdateSettings:SetServerListener(HandleUpdateShopSettings)
-	ShopEvents.UpdateLayout:SetServerListener(function(player, id)
-		HandleUpdateShopLayout(player, id :: LayoutData.LayoutId)
-	end)
-	ShopEvents.UpdateStorefront:SetServerListener(function(player, id)
-		HandleUpdateShopStorefront(player, id :: LayoutData.StorefrontId)
-	end)
-
-	Players.PlayerAdded:Connect(PlayerAdded)
-	Players.PlayerRemoving:Connect(PlayerRemoving)
-
+local function SpawnSponsoredShops()
 	task.spawn(function()
-		-- if 1 == 1 then
-		-- 	return
-		-- end
-
 		local sponsoredShops = TableUtil.Filter(MallCFrames.shops, function(shop)
 			return shop.type == "Sponsored"
 		end)
@@ -602,6 +599,105 @@ local function Initialize()
 			LoadShop(shop.cframe, details, "Server")
 		end
 	end)
+end
+
+local function CreateRandomShop(cframe: CFrame)
+	return Future.new(function(): RandomShop?
+		local nextShop = RandomFeed.GetNextShop():Await()
+		if not nextShop then
+			warn("Failed to load random shop!")
+			return
+		end
+
+		local activeShop = LoadShop(cframe, nextShop, "Random")
+
+		local randomShop: RandomShop = {
+			activeShop = activeShop,
+			cooldownTime = Config.RandomShopTimeout,
+			enteredPlayers = {},
+		}
+
+		return randomShop
+	end)
+end
+
+local function SetupRandomizedShops()
+	return Future.new(function()
+		local randomShops: { RandomShop } = {}
+
+		for _, shop in MallCFrames.shops do
+			if shop.type == "Randomized" then
+				local newShop = CreateRandomShop(shop.cframe):Await()
+				if newShop then
+					table.insert(randomShops, newShop)
+				end
+			end
+		end
+
+		local shopSize = placeholderShop:GetExtentsSize()
+		local frontAttachment = placeholderShop:FindFirstChild("FrontAttachment") :: BasePart
+		local offset = frontAttachment.CFrame:ToObjectSpace(placeholderShop:GetPivot())
+
+		RunService.Heartbeat:Connect(function(dt)
+			for i, shop in randomShops do
+				local playerInside = false
+
+				for _, player in Players:GetPlayers() do
+					local char = player.Character
+					if Util.PointInBounds(char:GetPivot().Position, shop.activeShop.cframe * offset, shopSize) then
+						playerInside = true
+						break
+					end
+				end
+
+				if not playerInside then
+					if shop.cooldownTime == Config.RandomShopTimeout then
+						ShopEvents.SetRandomShopTimer:FireAllClients(shop.activeShop.cframe, false)
+					end
+					shop.cooldownTime -= dt
+				else
+					if shop.cooldownTime ~= Config.RandomShopTimeout then
+						ShopEvents.SetRandomShopTimer:FireAllClients(shop.activeShop.cframe, true)
+					end
+					shop.cooldownTime = Config.RandomShopTimeout
+				end
+
+				if shop.cooldownTime <= 0 then
+					randomShops[i] = nil
+					CreateRandomShop(shop.activeShop.cframe):After(function(newShop)
+						if newShop then
+							randomShops[i] = newShop
+						else
+							warn("Failed to load a new random shop!")
+						end
+					end)
+				end
+			end
+		end)
+	end)
+end
+
+local function Initialize()
+	ShopEvents.CreateShop:SetCallback(HandleCreatePlace)
+	ShopEvents.DeleteShop:SetServerListener(HandleDeleteShop)
+
+	ShopEvents.ClaimShop:SetServerListener(HandleClaimShop)
+
+	ShopEvents.UpdateStand:SetServerListener(HandleUpdateStand)
+	ShopEvents.UpdateOutfitStand:SetServerListener(HandleUpdateOutfitStand)
+	ShopEvents.UpdateSettings:SetServerListener(HandleUpdateShopSettings)
+	ShopEvents.UpdateLayout:SetServerListener(function(player, id)
+		HandleUpdateShopLayout(player, id :: LayoutData.LayoutId)
+	end)
+	ShopEvents.UpdateStorefront:SetServerListener(function(player, id)
+		HandleUpdateShopStorefront(player, id :: LayoutData.StorefrontId)
+	end)
+
+	Players.PlayerAdded:Connect(PlayerAdded)
+	Players.PlayerRemoving:Connect(PlayerRemoving)
+
+	SpawnSponsoredShops()
+	SetupRandomizedShops()
 end
 
 Initialize()

@@ -85,4 +85,8 @@ return {
 	LoadShop = Red.SharedEvent("Shop_LoadShop", function(cframe, options)
 		return Guard.CFrame(cframe), options :: LoadShopSettings
 	end),
+
+	SetRandomShopTimer = Red.SharedEvent("Shop_StartRandomShopTimer", function(cframe, paused)
+		return Guard.CFrame(cframe), Guard.Boolean(paused)
+	end),
 }

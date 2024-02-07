@@ -1,7 +1,8 @@
+local Util = require(script.Parent.Util)
 local shopFolder = workspace:FindFirstChild("Mall Shops") :: Folder?
 assert(shopFolder, 'Workspace did not have a "Mall Shops" folder.')
 
-export type ShopType = "Dynamic" | "Claimable" | "Sponsored"
+export type ShopType = "Dynamic" | "Claimable" | "Sponsored" | "Randomized"
 
 type Shop = {
 	type: ShopType,
@@ -19,15 +20,16 @@ for i, child in shopFolder:GetChildren() do
 	-- They are not hidden in studio to aid with building, so hide them here.
 	child.Transparency = 1
 
-	if child.Name == "Dynamic" then
+	local name: ShopType = child.Name :: ShopType
+	if name == "Dynamic" then
 		dynamicShop = { type = "Dynamic" :: "Dynamic", cframe = child.CFrame }
-	elseif child.Name == "Sponsored" or child.Name == "Claimable" then
+	elseif name == "Sponsored" or name == "Claimable" or name == "Randomized" then
 		table.insert(shops, {
-			type = child.Name,
+			type = name,
 			cframe = child.CFrame,
 		})
 	else
-		error(`{child.Name} was not a valid shop type.`)
+		Util.ExhaustiveMatch(name)
 	end
 end
 
