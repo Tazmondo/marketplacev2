@@ -5,6 +5,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
+local NotificationEvents = require(ReplicatedStorage.Events.NotificationEvents)
+local EffectsService = require(script.Parent.EffectsService)
+local ShopService = require(script.Parent.ShopService)
 local DataService = require(ServerStorage.Modules.Data.DataService)
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
@@ -81,6 +84,18 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 
 	if ownerId then
 		RegisterEarnedUpdate(ownerId, cut)
+
+		NotificationEvents.Raised:FireClient(player, cut, ownerId)
+
+		local ownerPlayer = Players:GetPlayerByUserId(ownerId)
+		if ownerPlayer then
+			NotificationEvents.Earned:FireClient(ownerPlayer, cut)
+		end
+
+		local ownerShop = ShopService:ShopFromPlayerAndOwner(player, ownerId)
+		if ownerShop then
+			EffectsService.PurchaseEffect((ownerShop.cframe * CFrame.new(0, 10, 0)).Position)
+		end
 	end
 end
 

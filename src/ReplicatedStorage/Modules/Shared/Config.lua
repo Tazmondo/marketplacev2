@@ -69,10 +69,10 @@ local Config = {
 	-- E.g. 0.75 = 30% of the item
 	OwnerCut = 0.75,
 
-	MallSpeed = 24,
-	ShopSpeed = 18,
+	MallSpeed = 33,
+	ShopSpeed = 22,
 
-	RandomShopTimeout = 15,
+	RandomShopTimeout = 60,
 }
 
 assert(PrimaryColors[Config.DefaultPrimaryColor:ToHex()], "Default primary color was not a valid color")

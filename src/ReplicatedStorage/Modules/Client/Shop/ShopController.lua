@@ -601,7 +601,8 @@ local function CreateShopSign(shop: Types.Shop)
 	guiDetails.Details.Details.Text = "Loading..."
 	guiDetails.Thumb.Image = Thumbs.GetHeadShot(shop.owner)
 
-	task.spawn(function()
+	-- must defer or the destroyed check can "pass" before it gets parented
+	task.defer(function()
 		local name = Players:GetNameFromUserIdAsync(shop.owner)
 		if shopSign.Parent ~= nil then
 			guiDetails.Details.NameLabel.Text = `@{name}`

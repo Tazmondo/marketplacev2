@@ -23,6 +23,7 @@ local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local MallCFrames = require(ReplicatedStorage.Modules.Shared.MallCFrames)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
+
 local Future = require(ReplicatedStorage.Packages.Future)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
@@ -675,6 +676,31 @@ local function SetupRandomizedShops()
 			end
 		end)
 	end)
+end
+
+function ShopService:ShopFromPlayerAndOwner(player: Player, owner: number): ActiveShop?
+	local char = player.Character
+	if not char then
+		return
+	end
+
+	local charPos = char:GetPivot().Position
+
+	local ownerShops = TableUtil.Filter(activeShops, function(shop)
+		return shop.owner == owner
+	end)
+
+	local closestShop
+	local closestDistance = math.huge
+	for _, shop in ownerShops do
+		local distance = (shop.cframe.Position - charPos).Magnitude
+		if distance < closestDistance then
+			closestShop = shop
+			closestDistance = distance
+		end
+	end
+
+	return closestShop
 end
 
 local function Initialize()
