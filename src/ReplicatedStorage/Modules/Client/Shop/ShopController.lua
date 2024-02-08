@@ -609,7 +609,11 @@ local function CreateShopSign(shop: Types.Shop)
 	end)
 
 	DataEvents.FetchEarned:Call(shop.owner):After(function(success, earned)
-		if not success or not earned or shopSign.Parent == nil then
+		if shopSign.Parent == nil then
+			return
+		end
+
+		if not success or not earned then
 			guiDetails.Details.Details.Text = "Failed to fetch!"
 			return
 		end
