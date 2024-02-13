@@ -4,15 +4,15 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 export type LayoutId = "Shop 1" | "Shop 2" | "Shop 3" | "Shop 4" | "Shop 5" | "Shop 6" | "Shop 7" | "Shop 8" | "Shop 9"
 
 local layoutData: { [LayoutId]: number } = {
-	["Shop 1"] = 16140057720,
-	["Shop 2"] = 16140054788,
-	["Shop 3"] = 16140055046,
-	["Shop 4"] = 16140055688,
-	["Shop 5"] = 16140057174,
-	["Shop 6"] = 16164780151,
-	["Shop 7"] = 16140056545,
-	["Shop 8"] = 16164871642,
-	["Shop 9"] = 16164871261,
+	["Shop 1"] = 16341180044,
+	["Shop 2"] = 16341180363,
+	["Shop 3"] = 16341180828,
+	["Shop 4"] = 16341181086,
+	["Shop 5"] = 16341181424,
+	["Shop 6"] = 16341181751,
+	["Shop 7"] = 16341182107,
+	["Shop 8"] = 16341182480,
+	["Shop 9"] = 16341182480,
 }
 
 TableUtil.Lock(layoutData)

@@ -72,7 +72,7 @@ local Config = {
 	MallSpeed = 33,
 	ShopSpeed = 22,
 
-	RandomShopTimeout = 60,
+	RandomShopTimeout = 20,
 }
 
 assert(PrimaryColors[Config.DefaultPrimaryColor:ToHex()], "Default primary color was not a valid color")
