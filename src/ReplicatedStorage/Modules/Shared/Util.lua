@@ -192,6 +192,44 @@ function Util.AwaitAllFuturesTupled<K, V...>(t: { [K]: Future<V...> }): Future<{
 	end, t)
 end
 
+function Util.FutureCache<Key, Value>(func: (Key) -> Future.Future<Value>, timeout: number?)
+	local cache: { [Key]: { time: number, value: Future<Value> } } = {}
+	timeout = timeout or math.huge
+	assert(timeout)
+
+	local function Get(key: Key)
+		if cache[key] and (os.clock() - cache[key].time) < timeout then
+			return cache[key].value
+		end
+
+		local future = func(key)
+		cache[key] = { value = future, time = os.clock() }
+		return future
+	end
+
+	local function Exists(key: Key)
+		return cache[key] ~= nil and (os.clock() - cache[key].time) < timeout
+	end
+
+	local function Clear(key: Key)
+		local value = cache[key] or nil -- makes return type optional
+		cache[key] = nil
+		return value
+	end
+
+	local function Overwrite(key: Key)
+		Clear(key)
+		return Get(key)
+	end
+
+	return {
+		Get = Get,
+		Exists = Exists,
+		Clear = Clear,
+		Overwrite = Overwrite,
+	}
+end
+
 -- @Quenty & @Tazmondo
 function Util.PointInBounds(point: Vector3, origin: CFrame, size: Vector3)
 	local relative = origin:PointToObjectSpace(point)
