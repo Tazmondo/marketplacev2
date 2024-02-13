@@ -12,6 +12,7 @@ local RandomFeed = require(ServerStorage.Modules.Feed.RandomFeed)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local DataService = require(script.Parent.Data.DataService)
 local LoadedService = require(script.Parent.LoadedService)
+local PlayerSales = require(script.Parent.PlayerSales)
 local SponsoredShops = require(script.Parent.SponsoredShops)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
@@ -703,6 +704,24 @@ function ShopService:ShopFromPlayerAndOwner(player: Player, owner: number): Acti
 	return closestShop
 end
 
+local passRateLimit = Util.RateLimit(5, 30)
+local function HandleGetOwnerPasses(player: Player, owner: number): { Types.Pass }
+	local ownerShop = TableUtil.Find(activeShops, function(shop)
+		return shop.owner == owner
+	end)
+
+	if not ownerShop then
+		warn("Fetching passes for an unloaded shop")
+		-- server does not know about dynamic shops
+		-- spamming can put pressure on proxy server, so rate limit
+		if not passRateLimit(player) then
+			return {}
+		end
+	end
+
+	return PlayerSales.GetPasses(owner):Await()
+end
+
 local function Initialize()
 	ShopEvents.CreateShop:SetCallback(HandleCreatePlace)
 	ShopEvents.DeleteShop:SetServerListener(HandleDeleteShop)
@@ -718,6 +737,7 @@ local function Initialize()
 	ShopEvents.UpdateStorefront:SetServerListener(function(player, id)
 		HandleUpdateShopStorefront(player, id :: LayoutData.StorefrontId)
 	end)
+	ShopEvents.GetOwnerPasses:SetCallback(HandleGetOwnerPasses)
 
 	Players.PlayerAdded:Connect(PlayerAdded)
 	Players.PlayerRemoving:Connect(PlayerRemoving)

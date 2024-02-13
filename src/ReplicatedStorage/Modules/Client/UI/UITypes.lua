@@ -1662,4 +1662,18 @@ export type RandomTimer = BillboardGui & {
 	},
 }
 
+export type Passes = SurfaceGui & {
+	ScrollingFrame: ScrollingFrame & {
+		UIListLayout: UIListLayout,
+		Donate: TextButton & {
+			TextLabel: TextLabel,
+			UICorner: UICorner,
+			UIStroke: UIStroke,
+			UIPadding: UIPadding,
+			UIListLayout: UIListLayout,
+		},
+		UIPadding: UIPadding,
+	},
+}
+
 return {}

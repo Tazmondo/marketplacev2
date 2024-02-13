@@ -25,6 +25,14 @@ type Update = {
 	updateThread: thread,
 }
 
+type PassProductInfo = {
+	PriceInRobux: number,
+	Creator: {
+		CreatorTargetId: number,
+	},
+	Name: string,
+}
+
 local outgoingUpdates: { [number]: Update } = {}
 
 local function SendUpdate(owner: number, amount: number)
@@ -55,6 +63,33 @@ function RegisterEarnedUpdate(owner: number, amount: number)
 	outgoingUpdates[owner] = newData
 end
 
+local function DispatchEarnedEffect(buyer: Player, seller: number, amount: number)
+	NotificationEvents.Raised:FireClient(buyer, amount, seller)
+
+	local ownerPlayer = Players:GetPlayerByUserId(seller)
+	if ownerPlayer then
+		NotificationEvents.Earned:FireClient(ownerPlayer, amount)
+	end
+
+	local ownerShop = ShopService:ShopFromPlayerAndOwner(buyer, seller)
+	if ownerShop then
+		EffectsService.PurchaseEffect((ownerShop.cframe * CFrame.new(0, 10, 0)).Position)
+	end
+
+	RegisterEarnedUpdate(seller, amount)
+end
+
+local function AddPurchase(player: Player, price: number)
+	local bux = price * Config.BuxMultiplier
+
+	DataService:WriteData(player, function(data)
+		data.purchases += 1
+		data.totalSpent += price
+		data.totalEarned += bux
+		data.currentEarned += bux
+	end)
+end
+
 local function HandlePromptFinished(player: Player, assetId: number, purchased: boolean)
 	if not purchased then
 		pendingPurchases[player] = nil
@@ -69,33 +104,11 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 		return
 	end
 
-	local experienceCut = 0.4
-	if itemDetails.standType and itemDetails.standType ~= "Accessory" then
-		-- Classic clothing only gives us 10%, while all other assets give 40%
-		experienceCut = 0.1
-	end
-
-	local cut = math.floor(itemDetails.price * experienceCut * Config.OwnerCut)
-
-	DataService:WriteData(player, function(data)
-		data.purchases += 1
-		data.totalSpent += itemDetails.price
-	end)
+	AddPurchase(player, itemDetails.price)
 
 	if ownerId then
-		RegisterEarnedUpdate(ownerId, cut)
-
-		NotificationEvents.Raised:FireClient(player, cut, ownerId)
-
-		local ownerPlayer = Players:GetPlayerByUserId(ownerId)
-		if ownerPlayer then
-			NotificationEvents.Earned:FireClient(ownerPlayer, cut)
-		end
-
-		local ownerShop = ShopService:ShopFromPlayerAndOwner(player, ownerId)
-		if ownerShop then
-			EffectsService.PurchaseEffect((ownerShop.cframe * CFrame.new(0, 10, 0)).Position)
-		end
+		local ownerBuxEarned = itemDetails.price * Config.BuxMultiplier
+		DispatchEarnedEffect(player, ownerId, ownerBuxEarned)
 	end
 end
 
@@ -106,6 +119,23 @@ local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwn
 
 	-- When we get exclusive deals we will need to secure this so users can't buy the exclusive assets.
 	MarketplaceService:PromptPurchase(player, assetId)
+end
+
+local function HandleDonationFinished(player: Player, assetId: number, purchased: boolean)
+	if not purchased then
+		return
+	end
+
+	local info = MarketplaceService:GetProductInfo(assetId, Enum.InfoType.GamePass) :: PassProductInfo
+
+	AddPurchase(player, info.PriceInRobux)
+
+	local ownerBuxEarned = info.PriceInRobux * 2
+	DispatchEarnedEffect(player, info.Creator.CreatorTargetId, ownerBuxEarned)
+end
+
+local function HandleDonateEvent(player: Player, id: number)
+	MarketplaceService:PromptGamePassPurchase(player, id)
 end
 
 local function PlayerRemoving(player: Player)
@@ -122,7 +152,10 @@ end
 
 function PurchaseService:Initialize()
 	MarketplaceService.PromptPurchaseFinished:Connect(HandlePromptFinished)
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(HandleDonationFinished)
+
 	PurchaseEvents.Asset:SetServerListener(HandlePurchaseAssetEvent)
+	PurchaseEvents.Donate:SetServerListener(HandleDonateEvent)
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 	game:BindToClose(HandleGameClose)

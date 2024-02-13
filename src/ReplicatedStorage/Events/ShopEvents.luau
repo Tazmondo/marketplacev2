@@ -89,4 +89,10 @@ return {
 	SetRandomShopTimer = Red.SharedEvent("Shop_StartRandomShopTimer", function(cframe, paused)
 		return Guard.CFrame(cframe), Guard.Boolean(paused)
 	end),
+
+	GetOwnerPasses = Red.Function("Shop_OwnerPasses", function(owner)
+		return Guard.Number(owner)
+	end, function(passes)
+		return passes :: { Types.Pass }
+	end),
 }

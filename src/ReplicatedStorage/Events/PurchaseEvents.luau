@@ -6,4 +6,8 @@ return {
 	Asset = Red.SharedEvent("Purchase_Asset", function(id, owner)
 		return Guard.Number(id), Guard.Optional(Guard.Number)(owner)
 	end),
+
+	Donate = Red.SharedEvent("Purchase_Donate", function(id)
+		return Guard.Number(id)
+	end),
 }

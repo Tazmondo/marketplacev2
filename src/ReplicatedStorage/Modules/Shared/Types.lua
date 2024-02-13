@@ -101,6 +101,12 @@ function GuardHumanoidDescriptionAccessory(accessory: unknown): HumanoidDescript
 	}
 end
 
+export type Pass = {
+	id: number,
+	name: string,
+	price: number,
+}
+
 return {
 	GuardFeed = GuardFeed,
 	GuardHumanoidDescriptionAccessory = GuardHumanoidDescriptionAccessory,

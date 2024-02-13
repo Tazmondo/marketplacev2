@@ -65,9 +65,8 @@ local Config = {
 	-- Proportion of stands used to show up on the random feed
 	RequiredProportionForRandom = 0.6,
 
-	-- The total cut of our 40% commission that owners will receive.
-	-- E.g. 0.75 = 30% of the item
-	OwnerCut = 0.75,
+	-- Mutliplied by price in robux, to get the final bux amount
+	BuxMultiplier = 2,
 
 	MallSpeed = 33,
 	ShopSpeed = 22,

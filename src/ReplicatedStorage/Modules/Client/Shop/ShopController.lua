@@ -1,5 +1,6 @@
 local ShopController = {}
 
+local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -608,6 +609,31 @@ local function CreateShopSign(shop: Types.Shop)
 		local name = Players:GetNameFromUserIdAsync(shop.owner)
 		if shopSign.Parent ~= nil then
 			guiDetails.Details.NameLabel.Text = `@{name}`
+		end
+	end)
+
+	task.defer(function()
+		local passGui = shopSign:FindFirstChild("Passes", true) :: UITypes.Passes
+		local list = passGui.ScrollingFrame
+		local template = list.Donate
+		template.Visible = false
+
+		local success, passes = ShopEvents.GetOwnerPasses:Call(shop.owner):Await()
+		if not success or shopSign.Parent == nil then
+			return
+		end
+
+		for _, pass in passes do
+			local item = template:Clone()
+			item.TextLabel.Text = `{pass.price}`
+			item.Visible = true
+			item.LayoutOrder = pass.price -- cheapest to most expensive
+
+			item.Activated:Connect(function()
+				MarketplaceService:PromptGamePassPurchase(Players.LocalPlayer, pass.id)
+			end)
+
+			item.Parent = list
 		end
 	end)
 
