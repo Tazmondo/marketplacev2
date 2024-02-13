@@ -1114,9 +1114,9 @@ function CatalogUI:Hide()
 	end
 end
 
-function CatalogUI:DisplayOutfit(outfit: HumanoidDescription)
+function CatalogUI:DisplayOutfit(outfit: HumanoidDescription, shopOwner: number)
 	CatalogUI:Display("OutfitPane", "Wear", false)
-	RenderOutfitPreviewPage(outfit)
+	RenderOutfitPreviewPage(outfit, shopOwner)
 end
 
 function CatalogUI:Display(mode: DisplayMode, useMode: UseMode, previewDisabled: boolean?)

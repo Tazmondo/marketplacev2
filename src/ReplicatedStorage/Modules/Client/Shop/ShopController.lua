@@ -364,6 +364,8 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 
 				outfit.Name = ""
 				outfit:AddTag(Config.RenderedOutfitTag)
+				outfit:SetAttribute("OwnerId", shop.details.owner)
+
 				SetDisplayVisibility(model, false)
 
 				local humanoid = outfit:FindFirstChildOfClass("Humanoid") :: Humanoid
@@ -420,7 +422,7 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 				prompt.Parent = modelPart
 
 				prompt.Triggered:Connect(function()
-					CatalogUI:DisplayOutfit(HumanoidDescription.Deserialize(stand.description))
+					CatalogUI:DisplayOutfit(HumanoidDescription.Deserialize(stand.description), shop.details.owner)
 				end)
 			end
 		end

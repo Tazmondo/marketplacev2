@@ -242,7 +242,11 @@ local function HandleClick(inputObject: InputObject)
 		local humanoid = state.hovered.model:FindFirstChildOfClass("Humanoid") :: Humanoid
 		local description =
 			assert(humanoid:FindFirstChildOfClass("HumanoidDescription"), "Outfit model had no description")
-		CatalogUI:DisplayOutfit(description)
+		local owner = state.hovered.model:GetAttribute("OwnerId")
+		if typeof(owner) ~= "number" then
+			warn("OwnerId not found", owner)
+		end
+		CatalogUI:DisplayOutfit(description, owner)
 	else
 		error("Invalid item type")
 	end
