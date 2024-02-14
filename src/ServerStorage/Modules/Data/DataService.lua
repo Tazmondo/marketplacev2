@@ -18,7 +18,7 @@ local SharedIncremental = require(script.Parent.SharedIncremental)
 
 DataService.PlayerRemoving = Signal()
 
-local STOREPREFIX = "PlayerData8"
+local STOREPREFIX = "PlayerData9"
 local PLAYERPREFIX = "Player_"
 local PLAYERCACHETIMEOUT = 60 * 15
 

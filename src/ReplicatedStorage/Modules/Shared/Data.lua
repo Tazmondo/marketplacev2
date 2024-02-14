@@ -89,7 +89,7 @@ export type Data = {
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 18,
+	version = 1,
 	firstTime = true,
 	purchases = 0,
 	sales = 0,
@@ -155,68 +155,15 @@ local function GreedyFillLayout(data: Data)
 	end
 end
 
-local function GeneralMigration(data: Data)
-	-- General migration
-	for k, v in pairs(dataTemplate) do
-		if not data[k] then
-			data[k] = v
-		end
-	end
-
-	for i, shop in data.shops do
-		for k, v in pairs(shopTemplate) do
-			if not shop[k] then
-				shop[k] = v
-			end
-		end
-
-		for i, stand in shop.stands do
-			for k, v in pairs(standTemplate) do
-				if not stand[k] then
-					stand[k] = v
-				end
-			end
-		end
-
-		for i, stand in shop.outfitStands do
-			for k, v in pairs(outfitStandTemplate) do
-				if not stand[k] then
-					stand[k] = v
-				end
-			end
-		end
-	end
-end
-
 function Data.Migrate(data: Data, ownerId: number)
 	if data.version == dataTemplate.version then
 		-- Data shape hasn't updated, no need to reconcile
 		return
 	end
 
-	-- Specific migrations
-	if data.version < 10 then
-		-- Renamed showcases to shops
-		data.shops = (data :: any).showcases or {};
-		(data :: any).showcases = nil
-	end
-
-	GeneralMigration(data)
-
-	if data.version < 12 then
-		-- added storefronts
-		for i, shop in data.shops do
-			local seed = i + ownerId
-			local randomStorefront = Layouts:GetRandomStorefrontId(seed)
-			shop.storefrontId = randomStorefront
-		end
-	end
-
-	if data.version < 16 then
-		GreedyFillLayout(data)
-	end
-
-	GeneralMigration(data)
+	-- DON'T DO GENERAL RECONCILIATIONS
+	--	honestly they are a pain to work with when you also want to make specific migrations, as you cannot be sure which fields exist
+	--	not that hard to just manually write migration code
 
 	data.version = dataTemplate.version
 end
