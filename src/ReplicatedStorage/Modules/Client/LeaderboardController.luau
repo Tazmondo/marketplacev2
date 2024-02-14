@@ -19,7 +19,7 @@ local updated = Signal()
 type LeaderboardName = LeaderboardEvents.LeaderboardName
 
 local leaderboardText: { [LeaderboardName]: string } = {
-	Earned = "%s Robux Earned",
+	Raised = "%s Robux Raised",
 	Purchases = "%s Items Purchased",
 }
 
@@ -99,7 +99,7 @@ local function RegisterLeaderboard(name: LeaderboardName)
 end
 
 local function Initialize()
-	RegisterLeaderboard("Earned")
+	RegisterLeaderboard("Raised")
 	RegisterLeaderboard("Purchases")
 
 	LeaderboardEvents.Update:SetClientListener(function(name, data)

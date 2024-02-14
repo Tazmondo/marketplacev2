@@ -79,20 +79,24 @@ export type Data = {
 	version: number,
 	firstTime: boolean,
 	purchases: number,
-	totalSpent: number,
-	totalEarned: number, -- never resets
-	currentEarned: number, -- resets upon payout
+	sales: number,
+	donationRobux: number, -- total robux received from donations
+	donationsReceived: number, -- total number of donations received
+	shopbux: number,
+	totalShopbux: number, -- lifetime shopbux earned
 }
 
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 17,
+	version = 18,
 	firstTime = true,
 	purchases = 0,
-	totalSpent = 0,
-	totalEarned = 0,
-	currentEarned = 0,
+	sales = 0,
+	donationRobux = 0,
+	donationsReceived = 0,
+	shopbux = 0,
+	totalShopbux = 0,
 }
 Data.dataTemplate = dataTemplate
 
@@ -211,6 +215,8 @@ function Data.Migrate(data: Data, ownerId: number)
 	if data.version < 16 then
 		GreedyFillLayout(data)
 	end
+
+	GeneralMigration(data)
 
 	data.version = dataTemplate.version
 end

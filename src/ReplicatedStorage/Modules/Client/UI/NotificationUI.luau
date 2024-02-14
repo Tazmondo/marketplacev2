@@ -19,6 +19,26 @@ type Notification = {
 local eventQueue: { Notification } = {}
 local displayingNotification = false
 
+local function GetName(id: number)
+	return Future.new(function(): string?
+		local player = Players:GetPlayerByUserId(id)
+		if player then
+			return player.Name
+		end
+
+		local success, name = pcall(function()
+			return Players:GetNameFromUserIdAsync(id)
+		end)
+
+		if success then
+			return name
+		else
+			warn(name)
+			return nil
+		end
+	end)
+end
+
 local function DisplayNotification(notification: Notification)
 	return Future.new(function()
 		gui.Position = invisiblePosition
@@ -50,19 +70,9 @@ local function QueueAdd(notification: Notification)
 	table.insert(eventQueue, notification)
 end
 
-local function ShowEarned(amount: number)
+local function CreateNotification(text: string)
 	local notification = {
-		text = `You earned {amount}!`,
-	}
-
-	QueueAdd(notification)
-end
-
-local function ShowRaised(amount: number, owner: number)
-	local name = Players:GetNameFromUserIdAsync(owner)
-
-	local notification = {
-		text = `You raised {amount} for @{name}!`,
+		text = text,
 	}
 
 	QueueAdd(notification)
@@ -81,8 +91,24 @@ local function Heartbeat()
 end
 
 local function Initialize()
-	NotificationEvents.Earned:SetClientListener(ShowEarned)
-	NotificationEvents.Raised:SetClientListener(ShowRaised)
+	NotificationEvents.Donated:SetClientListener(function(robux, receiver)
+		local name = GetName(receiver):Await()
+		CreateNotification(`You donated {robux} to @{name or "Not Found"}`)
+	end)
+
+	NotificationEvents.EarnedShopbux:SetClientListener(function(shopbux)
+		CreateNotification(`You earned ${shopbux} Shopbux!`)
+	end)
+
+	NotificationEvents.ReceiveDonation:SetClientListener(function(amount, giver)
+		local name = GetName(giver):Await()
+		CreateNotification(`@{name or "Not Found"} gave you a {amount} donation!`)
+	end)
+
+	NotificationEvents.ReceiveSale:SetClientListener(function(amount, buyer)
+		local name = GetName(buyer):Await()
+		CreateNotification(`@{name or "Not Found"} made a {amount} purchase in your shop!`)
+	end)
 
 	RunService.Heartbeat:Connect(Heartbeat)
 end

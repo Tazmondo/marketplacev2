@@ -130,10 +130,10 @@ local function InitializeLeaderboard(
 end
 
 local function Initialize()
-	InitializeLeaderboard("Earned", function(data)
-		return data.totalEarned
+	InitializeLeaderboard("Raised", function(data)
+		return data.donationRobux
 	end, function(data)
-		LeaderboardEvents.Update:FireAllClients("Earned", data)
+		LeaderboardEvents.Update:FireAllClients("Raised", data)
 	end)
 
 	InitializeLeaderboard("Purchases", function(data)

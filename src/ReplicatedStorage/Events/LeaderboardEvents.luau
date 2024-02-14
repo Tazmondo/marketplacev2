@@ -7,7 +7,7 @@ export type LeaderboardUpdateData = {
 	data: number,
 }
 
-export type LeaderboardName = "Earned" | "Purchases"
+export type LeaderboardName = "Raised" | "Purchases"
 
 return {
 	Update = Red.SharedEvent("Leaderboard", function(name, data)

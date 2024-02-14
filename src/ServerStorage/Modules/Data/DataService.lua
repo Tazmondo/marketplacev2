@@ -1,10 +1,9 @@
 local DataService = {}
 
-local DataStoreService = game:GetService("DataStoreService")
-local MemoryStoreService = game:GetService("MemoryStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local GlobalUpdates = require(script.Parent.GlobalUpdates)
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
@@ -14,6 +13,7 @@ local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local ProfileService = require(script.Parent.ProfileService)
+local ShareCodes = require(script.Parent.ShareCodes)
 local SharedIncremental = require(script.Parent.SharedIncremental)
 
 DataService.PlayerRemoving = Signal()
@@ -21,13 +21,9 @@ DataService.PlayerRemoving = Signal()
 local STOREPREFIX = "PlayerData8"
 local PLAYERPREFIX = "Player_"
 local PLAYERCACHETIMEOUT = 60 * 15
-local SHARECODECACHEEXPIRATION = 60 * 60 * 24 * 8 -- 8 days
 
 local ProfileStore =
 	assert(ProfileService.GetProfileStore(STOREPREFIX, Data.dataTemplate), "Failed to load profile store")
-
-local ShareCodeStore = DataStoreService:GetDataStore("ShareCodes")
-local ShareCodeMemoryStore = MemoryStoreService:GetSortedMap("ShareCodes")
 
 type Profile = typeof(assert(ProfileStore:LoadProfileAsync(...)))
 type CachedProfile = {
@@ -35,58 +31,11 @@ type CachedProfile = {
 	data: Future.Future<Data.Data?>,
 }
 
-type ShareCodeUpdate = {
-	type: "ShareCode",
-	code: number,
-	player: number,
-	guid: string,
-}
-
-type EarnedUpdate = {
-	type: "Earned",
-	amount: number,
-}
-
-type GlobalUpdateData = ShareCodeUpdate | EarnedUpdate
-
 local profiles: { [Player]: Profile } = {}
 local cachedProfiles: { [number]: CachedProfile? } = {}
-local shareCodeCache: { [number]: { owner: number, guid: string } | false } = {}
 
 local function GetKey(userId: number)
 	return PLAYERPREFIX .. userId
-end
-
-local function UpdateShareCodeCache(code: number, owner: number, guid: string)
-	return Future.new(function()
-		local tries = 0
-		while true do
-			local success = pcall(function()
-				ShareCodeMemoryStore:SetAsync(tostring(code), {
-					owner = owner,
-					guid = guid,
-				}, SHARECODECACHEEXPIRATION)
-			end)
-			if success then
-				return
-			end
-
-			tries += 1
-			task.wait(2 ^ tries)
-		end
-	end)
-end
-
-local function UpdateShareCode(data: Data.Data, code: number, owner: number, guid: string)
-	local shop = TableUtil.Find(data.shops, function(shop)
-		return shop.GUID == guid
-	end)
-
-	if not shop then
-		return
-	end
-
-	shop.shareCode = code
 end
 
 local function UpdateLeaderstats(player: Player, data: Data.Data)
@@ -110,10 +59,10 @@ local function UpdateLeaderstats(player: Player, data: Data.Data)
 	end
 	assert(purchases)
 
-	local earned = stats:FindFirstChild("Earned") :: IntValue?
+	local earned = stats:FindFirstChild("Raised") :: IntValue?
 	if not earned then
 		local newEarned = Instance.new("IntValue")
-		newEarned.Name = "Earned"
+		newEarned.Name = "Raised"
 		newEarned.Parent = stats
 
 		earned = newEarned
@@ -121,23 +70,7 @@ local function UpdateLeaderstats(player: Player, data: Data.Data)
 	assert(earned)
 
 	purchases.Value = data.purchases
-	earned.Value = data.totalEarned
-end
-
-local function ProcessGlobalUpdate(profile: Profile, update: GlobalUpdateData): boolean
-	if update.type == "ShareCode" then
-		UpdateShareCode(profile.Data, update.code, update.player, update.guid)
-		return true
-	elseif update.type == "Earned" then
-		local amount = update.amount
-		local data = profile.Data
-
-		data.currentEarned += amount
-		data.totalEarned += amount
-		return true
-	end
-
-	return false
+	earned.Value = data.donationRobux
 end
 
 local function PlayerAdded(player: Player)
@@ -164,16 +97,16 @@ local function PlayerAdded(player: Player)
 		for _, update in profile.GlobalUpdates:GetLockedUpdates() do
 			local id = update[1]
 			local data = update[2]
-			ProcessGlobalUpdate(profile, data)
+			GlobalUpdates.ProcessGlobalUpdate(profile.Data, data)
 			profile.GlobalUpdates:ClearLockedUpdate(id)
 		end
 
-		profile.GlobalUpdates:ListenToNewActiveUpdate(function(updateId, data: GlobalUpdateData)
+		profile.GlobalUpdates:ListenToNewActiveUpdate(function(updateId, data: GlobalUpdates.Update)
 			profile.GlobalUpdates:LockActiveUpdate(updateId)
 		end)
 
-		profile.GlobalUpdates:ListenToNewLockedUpdate(function(updateId, data: GlobalUpdateData)
-			local success = ProcessGlobalUpdate(profile, data)
+		profile.GlobalUpdates:ListenToNewLockedUpdate(function(updateId, data: GlobalUpdates.Update)
+			local success = GlobalUpdates.ProcessGlobalUpdate(profile.Data, data)
 
 			-- we may receive a globalupdate from a new server, which this old server does not know how to deal with
 			-- in this case we don't want to clear the update
@@ -239,12 +172,12 @@ function FetchOfflineData(userId: number)
 			for _, update in profile.GlobalUpdates:GetActiveUpdates() do
 				local data = update[2]
 
-				ProcessGlobalUpdate(profile, data)
+				GlobalUpdates.ProcessGlobalUpdate(profile.Data, data)
 			end
 			for _, update in profile.GlobalUpdates:GetLockedUpdates() do
 				local data = update[2]
 
-				ProcessGlobalUpdate(profile, data)
+				GlobalUpdates.ProcessGlobalUpdate(profile.Data, data)
 			end
 
 			return profile.Data
@@ -356,87 +289,23 @@ local function GenerateNextShareCode(player: Player, targetId: number, guid: str
 		local targetPlayer = Players:GetPlayerByUserId(targetId)
 		if targetPlayer and DataService:IsDataLoaded(targetPlayer) then
 			DataService:WriteData(targetPlayer, function(data)
-				UpdateShareCode(data, nextNumber, targetId, guid)
+				ShareCodes.UpdatePlayerData(data, nextNumber, targetId, guid)
 			end)
 		else
 			ProfileStore:GlobalUpdateProfileAsync(GetKey(targetId), function(globalUpdates)
-				local data: GlobalUpdateData = {
-					type = "ShareCode",
-					code = nextNumber,
-					player = targetId,
-					guid = guid,
-				}
-
-				globalUpdates:AddActiveUpdate(data)
+				GlobalUpdates.CreateShareCodeUpdate(globalUpdates, targetId, nextNumber, guid)
 			end)
 		end
 
-		task.spawn(function()
-			local tries = 0
-			repeat
-				local success = pcall(function()
-					ShareCodeStore:SetAsync(tostring(nextNumber), {
-						owner = targetId,
-						guid = guid,
-					})
-				end)
-				tries += 1
-				task.wait(2 ^ tries)
-			until success == true
-		end)
-
-		UpdateShareCodeCache(nextNumber, targetId, guid)
+		ShareCodes.CreateShareCode(nextNumber, targetId, guid)
 
 		return nextNumber
 	end)
 end
 
-local function GetShareCodeData(code: number)
-	return Future.new(function(): (number?, string?)
-		local localCached = shareCodeCache[code]
-		if localCached ~= nil then
-			if typeof(localCached) == "boolean" then
-				return nil
-			end
-			return localCached.owner, localCached.guid
-		end
-
-		local owner: number
-		local guid: string
-
-		local cacheSuccess, cacheData = pcall(function()
-			return ShareCodeMemoryStore:GetAsync(tostring(code))
-		end)
-
-		if cacheSuccess and cacheData then
-			owner = cacheData.owner
-			guid = cacheData.guid
-		else
-			local success, codeData = pcall(function()
-				return ShareCodeStore:GetAsync(tostring(code))
-			end)
-
-			if not success or not codeData then
-				shareCodeCache[code] = false
-				return nil
-			end
-
-			owner = codeData.owner
-			guid = codeData.guid
-		end
-
-		-- Always update the cache to reset the expiry date.
-		UpdateShareCodeCache(code, owner, guid)
-
-		shareCodeCache[code] = { owner = owner, guid = guid }
-
-		return owner, guid
-	end)
-end
-
 local function ShopFromShareCode(shareCode: number)
 	return Future.new(function(shareCode): (Data.Shop?, number?)
-		local owner, guid = GetShareCodeData(shareCode):Await()
+		local owner, guid = ShareCodes.FetchWithCode(shareCode):Await()
 		if not owner or not guid then
 			return
 		end
@@ -539,46 +408,33 @@ local function HandleFetchEarned(player: Player, id: number): number?
 
 	local data = DataService:ReadOfflineData(id):Await()
 	if data then
-		return data.totalEarned
+		return data.donationRobux
 	else
 		return nil
 	end
 end
 
-function DataService:SendEarnedUpdate(owner: number, amount: number)
+function DataService:SendEarnedUpdate(owner: number, amount: number, count: number)
 	return Future.new(function(): boolean
 		local success, updates = pcall(function()
 			return ProfileStore:GlobalUpdateProfileAsync(GetKey(owner), function(globalUpdates)
-				local existingUpdate
-				for _, update in globalUpdates:GetActiveUpdates() do
-					local id = update[1]
-					local data = update[2] :: GlobalUpdateData
-					if data.type == "Earned" then
-						existingUpdate = {
-							id = id,
-							data = data,
-						}
-						break
-					end
-				end
-
-				if existingUpdate then
-					local data: EarnedUpdate = {
-						type = "Earned",
-						amount = existingUpdate.data.amount + amount,
-					}
-					globalUpdates:ChangeActiveUpdate(existingUpdate.id, data)
-				else
-					local data: EarnedUpdate = {
-						type = "Earned",
-						amount = amount,
-					}
-					globalUpdates:AddActiveUpdate(data)
-				end
+				GlobalUpdates.CreateEarnedUpdate(globalUpdates, amount, count)
 			end)
 		end)
 
-		return success == true and updates ~= nil
+		return success and updates ~= nil
+	end)
+end
+
+function DataService:SendDonationUpdate(owner: number, amount: number, count: number)
+	return Future.new(function(): boolean
+		local success, updates = pcall(function()
+			return ProfileStore:GlobalUpdateProfileAsync(GetKey(owner), function(globalUpdates)
+				GlobalUpdates.CreateDonatedUpdate(globalUpdates, amount, count)
+			end)
+		end)
+
+		return success and updates ~= nil
 	end)
 end
 

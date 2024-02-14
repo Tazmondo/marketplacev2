@@ -3,11 +3,19 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Guard = require(ReplicatedStorage.Packages.Guard)
 local Red = require(ReplicatedStorage.Packages.Red)
 return {
-	Raised = Red.SharedEvent("Notify_Raised", function(amount, owner)
-		return Guard.Number(amount), Guard.Number(owner)
+	Donated = Red.SharedEvent("Notif_Donate", function(robux, receiver)
+		return Guard.Number(robux), Guard.Number(receiver)
 	end),
 
-	Earned = Red.SharedEvent("Notify_Earned", function(amount)
-		return Guard.Number(amount)
+	ReceiveDonation = Red.SharedEvent("Notif_ReceiveDonate", function(robux, giver)
+		return Guard.Number(robux), Guard.Number(giver)
+	end),
+
+	ReceiveSale = Red.SharedEvent("Notif_Sale", function(robux, buyer)
+		return Guard.Number(robux), Guard.Number(buyer)
+	end),
+
+	EarnedShopbux = Red.SharedEvent("Notif_EarnShopbux", function(shopbux)
+		return Guard.Number(shopbux)
 	end),
 }

@@ -19,11 +19,24 @@ local pendingPurchases: { [Player]: number } = {}
 -- How long after the last purchase is made it will send the request out
 local UPDATEDELAY = 60
 
-type Update = {
+type EarnedUpdate = {
+	type: "Earned",
 	amount: number,
+	count: number,
 	owner: number,
 	updateThread: thread,
 }
+
+type DonateUpdate = {
+	type: "Donate",
+	amount: number,
+	count: number,
+	owner: number,
+	updateThread: thread,
+}
+
+type Update = EarnedUpdate | DonateUpdate
+type UpdateType = typeof(({} :: Update).type)
 
 type PassProductInfo = {
 	PriceInRobux: number,
@@ -33,42 +46,80 @@ type PassProductInfo = {
 	Name: string,
 }
 
-local outgoingUpdates: { [number]: Update } = {}
+local outgoingUpdates = {
+	Sale = {} :: { [number]: EarnedUpdate },
+	Donate = {} :: { [number]: DonateUpdate },
+}
 
-local function SendUpdate(owner: number, amount: number)
+local function SendEarnedUpdate(owner: number, amount: number, count: number)
 	return Future.new(function()
-		outgoingUpdates[owner] = nil
-		local success = DataService:SendEarnedUpdate(owner, amount):Await()
+		outgoingUpdates.Sale[owner] = nil
+		local success = DataService:SendEarnedUpdate(owner, amount, count):Await()
 
 		-- If it failed to save then just put it back into the queue
 		if not success then
-			RegisterEarnedUpdate(owner, amount)
+			RegisterEarnedUpdate(owner, amount, count)
 		end
 	end)
 end
 
-function RegisterEarnedUpdate(owner: number, amount: number)
-	local existing = outgoingUpdates[owner]
+function RegisterEarnedUpdate(owner: number, amount: number, count: number)
+	local existing = outgoingUpdates.Sale[owner]
 	if existing then
 		amount += existing.amount
 		task.cancel(existing.updateThread)
 	end
 
-	local newData = {
+	local newData: EarnedUpdate = {
+		type = "Earned" :: "Earned",
 		owner = owner,
+		count = count,
 		amount = amount,
-		updateThread = task.delay(UPDATEDELAY, SendUpdate, owner, amount),
+
+		updateThread = task.delay(UPDATEDELAY, SendEarnedUpdate, owner, amount, count),
 	}
 
-	outgoingUpdates[owner] = newData
+	outgoingUpdates.Sale[owner] = newData
 end
 
-local function DispatchEarnedEffect(buyer: Player, seller: number, amount: number)
-	NotificationEvents.Raised:FireClient(buyer, amount, seller)
+local function SendDonateUpdate(owner: number, amount: number, count: number)
+	return Future.new(function()
+		outgoingUpdates.Donate[owner] = nil
+		local success = DataService:SendDonationUpdate(owner, amount, count):Await()
+
+		if not success then
+			RegisterDonateUpdate(owner, amount, count)
+		end
+	end)
+end
+
+function RegisterDonateUpdate(owner: number, amount: number, count: number)
+	return Future.new(function()
+		local existing = outgoingUpdates.Donate[owner]
+		if existing then
+			amount += existing.amount
+			task.cancel(existing.updateThread)
+		end
+
+		local newData: DonateUpdate = {
+			type = "Donate" :: "Donate",
+			owner = owner,
+			amount = amount,
+			count = count,
+			updateThread = task.delay(UPDATEDELAY, SendDonateUpdate, owner, amount, count),
+		}
+
+		outgoingUpdates.Donate[owner] = newData
+	end)
+end
+
+local function DispatchEarnedEffect(buyer: Player, seller: number, robux: number, shopbux: number)
+	NotificationEvents.EarnedShopbux:FireClient(buyer, shopbux)
 
 	local ownerPlayer = Players:GetPlayerByUserId(seller)
 	if ownerPlayer then
-		NotificationEvents.Earned:FireClient(ownerPlayer, amount)
+		NotificationEvents.ReceiveSale:FireClient(ownerPlayer, robux, buyer.UserId)
+		NotificationEvents.EarnedShopbux:FireClient(ownerPlayer, shopbux)
 	end
 
 	local ownerShop = ShopService:ShopFromPlayerAndOwner(buyer, seller)
@@ -76,18 +127,19 @@ local function DispatchEarnedEffect(buyer: Player, seller: number, amount: numbe
 		EffectsService.PurchaseEffect((ownerShop.cframe * CFrame.new(0, 10, 0)).Position)
 	end
 
-	RegisterEarnedUpdate(seller, amount)
+	RegisterEarnedUpdate(seller, shopbux, 1)
 end
 
-local function AddPurchase(player: Player, price: number)
-	local bux = price * Config.BuxMultiplier
+local function DispatchDonationEffect(buyer: Player, seller: number, robux: number, shopbux: number)
+	NotificationEvents.Donated:FireClient(buyer, robux, seller)
+	NotificationEvents.EarnedShopbux:FireClient(buyer, shopbux)
 
-	DataService:WriteData(player, function(data)
-		data.purchases += 1
-		data.totalSpent += price
-		data.totalEarned += bux
-		data.currentEarned += bux
-	end)
+	local ownerPlayer = Players:GetPlayerByUserId(seller)
+	if ownerPlayer then
+		NotificationEvents.ReceiveDonation:FireClient(ownerPlayer, robux, buyer.UserId)
+	end
+
+	RegisterDonateUpdate(seller, robux, 1)
 end
 
 local function HandlePromptFinished(player: Player, assetId: number, purchased: boolean)
@@ -98,18 +150,25 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 
 	local ownerId: number? = pendingPurchases[player]
 	pendingPurchases[player] = nil
+	if not ownerId or ownerId == player.UserId then
+		-- don't process if players purchase from their own shops
+		return
+	end
 
 	local itemDetails = DataFetch.GetItemDetails(assetId):Await()
 	if not itemDetails or not itemDetails.price then
 		return
 	end
 
-	AddPurchase(player, itemDetails.price)
+	local bux = itemDetails.price * Config.BuxMultiplier
 
-	if ownerId then
-		local ownerBuxEarned = itemDetails.price * Config.BuxMultiplier
-		DispatchEarnedEffect(player, ownerId, ownerBuxEarned)
-	end
+	DataService:WriteData(player, function(data)
+		data.purchases += 1
+		data.shopbux += bux
+		data.totalShopbux += bux
+	end)
+
+	DispatchEarnedEffect(player, ownerId, itemDetails.price, bux)
 end
 
 local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwner: number?)
@@ -128,10 +187,14 @@ local function HandleDonationFinished(player: Player, assetId: number, purchased
 
 	local info = MarketplaceService:GetProductInfo(assetId, Enum.InfoType.GamePass) :: PassProductInfo
 
-	AddPurchase(player, info.PriceInRobux)
+	local bux = info.PriceInRobux * Config.BuxMultiplier
+	DataService:WriteData(player, function(data)
+		data.purchases += 1
+		data.shopbux += bux
+		data.totalShopbux += bux
+	end)
 
-	local ownerBuxEarned = info.PriceInRobux * 2
-	DispatchEarnedEffect(player, info.Creator.CreatorTargetId, ownerBuxEarned)
+	DispatchDonationEffect(player, info.Creator.CreatorTargetId, info.PriceInRobux, bux)
 end
 
 local function HandleDonateEvent(player: Player, id: number)
@@ -144,9 +207,14 @@ end
 
 local function HandleGameClose()
 	-- clone it so removal from the table doesnt break the loop
-	for _, update in table.clone(outgoingUpdates) do
+	for _, update in table.clone(outgoingUpdates.Sale) do
 		task.cancel(update.updateThread)
-		SendUpdate(update.owner, update.amount):Await()
+		SendEarnedUpdate(update.owner, update.amount, update.count):Await()
+	end
+
+	for _, update in table.clone(outgoingUpdates.Donate) do
+		task.cancel(update.updateThread)
+		SendDonateUpdate(update.owner, update.amount, update.count):Await()
 	end
 end
 
