@@ -54,7 +54,7 @@ local Config = {
 
 	DefaultPrimaryColor = Color3.fromRGB(215, 197, 154),
 	DefaultAccentColor = Color3.fromRGB(119, 122, 243),
-	DefaultLayout = "Shop 9" :: LayoutData.LayoutId,
+	DefaultLayout = "Shop 1" :: LayoutData.LayoutId,
 	DefaultShopThumbnail = 15664989981,
 
 	DefaultFeed = "Random" :: Types.FeedType,
