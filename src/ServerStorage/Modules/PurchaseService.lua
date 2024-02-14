@@ -139,6 +139,11 @@ local function DispatchDonationEffect(buyer: Player, seller: number, robux: numb
 		NotificationEvents.ReceiveDonation:FireClient(ownerPlayer, robux, buyer.UserId)
 	end
 
+	local ownerShop = ShopService:ShopFromPlayerAndOwner(buyer, seller)
+	if ownerShop then
+		EffectsService.PurchaseEffect((ownerShop.cframe * CFrame.new(0, 10, 0)).Position)
+	end
+
 	RegisterDonateUpdate(seller, robux, 1)
 end
 
