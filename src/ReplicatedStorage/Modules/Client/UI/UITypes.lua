@@ -1,20 +1,71 @@
 export type Nav = ScreenGui & {
-	Nav: Frame & {
-		Profile: Frame & {
+	NavWIP: Frame & {
+		Teleport: Frame & {
+			Frame: Frame & {
+				UICorner: UICorner,
+				UIListLayout: UIListLayout,
+				Icon: ImageLabel,
+				Body: TextLabel,
+			},
+			UIScale: UIScale,
 			ImageButton: ImageButton & {
 				UICorner: UICorner,
 				UIStroke: UIStroke,
 			},
+		},
+		UIListLayout: UIListLayout,
+		Sponsor: Frame & {
 			Frame: Frame & {
-				Body: TextLabel,
 				UICorner: UICorner,
 				UIListLayout: UIListLayout,
-				Shops: ImageLabel,
-				ImageLabel: ImageLabel & {
-					UICorner: UICorner,
-				},
+				Icon: ImageLabel,
+				Body: TextLabel,
 			},
 			UIScale: UIScale,
+			ImageButton: ImageButton & {
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+			},
+		},
+		UISizeConstraint: UISizeConstraint,
+		Reset: Frame & {
+			Frame: Frame & {
+				UICorner: UICorner,
+				UIListLayout: UIListLayout,
+				Icon: ImageLabel,
+				Body: TextLabel,
+			},
+			UIScale: UIScale,
+			ImageButton: ImageButton & {
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+			},
+		},
+	},
+	Nav: Frame & {
+		Inventory: Frame & {
+			Frame: Frame & {
+				UIListLayout: UIListLayout,
+				Body: TextLabel,
+				ImageLabel: ImageLabel,
+			},
+			ImageButton: ImageButton & {
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+			},
+		},
+		VIP: Frame & {
+			Frame: Frame & {
+				UIListLayout: UIListLayout,
+				Body: TextLabel & {
+					UIStroke: UIStroke,
+				},
+				ImageLabel: ImageLabel,
+			},
+			ImageButton: ImageButton & {
+				UICorner: UICorner,
+				UIStroke: UIStroke,
+			},
 		},
 		Catalog: Frame & {
 			Frame: Frame & {
@@ -29,79 +80,19 @@ export type Nav = ScreenGui & {
 		},
 		UIListLayout: UIListLayout,
 		UISizeConstraint: UISizeConstraint,
-		Inventory: Frame & {
+		Profile: Frame & {
 			Frame: Frame & {
 				UIListLayout: UIListLayout,
+				UICorner: UICorner,
+				Shops: ImageLabel,
 				Body: TextLabel,
-				ImageLabel: ImageLabel,
 			},
+			UIScale: UIScale,
 			ImageButton: ImageButton & {
 				UICorner: UICorner,
 				UIStroke: UIStroke,
 			},
 		},
-	},
-	Feed: Frame & {
-		Current: ImageButton & {
-			UIPadding: UIPadding,
-			Expand: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-				UIPadding: UIPadding,
-			},
-			UICorner: UICorner,
-			UIStroke: UIStroke,
-			Feed: TextLabel,
-			UIListLayout: UIListLayout,
-		},
-		Search: ImageButton & {
-			Creator: TextBox & {
-				UICorner: UICorner,
-				UIPadding: UIPadding,
-			},
-			UIListLayout: UIListLayout,
-			UIStroke: UIStroke,
-			UICorner: UICorner,
-			Toggle: TextButton & {
-				UICorner: UICorner,
-				TextLabel: TextLabel,
-				UIListLayout: UIListLayout,
-			},
-		},
-		ActionButton: Frame & {
-			UICorner: UICorner,
-			UIStroke: UIStroke,
-			UIListLayout: UIListLayout,
-			ImageButton: ImageButton & {
-				SearchIcon: ImageLabel & {
-					UICorner: UICorner,
-				},
-				UIListLayout: UIListLayout,
-				CloseIcon: ImageLabel & {
-					UICorner: UICorner,
-				},
-				UICorner: UICorner,
-			},
-		},
-		Frame: Frame & {
-			Editor: ImageButton & {
-				UIListLayout: UIListLayout,
-				UIPadding: UIPadding,
-				Feed: TextLabel,
-				UICorner: UICorner,
-			},
-			UIPadding: UIPadding,
-			UICorner: UICorner,
-			UIStroke: UIStroke,
-			Random: ImageButton & {
-				UIListLayout: UIListLayout,
-				UIPadding: UIPadding,
-				Feed: TextLabel,
-				UICorner: UICorner,
-			},
-			UIListLayout: UIListLayout,
-		},
-		UISizeConstraint: UISizeConstraint,
 	},
 	Discover: Frame & {
 		UIListLayout: UIListLayout,
@@ -110,36 +101,25 @@ export type Nav = ScreenGui & {
 				Controls: Frame & {
 					UIListLayout: UIListLayout,
 					UICorner: UICorner,
-					UISizeConstraint: UISizeConstraint,
+					Search: TextBox & {
+						UIPadding: UIPadding,
+						UIListLayout: UIListLayout,
+						Toggle: TextButton & {
+							UICorner: UICorner,
+							TextLabel: TextLabel,
+							UIListLayout: UIListLayout,
+						},
+						UIStroke: UIStroke,
+						UISizeConstraint: UISizeConstraint,
+						UICorner: UICorner,
+					},
 					Close: TextButton & {
+						UIListLayout: UIListLayout,
+						UICorner: UICorner,
+						UISizeConstraint: UISizeConstraint,
 						Close: ImageLabel & {
 							UICorner: UICorner,
 						},
-						UICorner: UICorner,
-						UIStroke: UIStroke,
-						UISizeConstraint: UISizeConstraint,
-						UIListLayout: UIListLayout,
-					},
-				},
-				Tabs: Frame & {
-					UISizeConstraint: UISizeConstraint,
-					UIPadding: UIPadding,
-					UICorner: UICorner,
-					UIListLayout: UIListLayout,
-					UIStroke: UIStroke,
-					Discover: TextButton & {
-						UIListLayout: UIListLayout,
-						TextLabel: TextLabel & {
-							UITextSizeConstraint: UITextSizeConstraint,
-						},
-						UICorner: UICorner,
-					},
-					Accessories: TextButton & {
-						UIListLayout: UIListLayout,
-						TextLabel: TextLabel & {
-							UITextSizeConstraint: UITextSizeConstraint,
-						},
-						UICorner: UICorner,
 					},
 				},
 				Results: Frame & {
@@ -162,7 +142,7 @@ export type Nav = ScreenGui & {
 											UICorner: UICorner,
 										},
 										UICorner: UICorner,
-										UIStroke: UIStroke,
+										UIAspectRatioConstraint: UIAspectRatioConstraint,
 										UISizeConstraint: UISizeConstraint,
 										UIListLayout: UIListLayout,
 									},
@@ -175,7 +155,7 @@ export type Nav = ScreenGui & {
 											UICorner: UICorner,
 										},
 										UICorner: UICorner,
-										UIStroke: UIStroke,
+										UIAspectRatioConstraint: UIAspectRatioConstraint,
 										UISizeConstraint: UISizeConstraint,
 										UIListLayout: UIListLayout,
 									},
@@ -203,6 +183,25 @@ export type Nav = ScreenGui & {
 						},
 					},
 				},
+			},
+		},
+	},
+	Nav2: Frame & {
+		UIListLayout: UIListLayout,
+		UISizeConstraint: UISizeConstraint,
+		Shopbux: Frame & {
+			Frame: Frame & {
+				UIPadding: UIPadding,
+				Amount: TextLabel & {
+					UITextSizeConstraint: UITextSizeConstraint,
+				},
+				UIListLayout: UIListLayout,
+				Icon: Frame & {
+					UICorner: UICorner,
+					TextLabel: TextLabel,
+					UIListLayout: UIListLayout,
+				},
+				UICorner: UICorner,
 			},
 		},
 	},
