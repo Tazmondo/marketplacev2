@@ -1,16 +1,20 @@
+local NotificationUI = {}
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
 local NotificationEvents = require(ReplicatedStorage.Events.NotificationEvents)
 local Future = require(ReplicatedStorage.Packages.Future)
 local UILoader = require(script.Parent.UILoader)
-local NotificationUI = {}
 
 local gui = UILoader:GetMain().Notification
 
 local visiblePosition = gui.Position
 local invisiblePosition = gui.Position + UDim2.fromScale(0, 1 - gui.Position.Y.Scale + gui.Size.Y.Scale)
+
+local LayoutPurchaseSound = ReplicatedStorage.Assets.Sounds.LayoutPurchase :: Sound
 
 type Notification = {
 	text: string,
@@ -88,6 +92,11 @@ local function Heartbeat()
 	displayingNotification = true
 	DisplayNotification(nextNotification):Await()
 	displayingNotification = false
+end
+
+function NotificationUI.PurchaseLayout()
+	CreateNotification(`You purchased a new shop!`)
+	SoundService:PlayLocalSound(LayoutPurchaseSound)
 end
 
 local function Initialize()

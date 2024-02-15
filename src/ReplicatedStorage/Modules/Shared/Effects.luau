@@ -1,20 +1,29 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local assets = ReplicatedStorage.Assets :: Folder
+local assets = ReplicatedStorage.Assets
+local soundFolder = assets.Sounds
+local effectFolder = assets.Effects
 
 type EffectPart = BasePart & {
 	Attachment: Attachment & {
 		ParticleEmitter: ParticleEmitter,
 	},
 }
+local sounds = {
+	ShopPurchase = soundFolder.ShopPurchase :: Sound,
+}
+
+local effects = {
+	ShopPurchase = effectFolder.ShopPurchase :: EffectPart,
+}
 
 return {
-	Purchase = {
+	ShopPurchase = {
 		Sound = function()
-			return (assets:FindFirstChild("PurchaseSound") :: Sound):Clone()
+			return sounds.ShopPurchase:Clone()
 		end,
 		VFX = function()
-			return (assets:FindFirstChild("PurchaseVFX") :: EffectPart):Clone()
+			return effects.ShopPurchase:Clone()
 		end,
 	},
 }

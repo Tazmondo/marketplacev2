@@ -23,6 +23,7 @@ local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDes
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
+local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Bin = require(ReplicatedStorage.Packages.Bin)
 
@@ -1155,7 +1156,7 @@ function CatalogUI:Display(mode: DisplayMode, useMode: UseMode, previewDisabled:
 
 	if gui.Visible and not previewDisabled then
 		cam.CameraType = Enum.CameraType.Scriptable
-		cam.FieldOfView = 20
+		cam.FieldOfView = Config.CatalogCameraFov
 		previewing = true
 	else
 		cam.CameraType = Enum.CameraType.Custom

@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local ConfirmUI = require(script.Parent.ConfirmUI)
+local NotificationUI = require(script.Parent.NotificationUI)
 local ProfileUI = require(script.Parent.ProfileUI)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
 local DataController = require(ReplicatedStorage.Modules.Client.DataController)
@@ -320,6 +321,7 @@ local function PopulateLayoutFrame()
 							newLayout.Locked.Visible = false
 							newLayout.Buy.Visible = false
 							owned = true
+							NotificationUI.PurchaseLayout()
 						end
 					end)
 				end

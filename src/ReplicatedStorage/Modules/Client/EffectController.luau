@@ -7,7 +7,7 @@ local EffectController = {}
 
 local function HandlePurchase(position: Vector3)
 	print("doing purchase vfx")
-	local purchase = Effects.Purchase
+	local purchase = Effects.ShopPurchase
 
 	local newPart = purchase.VFX()
 	local newSound = purchase.Sound()
