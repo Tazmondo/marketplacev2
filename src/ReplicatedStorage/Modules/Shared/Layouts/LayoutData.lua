@@ -33,14 +33,14 @@ end
 
 local layoutData: { [LayoutId]: Layout } = {
 	["Shop 1"] = FreeLayout(16341180044),
-	["Shop 2"] = BuyableLayout(10, 16341180363),
-	["Shop 3"] = BuyableLayout(10, 1634118082),
-	["Shop 4"] = BuyableLayout(10, 16341181086),
-	["Shop 5"] = BuyableLayout(10, 16341181424),
-	["Shop 6"] = BuyableLayout(10, 16341181751),
-	["Shop 7"] = BuyableLayout(10, 16341182107),
-	["Shop 8"] = BuyableLayout(10, 16341182480),
-	["Shop 9"] = BuyableLayout(10, 16341182480),
+	["Shop 2"] = BuyableLayout(99, 16341180363),
+	["Shop 3"] = BuyableLayout(199, 1634118082),
+	["Shop 4"] = BuyableLayout(199, 16341181086),
+	["Shop 5"] = BuyableLayout(299, 16341181424),
+	["Shop 6"] = BuyableLayout(299, 16341181751),
+	["Shop 7"] = BuyableLayout(399, 16341182107),
+	["Shop 8"] = BuyableLayout(699, 16341182480),
+	["Shop 9"] = BuyableLayout(799, 16341182480),
 }
 
 TableUtil.Lock(layoutData)
