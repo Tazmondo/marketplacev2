@@ -106,7 +106,7 @@ local function InitializeLeaderboard(
 	extractData: (Data.Data) -> number,
 	onUpdate: ({ LeaderboardUpdateData }) -> ()
 )
-	local leaderboardStore = DataStoreService:GetOrderedDataStore(leaderboardName)
+	local leaderboardStore = DataStoreService:GetOrderedDataStore(`{leaderboardName}_2`)
 
 	local getData, updated = SetupDataFetchFunction(leaderboardStore)
 
