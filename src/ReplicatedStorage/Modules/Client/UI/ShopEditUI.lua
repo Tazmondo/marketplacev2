@@ -8,6 +8,7 @@ local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local ConfirmUI = require(script.Parent.ConfirmUI)
 local ProfileUI = require(script.Parent.ProfileUI)
 local ShopEvents = require(ReplicatedStorage.Events.ShopEvents)
+local DataController = require(ReplicatedStorage.Modules.Client.DataController)
 local Base36 = require(ReplicatedStorage.Modules.Shared.Base36)
 local ShopSettingsUI = require(script.Parent.ShopSettingsUI)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
@@ -289,27 +290,57 @@ end
 
 -- Should only be called once
 local function PopulateLayoutFrame()
-	local frame = gui.LayoutPicker.ScrollingFrame
-	local template = frame.Layout
-	template.Visible = false
-	local layouts = Layouts:GetLayouts()
+	task.spawn(function()
+		local data = DataController:GetData():Await()
 
-	for id, layout in layouts do
-		local newLayout = template:Clone()
-		newLayout.Visible = true
-		newLayout.Image = `rbxassetid://{layout.displayThumbId}`
-		newLayout.Name = id
+		local frame = gui.LayoutPicker.ScrollingFrame
+		local template = frame.Layout
+		template.Visible = false
+		local layouts = Layouts:GetLayouts()
 
-		newLayout.Activated:Connect(function()
-			SwitchLayout(layout.id)
-		end)
+		for id, layout in layouts do
+			local newLayout = template:Clone()
+			newLayout.Visible = true
+			newLayout.Image = `rbxassetid://{layout.displayThumbId}`
+			newLayout.Name = id
 
-		if id == Config.DefaultLayout then
-			newLayout.LayoutOrder = -1
+			local owned = layout.shopData.type == "Free" or data.ownedLayouts[id] ~= nil
+
+			if not owned then
+				if layout.shopData.type == "Buyable" then
+					newLayout.Locked.Visible = true
+					newLayout.Buy.Visible = true
+					newLayout.Buy.TextLabel.Text = `${layout.shopData.price}`
+
+					newLayout.Buy.Activated:Connect(function()
+						-- this does shadow, and rn is not needed, but treating data as ephemeral is more resilient (i.e. what if getdata returns a cloned table in future)
+						local data = DataController:GetData():Await()
+						if data.shopbux >= layout.shopData.price then
+							DataEvents.PurchaseLayout:FireServer(id)
+							newLayout.Locked.Visible = false
+							newLayout.Buy.Visible = false
+							owned = true
+						end
+					end)
+				end
+			else
+				newLayout.Locked.Visible = false
+				newLayout.Buy.Visible = false
+			end
+
+			newLayout.Activated:Connect(function()
+				if owned then
+					SwitchLayout(layout.id)
+				end
+			end)
+
+			if id == Config.DefaultLayout then
+				newLayout.LayoutOrder = -1
+			end
+
+			newLayout.Parent = frame
 		end
-
-		newLayout.Parent = frame
-	end
+	end)
 end
 
 local function PopulateStorefrontFrame()

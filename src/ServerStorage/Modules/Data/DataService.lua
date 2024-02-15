@@ -1,3 +1,4 @@
+--!nolint LocalShadow
 local DataService = {}
 
 local Players = game:GetService("Players")
@@ -7,6 +8,8 @@ local GlobalUpdates = require(script.Parent.GlobalUpdates)
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
+local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
+local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -414,6 +417,34 @@ local function HandleFetchEarned(player: Player, id: number): number?
 	end
 end
 
+local function HandleLayoutPurchase(player: Player, layoutId: string)
+	if not Layouts:LayoutIdExists(layoutId) then
+		warn("Invalid layout id received", layoutId)
+		return
+	end
+	local data = DataService:ReadData(player):Await()
+	if not data then
+		return
+	end
+
+	local layoutId: LayoutData.LayoutId = Layouts:GuardLayoutId(layoutId)
+
+	local layout = Layouts:GetLayout(layoutId)
+	if layout.shopData.type == "Free" then
+		return
+	end
+
+	local price = layout.shopData.price
+	if data.shopbux < price or data.ownedLayouts[layoutId] == true then
+		return
+	end
+
+	DataService:WriteData(player, function(data)
+		data.shopbux -= price
+		data.ownedLayouts[layoutId] = true
+	end)
+end
+
 function DataService:SendEarnedUpdate(owner: number, amount: number, count: number)
 	return Future.new(function(): boolean
 		local success, updates = pcall(function()
@@ -452,6 +483,7 @@ function DataService:Initialize()
 	DataEvents.GetShop:SetCallback(HandleGetShop)
 	DataEvents.GenerateShareCode:SetCallback(HandleGenerateShareCode)
 	DataEvents.FetchEarned:SetCallback(HandleFetchEarned)
+	DataEvents.PurchaseLayout:SetServerListener(HandleLayoutPurchase)
 end
 
 DataService:Initialize()

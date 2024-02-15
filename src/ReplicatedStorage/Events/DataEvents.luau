@@ -41,4 +41,8 @@ return {
 	end, function(earned)
 		return Guard.Optional(Guard.Number)(earned)
 	end),
+
+	PurchaseLayout = Red.SharedEvent("Data_BuyLayout", function(layoutId)
+		return Guard.String(layoutId)
+	end),
 }

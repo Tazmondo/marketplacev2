@@ -3,16 +3,44 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 
 export type LayoutId = "Shop 1" | "Shop 2" | "Shop 3" | "Shop 4" | "Shop 5" | "Shop 6" | "Shop 7" | "Shop 8" | "Shop 9"
 
-local layoutData: { [LayoutId]: number } = {
-	["Shop 1"] = 16341180044,
-	["Shop 2"] = 16341180363,
-	["Shop 3"] = 16341180828,
-	["Shop 4"] = 16341181086,
-	["Shop 5"] = 16341181424,
-	["Shop 6"] = 16341181751,
-	["Shop 7"] = 16341182107,
-	["Shop 8"] = 16341182480,
-	["Shop 9"] = 16341182480,
+export type BuyableLayout = {
+	type: "Buyable",
+	price: number,
+	thumb: number,
+}
+
+export type FreeLayout = {
+	type: "Free",
+	thumb: number,
+}
+
+export type Layout = BuyableLayout | FreeLayout
+
+local function BuyableLayout(price: number, thumb: number): BuyableLayout
+	return {
+		type = "Buyable",
+		price = price,
+		thumb = thumb,
+	}
+end
+
+local function FreeLayout(thumb: number): FreeLayout
+	return {
+		type = "Free",
+		thumb = thumb,
+	}
+end
+
+local layoutData: { [LayoutId]: Layout } = {
+	["Shop 1"] = FreeLayout(16341180044),
+	["Shop 2"] = BuyableLayout(10, 16341180363),
+	["Shop 3"] = BuyableLayout(10, 1634118082),
+	["Shop 4"] = BuyableLayout(10, 16341181086),
+	["Shop 5"] = BuyableLayout(10, 16341181424),
+	["Shop 6"] = BuyableLayout(10, 16341181751),
+	["Shop 7"] = BuyableLayout(10, 16341182107),
+	["Shop 8"] = BuyableLayout(10, 16341182480),
+	["Shop 9"] = BuyableLayout(10, 16341182480),
 }
 
 TableUtil.Lock(layoutData)

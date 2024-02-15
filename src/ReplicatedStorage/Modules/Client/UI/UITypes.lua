@@ -766,117 +766,145 @@ export type Main = ScreenGui & {
 			Rose: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			BabyYellow: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Moss: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Mint: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			White: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			DeepBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Purple: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			DarkRed: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Lilaiq: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Cloud: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Gold: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Brown: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Beige: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Orange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Red: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Violet: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Turquois: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Blue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			IslandBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			UICorner: UICorner,
 			PastelGreen: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			LightGray: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Pink: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Midnight: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			UIGridLayout: UIGridLayout,
 			Black: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Green: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			UIPadding: UIPadding,
 			Yellow: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			PastelOrange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			LightBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 		},
 		ShareLink: Frame & {
@@ -906,6 +934,18 @@ export type Main = ScreenGui & {
 				Layout: ImageButton & {
 					UICorner: UICorner,
 					SelectedOutline: UIStroke,
+					Locked: TextButton & {
+						UIListLayout: UIListLayout,
+						UIStroke: UIStroke,
+						UICorner: UICorner,
+						Close: ImageLabel,
+					},
+					Buy: TextButton & {
+						UIListLayout: UIListLayout,
+						UISizeConstraint: UISizeConstraint,
+						TextLabel: TextLabel,
+						UICorner: UICorner,
+					},
 				},
 				UIPadding: UIPadding,
 			},
@@ -915,119 +955,157 @@ export type Main = ScreenGui & {
 			Rose: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			BabyYellow: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			UIPadding: UIPadding,
 			Mint: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
-			},
-			Gold: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Midnight: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Purple: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			DarkRed: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Lilaiq: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			White: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Beige: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Brown: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Turquois: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Orange: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Red: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Violet: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Pink: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
-			},
-			Blue: ImageButton & {
-				UICorner: UICorner,
-				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			IslandBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
-			UICorner: UICorner,
+			White: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Purple: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			DarkRed: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Lilaiq: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Violet: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Gold: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Brown: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Turquois: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Orange: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Red: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Pink: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Beige: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			Blue: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
 			DeepBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
+			},
+			UICorner: UICorner,
+			PastelGreen: ImageButton & {
+				UICorner: UICorner,
+				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			LightGray: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Cloud: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Moss: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			UIGridLayout: UIGridLayout,
 			Black: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Green: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
-			PastelGreen: ImageButton & {
+			Midnight: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			Yellow: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			PastelOrange: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 			LightBlue: ImageButton & {
 				UICorner: UICorner,
 				SelectedOutline: UIStroke,
+				VIP: ImageLabel,
 			},
 		},
+	},
+	DonateHover: Frame & {
+		UIPadding: UIPadding,
+		UISizeConstraint: UISizeConstraint,
+		UICorner: UICorner,
+		Frame: Frame & {
+			UIListLayout: UIListLayout,
+		},
+		UIAspectRatioConstraint: UIAspectRatioConstraint,
+		UIListLayout: UIListLayout,
 	},
 	Welcome: Frame & {
 		UICorner: UICorner,

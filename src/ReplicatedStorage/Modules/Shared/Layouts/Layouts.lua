@@ -14,6 +14,13 @@ export type Layout = {
 	getValidStandPositions: PositionFunction,
 	getValidOutfitStandPositions: PositionFunction,
 	getNumberOfStands: () -> number,
+
+	shopData: {
+		type: "Free",
+	} | {
+		type: "Buyable",
+		price: number,
+	},
 }
 
 export type Storefront = {
@@ -112,7 +119,7 @@ function Layouts:GetLayouts()
 end
 
 -- Cause writing the table out every time is a pain
-local function SetupLayout(id: LayoutData.LayoutId, thumbnail: number)
+local function SetupLayout(id: LayoutData.LayoutId, data: LayoutData.Layout)
 	local model = LayoutFolder:FindFirstChild(id)
 	assert(model and model:IsA("Model"), `Could not find model layout with id: {id}`)
 
@@ -140,15 +147,26 @@ local function SetupLayout(id: LayoutData.LayoutId, thumbnail: number)
 	local validPositionFunction, validOutfitPositionFunction = GenerateValidPositionFunctions(model)
 	local standAmountFunction = GenerateNumberOfStandsFunction(validPositionFunction, validOutfitPositionFunction)
 
+	local shopData = if data.type == "Buyable"
+		then {
+			type = data.type,
+			price = data.price,
+		}
+		else {
+			type = data.type,
+		}
+
 	savedLayouts[id] = TableUtil.Lock({
 		id = id,
-		displayThumbId = thumbnail,
+		displayThumbId = data.thumb,
 		modelTemplate = model,
 		hasLogo = logo ~= nil,
 		attachment = attachmentCFrame,
 		getValidStandPositions = validPositionFunction,
 		getValidOutfitStandPositions = validOutfitPositionFunction,
 		getNumberOfStands = standAmountFunction,
+
+		shopData = shopData,
 	})
 end
 
@@ -209,8 +227,8 @@ local function SetupStorefront(id: LayoutData.StorefrontId, thumbnail: number)
 	})
 end
 
-for layout: LayoutData.LayoutId, thumbnail in LayoutData.layoutData do
-	SetupLayout(layout, thumbnail)
+for layout: LayoutData.LayoutId, data in LayoutData.layoutData do
+	SetupLayout(layout, data)
 end
 
 for storefront: LayoutData.StorefrontId, thumbnail in LayoutData.storeFrontData do
@@ -218,5 +236,9 @@ for storefront: LayoutData.StorefrontId, thumbnail in LayoutData.storeFrontData 
 end
 
 assert(Layouts:LayoutIdExists(Config.DefaultLayout), `Default layout {Config.DefaultLayout} is not a valid layout.`)
+assert(
+	Layouts:GetLayout(Config.DefaultLayout).shopData.type == "Free",
+	`Default layout {Config.DefaultLayout} was not free!`
+)
 
 return Layouts

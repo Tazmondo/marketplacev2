@@ -470,6 +470,18 @@ local function HandleUpdateShopLayout(player: Player, layoutId: LayoutData.Layou
 		return
 	end
 	local newLayout = Layouts:GetLayout(layoutId)
+
+	local data = DataService:ReadData(player):Await()
+	if not data then
+		return
+	end
+
+	local owned = data.ownedLayouts[layoutId] ~= nil or newLayout.shopData.type == "Free"
+	if not owned then
+		print("Switched to layout without owning it")
+		return
+	end
+
 	shop.layout = newLayout
 	shop.stands = PopulateLayoutStands(shop.stands, newLayout.getValidStandPositions())
 	shop.outfitStands = PopulateLayoutOutfitStands(shop.outfitStands, newLayout.getValidOutfitStandPositions())

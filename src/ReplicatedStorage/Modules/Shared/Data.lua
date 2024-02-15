@@ -84,12 +84,13 @@ export type Data = {
 	donationsReceived: number, -- total number of donations received
 	shopbux: number,
 	totalShopbux: number, -- lifetime shopbux earned
+	ownedLayouts: { [string]: true },
 }
 
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 1,
+	version = 2,
 	firstTime = true,
 	purchases = 0,
 	sales = 0,
@@ -97,6 +98,7 @@ local dataTemplate: Data = {
 	donationsReceived = 0,
 	shopbux = 0,
 	totalShopbux = 0,
+	ownedLayouts = {},
 }
 Data.dataTemplate = dataTemplate
 
@@ -162,8 +164,12 @@ function Data.Migrate(data: Data, ownerId: number)
 	end
 
 	-- DON'T DO GENERAL RECONCILIATIONS
-	--	honestly they are a pain to work with when you also want to make specific migrations, as you cannot be sure which fields exist
+	--	honestly they are a pain to work with when you also want to make specific migrations, as you cannot be sure which fields exist at any point in the migration
 	--	not that hard to just manually write migration code
+
+	if data.version < 2 then
+		data.ownedLayouts = {}
+	end
 
 	data.version = dataTemplate.version
 end
