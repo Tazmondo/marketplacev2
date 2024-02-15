@@ -669,7 +669,9 @@ local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMo
 
 	model:PivotTo(shopCFrame * layout.attachment)
 	storefrontModel:PivotTo(shopCFrame * storefront.attachment)
-	storefrontModel.Parent = model
+
+	-- Storefronts are currently disabled, but didn't want to rewrite the codebase to exclude them lol
+	-- storefrontModel.Parent = model
 
 	shopSign:PivotTo(shopCFrame) -- the pivot offset is already correctly set
 	shopSign.Parent = model
