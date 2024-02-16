@@ -7,19 +7,29 @@ local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 
 local colorPickers = (StarterGui:FindFirstChild("Main") :: UITypes.Main).ControllerEdit
 
-local PrimaryColors: { [string]: boolean } = {}
-for i, v in colorPickers.PrimaryColorPicker:GetChildren() do
-	if v:IsA("ImageButton") then
-		PrimaryColors[v.BackgroundColor3:ToHex()] = true
+type Color = {
+	color: string, -- hex
+	vipOnly: boolean,
+}
+
+local function GetColors(colorList: { Instance })
+	local colors: { [string]: Color } = {}
+	for i, v in colorList do
+		if v:IsA("ImageButton") then
+			local vipLabel = v:FindFirstChild("VIP") :: ImageLabel?
+			local color = v.BackgroundColor3:ToHex()
+			colors[v.BackgroundColor3:ToHex()] = {
+				color = color,
+				vipOnly = vipLabel ~= nil and vipLabel.Visible == true,
+			}
+		end
 	end
+
+	return colors
 end
 
-local AccentColors: { [string]: boolean } = {}
-for i, v in colorPickers.AccentColorPicker:GetChildren() do
-	if v:IsA("ImageButton") then
-		AccentColors[v.BackgroundColor3:ToHex()] = true
-	end
-end
+local PrimaryColors = GetColors(colorPickers.PrimaryColorPicker:GetChildren())
+local AccentColors = GetColors(colorPickers.AccentColorPicker:GetChildren())
 
 local Config = {
 	StandTag = "DisplayStandSpot",

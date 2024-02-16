@@ -42,6 +42,7 @@ type PassProductInfo = {
 	PriceInRobux: number,
 	Creator: {
 		CreatorTargetId: number,
+		CreatorType: "User" | "Group",
 	},
 	Name: string,
 }
@@ -190,7 +191,22 @@ local function HandleDonationFinished(player: Player, assetId: number, purchased
 		return
 	end
 
-	local info = MarketplaceService:GetProductInfo(assetId, Enum.InfoType.GamePass) :: PassProductInfo
+	local success = false
+	local info
+	while not success do
+		success, info = pcall(function()
+			return MarketplaceService:GetProductInfo(assetId, Enum.InfoType.GamePass) :: PassProductInfo
+		end)
+		if not success then
+			warn(info)
+			task.wait(2)
+		end
+	end
+
+	if info.Creator.CreatorTargetId == game.CreatorId and info.Creator.CreatorType == game.CreatorType.Name then
+		-- Our gamepass was bought, so ignore.
+		return
+	end
 
 	local bux = info.PriceInRobux * Config.BuxMultiplier
 	DataService:WriteData(player, function(data)

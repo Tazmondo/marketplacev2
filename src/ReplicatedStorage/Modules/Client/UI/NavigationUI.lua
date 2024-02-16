@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 
 local ShopController = require(ReplicatedStorage.Modules.Client.Shop.ShopController)
 local MallCFrames = require(ReplicatedStorage.Modules.Shared.MallCFrames)
+local VIP = require(ReplicatedStorage.Modules.Shared.VIP)
 local CatalogUI = require(script.Parent.CatalogUI)
 local DiscoverUI = require(script.Parent.DiscoverUI)
 local UILoader = require(script.Parent.UILoader)
@@ -27,6 +28,17 @@ end
 
 local function InventoryClicked()
 	CatalogUI:Display("Inventory", "Wear")
+end
+
+local function VIPClicked()
+	VIP.PromptPurchase(Players.LocalPlayer)
+end
+
+local function RenderVIP()
+	local vip = gui.Nav.VIP
+	VIP.IsPlayerVIP(Players.LocalPlayer.UserId):After(function(isVip)
+		vip.Visible = not isVip
+	end)
 end
 
 local function RenderShopsButton()
@@ -81,6 +93,10 @@ function NavigationUI:Initialize()
 
 		RenderShopsButton()
 	end)
+
+	RenderVIP()
+	VIP.GainedVIP:Connect(RenderVIP)
+	gui.Nav.VIP.ImageButton.Activated:Connect(VIPClicked)
 end
 
 NavigationUI:Initialize()

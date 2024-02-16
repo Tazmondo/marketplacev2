@@ -24,6 +24,7 @@ local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local MallCFrames = require(ReplicatedStorage.Modules.Shared.MallCFrames)
 local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
+local VIP = require(ReplicatedStorage.Modules.Shared.VIP)
 
 local Future = require(ReplicatedStorage.Packages.Future)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
@@ -408,15 +409,27 @@ local function HandleUpdateShopSettings(player: Player, settings: ShopEvents.Upd
 	local updateTime = os.clock()
 	shop.lastUpdate = updateTime
 
-	local primaryColorExists = Config.PrimaryColors[settings.primaryColor:ToHex()]
-	if not primaryColorExists then
+	local isVip = VIP.IsPlayerVIP(player.UserId):Await()
+
+	local primaryColorDetails = Config.PrimaryColors[settings.primaryColor:ToHex()]
+	if not primaryColorDetails then
 		warn("Invalid primary color sent:", settings.primaryColor)
 		return
 	end
 
-	local accentColorExists = Config.AccentColors[settings.accentColor:ToHex()]
-	if not accentColorExists then
+	if primaryColorDetails.vipOnly and not isVip then
+		warn("Tried to switch to vip only color without vip")
+		return
+	end
+
+	local accentColorDetails = Config.AccentColors[settings.accentColor:ToHex()]
+	if not accentColorDetails then
 		warn("Invalid accent color sent:", settings.accentColor)
+		return
+	end
+
+	if accentColorDetails.vipOnly and not isVip then
+		warn("Tried to switch to vip only color without vip")
 		return
 	end
 

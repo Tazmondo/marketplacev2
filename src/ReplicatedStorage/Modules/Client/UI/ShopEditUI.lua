@@ -2,6 +2,7 @@
 
 local ShopEditUI = {}
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
@@ -17,6 +18,7 @@ local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
+local VIP = require(ReplicatedStorage.Modules.Shared.VIP)
 local Future = require(ReplicatedStorage.Packages.Future)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
@@ -127,6 +129,27 @@ local function UpdateAccentColourPickerSelection(color: Color3)
 	end
 end
 
+local function UpdateVIPIcons()
+	VIP.IsPlayerVIP(Players.LocalPlayer.UserId):After(function(isVip)
+		for i, child in gui.PrimaryColorPicker:GetChildren() do
+			if child:IsA("ImageButton") then
+				local vip = child:FindFirstChild("VIP") :: ImageLabel?
+				if vip then
+					vip.Visible = not isVip
+				end
+			end
+		end
+		for i, child in gui.AccentColorPicker:GetChildren() do
+			if child:IsA("ImageButton") then
+				local vip = child:FindFirstChild("VIP") :: ImageLabel?
+				if vip then
+					vip.Visible = not isVip
+				end
+			end
+		end
+	end)
+end
+
 local function UpdateTextureSelection(texture: string)
 	for i, child in gui.TexturePicker:GetChildren() do
 		if child:IsA("ImageButton") then
@@ -176,12 +199,34 @@ local function Update()
 end
 
 local function PickPrimaryColor(color: Color3)
+	local details = Config.PrimaryColors[color:ToHex()]
+	if not details then
+		warn(color, "was not in config")
+		return
+	end
+
+	if details.vipOnly and not VIP.IsPlayerVIP(Players.LocalPlayer.UserId):Await() then
+		VIP.PromptPurchase(Players.LocalPlayer)
+		return
+	end
+
 	gui.Wrapper.CurrentPrimaryColor.BackgroundColor3 = color
 	UpdatePrimaryColourPickerSelection(color)
 	Update()
 end
 
 local function PickAccentColor(color: Color3)
+	local details = Config.AccentColors[color:ToHex()]
+	if not details then
+		warn(color, "was not in config")
+		return
+	end
+
+	if details.vipOnly and not VIP.IsPlayerVIP(Players.LocalPlayer.UserId):Await() then
+		VIP.PromptPurchase(Players.LocalPlayer)
+		return
+	end
+
 	gui.Wrapper.CurrentAccentColor.BackgroundColor3 = color
 	UpdateAccentColourPickerSelection(color)
 	Update()
@@ -385,8 +430,11 @@ function ShopEditUI:Initialize()
 		end
 	end)
 
+	VIP.GainedVIP:Connect(UpdateVIPIcons)
+
 	PopulateLayoutFrame()
 	PopulateStorefrontFrame()
+	UpdateVIPIcons()
 
 	-- Not the prettiest but gets the job done
 	for i, child in gui.PrimaryColorPicker:GetChildren() do
