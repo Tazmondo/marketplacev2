@@ -51,6 +51,21 @@ function Material:TextureExists(texture: string)
 	return Material:GetMaterialSet(texture) ~= nil
 end
 
+function Material:IsVIPOnly(texture: string)
+	local material = Material:GetMaterialSet(texture)
+	if not material then
+		return false
+	end
+
+	-- TODO: 	this is not really an ideal way of doing this
+	--			should have a centralized material config that decides if a material is vip or not
+	if texture == "Plastic" then
+		return false
+	else
+		return true
+	end
+end
+
 function Material:GetDefault()
 	return "Plastic"
 end

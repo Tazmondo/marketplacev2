@@ -439,6 +439,11 @@ local function HandleUpdateShopSettings(player: Player, settings: ShopEvents.Upd
 		return
 	end
 
+	if Material:IsVIPOnly(settings.texture) and not isVip then
+		warn("Tried to switch to vip only texture without vip")
+		return
+	end
+
 	if shop.name ~= settings.name then
 		-- Yields
 		local success, result = pcall(function()

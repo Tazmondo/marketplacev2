@@ -17,6 +17,7 @@ local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Data = require(ReplicatedStorage.Modules.Shared.Data)
 local LayoutData = require(ReplicatedStorage.Modules.Shared.Layouts.LayoutData)
 local Layouts = require(ReplicatedStorage.Modules.Shared.Layouts.Layouts)
+local Material = require(ReplicatedStorage.Modules.Shared.Material)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local VIP = require(ReplicatedStorage.Modules.Shared.VIP)
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -130,20 +131,34 @@ local function UpdateAccentColourPickerSelection(color: Color3)
 end
 
 local function UpdateVIPIcons()
-	VIP.IsPlayerVIP(Players.LocalPlayer.UserId):After(function(isVip)
+	VIP.IsPlayerVIP(Players.LocalPlayer.UserId):After(function(isPlayerVip)
 		for i, child in gui.PrimaryColorPicker:GetChildren() do
 			if child:IsA("ImageButton") then
 				local vip = child:FindFirstChild("VIP") :: ImageLabel?
 				if vip then
-					vip.Visible = not isVip
+					vip.Visible = not isPlayerVip
 				end
 			end
 		end
+
 		for i, child in gui.AccentColorPicker:GetChildren() do
 			if child:IsA("ImageButton") then
 				local vip = child:FindFirstChild("VIP") :: ImageLabel?
 				if vip then
-					vip.Visible = not isVip
+					vip.Visible = not isPlayerVip
+				end
+			end
+		end
+
+		for i, child in gui.TexturePicker:GetChildren() do
+			if child:IsA("ImageButton") then
+				local vipLabel = child:FindFirstChild("VIP") :: ImageLabel?
+
+				if vipLabel then
+					local texture = child.Name
+					local isMaterialVip = Material:IsVIPOnly(texture)
+					local canUse = (not isMaterialVip) or (isMaterialVip and isPlayerVip)
+					vipLabel.Visible = not canUse
 				end
 			end
 		end
@@ -233,6 +248,11 @@ local function PickAccentColor(color: Color3)
 end
 
 local function PickTexture(texture: string)
+	if Material:IsVIPOnly(texture) and not VIP.IsPlayerVIP(Players.LocalPlayer.UserId):Await() then
+		VIP.PromptPurchase(Players.LocalPlayer)
+		return
+	end
+
 	UpdateTextureSelection(texture)
 	selectedTexture = texture
 	Update()
