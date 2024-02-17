@@ -664,6 +664,10 @@ local function NewShop(shopCFrame: CFrame, shopDetails: Types.Shop, mode: ShopMo
 
 	local shopSign = CreateShopSign(shopDetails)
 
+	for _, label in Layouts:GetNameGuis(model) do
+		label.Frame.TextLabel.Text = shopDetails.name
+	end
+
 	local label = storefront.getNameLabel(storefrontModel)
 	label.Text = shopDetails.name
 

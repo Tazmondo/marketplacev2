@@ -31,6 +31,12 @@ export type Storefront = {
 	getNameLabel: (Model) -> TextLabel,
 }
 
+type ShopNameGui = SurfaceGui & {
+	Frame: Frame & {
+		TextLabel: TextLabel,
+	},
+}
+
 local LayoutFolder = ReplicatedStorage.Assets.Layouts :: Folder
 local StorefrontFolder = ReplicatedStorage.Assets.Storefronts :: Folder
 
@@ -116,6 +122,20 @@ end
 
 function Layouts:GetLayouts()
 	return savedLayouts
+end
+
+function Layouts:GetNameGuis(layoutModel: Model)
+	local guis: { ShopNameGui } = {}
+
+	for _, gui in layoutModel:GetDescendants() do
+		if not gui:HasTag(Config.ShopNameTag) or not gui:IsA("SurfaceGui") then
+			continue
+		end
+
+		table.insert(guis, gui :: any)
+	end
+
+	return guis
 end
 
 -- Cause writing the table out every time is a pain

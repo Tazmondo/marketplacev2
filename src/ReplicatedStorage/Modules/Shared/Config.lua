@@ -47,6 +47,8 @@ local Config = {
 	RenderedOutfitTag = "RenderedOutfit",
 	RenderedClassicClothingTag = "RenderedClassicClothing",
 
+	ShopNameTag = "ShopNameSign",
+
 	StandRotationSpeed = math.rad(30),
 	StandBobSpeed = 0.2,
 	DefaultScale = 2.5,
