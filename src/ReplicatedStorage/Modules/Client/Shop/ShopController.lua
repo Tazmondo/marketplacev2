@@ -84,7 +84,10 @@ type RenderedOutfit = {
 	prompt: ProximityPrompt,
 	roundedPosition: Vector3,
 
-	description: Types.SerializedDescription?,
+	details: {
+		name: string,
+		description: Types.SerializedDescription,
+	}?,
 	outfitModel: Model?,
 
 	-- Since fetching the model is asynchronous, we need this in case a stand is destroyed
@@ -326,7 +329,7 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 		local existingStand = shop.renderedOutfitStands[roundedPosition]
 		if existingStand then
 			local existingDescription = existingStand.description
-			local newDescription = if stand then stand.description else nil
+			local newDescription = if stand and stand.details then stand.details.description else nil
 
 			if HumanoidDescription.Equal(existingDescription, newDescription) then
 				continue
@@ -346,14 +349,14 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 			prompt = prompt,
 			roundedPosition = roundedPosition,
 
-			description = if stand then stand.description else nil,
+			details = if stand and stand.details then table.clone(stand.details) else nil,
 
 			destroyed = false,
 		}
 		shop.renderedOutfitStands[roundedPosition] = renderedStand
 
-		if stand and stand.description then
-			CharacterCache:LoadWithDescription(stand.description):After(function(outfit)
+		if stand and stand.details then
+			CharacterCache:LoadWithDescription(stand.details.description):After(function(outfit)
 				if not outfit then
 					return
 				end
@@ -394,7 +397,7 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 		end
 
 		if shop.mode == "Edit" then
-			if stand and stand.description then
+			if stand and stand.details then
 				prompt.ActionText = "Remove Outfit"
 				prompt.ObjectText = "Stand"
 				prompt.Parent = modelPart
@@ -409,21 +412,24 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 				prompt.Parent = modelPart
 
 				prompt.Triggered:Connect(function()
-					local outfit = CatalogUI:SelectOutfit():Await()
-					if outfit then
-						ShopEvents.UpdateOutfitStand:FireServer(roundedPosition, HumanoidDescription.Serialize(outfit))
+					local outfit, name = CatalogUI:SelectOutfit():Await()
+					if outfit and name then
+						ShopEvents.UpdateOutfitStand:FireServer(roundedPosition, {
+							description = HumanoidDescription.Serialize(outfit),
+							name = name,
+						})
 					end
 				end)
 			end
 		else
 			SetDisplayVisibility(model, false)
-			if stand and stand.description then
+			if stand and stand.details then
 				prompt.ActionText = ""
 				prompt.ObjectText = ""
 				prompt.Parent = modelPart
 
 				prompt.Triggered:Connect(function()
-					CatalogUI:DisplayOutfit(HumanoidDescription.Deserialize(stand.description), shop.details.owner)
+					CatalogUI:DisplayOutfit(HumanoidDescription.Deserialize(stand.details), shop.details.owner)
 				end)
 			end
 		end

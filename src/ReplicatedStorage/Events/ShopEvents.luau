@@ -35,6 +35,14 @@ local function GuardUpdateSettings(settings: unknown)
 	}
 end
 
+local function GuardOutfitStand(details: unknown)
+	local value: any = details
+	return {
+		description = HumanoidDescription.Guard(value.description),
+		name = Guard.String(value.name),
+	}
+end
+
 return {
 	CreateShop = Red.Function("Shop_CreateShop", function()
 		return
@@ -54,8 +62,8 @@ return {
 		return Guard.Vector3(roundedPosition), Guard.Optional(Guard.Number)(assetId)
 	end),
 
-	UpdateOutfitStand = Red.SharedEvent("Shop_UpdateOutfitStand", function(roundedPosition, description)
-		return Guard.Vector3(roundedPosition), Guard.Optional(HumanoidDescription.Guard)(description)
+	UpdateOutfitStand = Red.SharedEvent("Shop_UpdateOutfitStand", function(roundedPosition, details)
+		return Guard.Vector3(roundedPosition), Guard.Optional(GuardOutfitStand)(details)
 	end),
 
 	UpdateSettings = Red.SharedEvent("Shop_UpdateSettings", function(settings)

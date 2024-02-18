@@ -24,9 +24,11 @@ export type Stand = {
 export type SerializedDescription = { string | number }
 
 export type OutfitStand = {
-	description: SerializedDescription?,
+	details: {
+		description: SerializedDescription,
+		name: string,
+	}?,
 	roundedPosition: Vector3,
-	[string]: never,
 }
 
 export type Shop = {

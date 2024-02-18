@@ -131,7 +131,7 @@ local categories = {
 CatalogUI.VisibilityUpdated = Signal()
 
 local ItemSelected: Signal.Signal<number, Types.StandType> = Signal()
-local OutfitSelected: Signal.Signal<HumanoidDescription> = Signal()
+local OutfitSelected: Signal.Signal<HumanoidDescription, string> = Signal()
 
 local previewing = false
 
@@ -502,7 +502,7 @@ function RenderOutfits()
 			if currentUseMode == "Wear" then
 				CartController:UseDescription(outfit.description)
 			else
-				OutfitSelected:Fire(outfit.description)
+				OutfitSelected:Fire(outfit.description, outfit.name)
 			end
 		end)
 
@@ -1227,7 +1227,7 @@ function CatalogUI:SelectItem()
 end
 
 function CatalogUI:SelectOutfit()
-	return Future.new(function(): HumanoidDescription?
+	return Future.new(function(): (HumanoidDescription?, string?)
 		local tracker = newproxy()
 		selectTracker = tracker
 		CatalogUI:Hide()
@@ -1236,12 +1236,13 @@ function CatalogUI:SelectOutfit()
 		SwitchSubCategory("Outfits")
 
 		local selectedOutfit: HumanoidDescription? = nil
+		local selectedOutfitName: string? = nil
 		local parentThread = coroutine.running()
 		local selectedThread: thread
 		local visibilityThread: thread
 
 		selectedThread = task.spawn(function()
-			selectedOutfit = OutfitSelected:Wait()
+			selectedOutfit, selectedOutfitName = OutfitSelected:Wait()
 			task.cancel(visibilityThread)
 			coroutine.resume(parentThread)
 		end)
@@ -1257,7 +1258,7 @@ function CatalogUI:SelectOutfit()
 		if selectTracker == tracker then
 			CatalogUI:Hide()
 
-			return selectedOutfit
+			return selectedOutfit, selectedOutfitName
 		else
 			return nil
 		end

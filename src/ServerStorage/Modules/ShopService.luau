@@ -141,10 +141,11 @@ local function SaveShop(shop: ActiveShop)
 
 	local filteredOutfitStands: { Data.OutfitStand } = {}
 	for _, stand in shop.outfitStands do
-		if stand.description and validOutfitPositions[stand.roundedPosition] then
+		if stand.details and validOutfitPositions[stand.roundedPosition] then
 			table.insert(filteredOutfitStands, {
-				description = stand.description,
+				description = stand.details.description,
 				roundedPosition = Data.VectorToTable(stand.roundedPosition),
+				name = stand.details.name,
 			})
 		end
 	end
@@ -213,8 +214,8 @@ local function PopulateLayoutOutfitStands(
 			table.insert(outputStands, stand)
 		else
 			table.insert(outputStands, {
-				description = nil,
 				roundedPosition = position,
+				details = nil,
 			})
 		end
 	end
@@ -368,7 +369,7 @@ end
 local function HandleUpdateOutfitStand(
 	player: Player,
 	roundedPosition: Vector3,
-	description: Types.SerializedDescription?
+	details: { name: string, description: Types.SerializedDescription }?
 )
 	local shop = GetEditableShop(player)
 	if not shop then
@@ -389,12 +390,17 @@ local function HandleUpdateOutfitStand(
 		return
 	end
 
-	if HumanoidDescription.Equal(stand.description, description) then
+	if
+		HumanoidDescription.Equal(
+			if stand.details then stand.details.description else nil,
+			if details then details.description else nil
+		)
+	then
 		-- Asset did not change
 		return
 	end
 
-	stand.description = description
+	stand.details = if details then details else nil
 
 	ShopEvents.LoadShop:FireAllClients(shop.cframe, ToNetworkShop(shop))
 	SaveShop(shop)

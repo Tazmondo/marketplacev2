@@ -35,10 +35,12 @@ local standTemplate: Stand = {
 
 export type OutfitStand = {
 	description: Types.SerializedDescription,
+	name: string,
 	roundedPosition: VectorTable,
 }
 local outfitStandTemplate = {
 	description = HumanoidDescription.Serialize(Instance.new("HumanoidDescription")),
+	name = "Outfit",
 	roundedPosition = { x = 0, y = 0, z = 0 },
 }
 
@@ -90,7 +92,7 @@ export type Data = {
 local dataTemplate: Data = {
 	shops = {},
 	outfits = {},
-	version = 2,
+	version = 3,
 	firstTime = true,
 	purchases = 0,
 	sales = 0,
@@ -114,49 +116,6 @@ function Data.TableToVector(vector: VectorTable): Vector3
 	return Vector3.new(vector.x, vector.y, vector.z)
 end
 
-local function GreedyFillLayout(data: Data)
-	for _, shop in data.shops do
-		if not Layouts:LayoutIdExists(shop.layoutId) then
-			shop.layoutId = "Shop 1" :: LayoutData.LayoutId
-		end
-		local newLayout = Layouts:GetLayout(shop.layoutId :: LayoutData.LayoutId)
-
-		local validStandPositions = newLayout.getValidStandPositions()
-		local validOutfitStandPositions = newLayout.getValidOutfitStandPositions()
-
-		local migratedStands: { Stand } = {}
-		local migratedOutfits: { OutfitStand } = {}
-		local oldStands = table.clone(shop.stands or {})
-		local oldOutfits = table.clone(shop.outfitStands or {})
-
-		for position, _ in validStandPositions do
-			local oldStand = table.remove(oldStands, #oldStands)
-			if not oldStand then
-				break
-			end
-			table.insert(migratedStands, {
-				assetId = oldStand.assetId,
-				roundedPosition = Data.VectorToTable(position),
-				type = (oldStand.type or "Accessory" :: Types.StandType) :: Types.StandType, -- double cast necessary here
-			})
-		end
-
-		for position, _ in validOutfitStandPositions do
-			local oldStand = table.remove(oldOutfits, #oldOutfits)
-			if not oldStand then
-				break
-			end
-			table.insert(migratedOutfits, {
-				description = oldStand.description,
-				roundedPosition = Data.VectorToTable(position),
-			})
-		end
-
-		shop.stands = migratedStands
-		shop.outfitStands = migratedOutfits
-	end
-end
-
 function Data.Migrate(data: Data, ownerId: number)
 	if data.version == dataTemplate.version then
 		-- Data shape hasn't updated, no need to reconcile
@@ -169,6 +128,14 @@ function Data.Migrate(data: Data, ownerId: number)
 
 	if data.version < 2 then
 		data.ownedLayouts = {}
+	end
+
+	if data.version < 3 then
+		for _, shop in data.shops do
+			for _, stand in shop.outfitStands do
+				stand.name = outfitStandTemplate.name
+			end
+		end
 	end
 
 	data.version = dataTemplate.version
@@ -187,10 +154,11 @@ function Data.ToDataStand(stand: Types.Stand): Stand?
 end
 
 function Data.ToDataOutfitStand(stand: Types.OutfitStand): OutfitStand?
-	if stand.description then
+	if stand.details then
 		return {
-			description = stand.description,
+			description = stand.details.description,
 			roundedPosition = Data.VectorToTable(stand.roundedPosition),
+			name = stand.details.name,
 		}
 	else
 		return nil
@@ -243,7 +211,10 @@ end
 
 function Data.FromDataOutfitStand(stand: OutfitStand): Types.OutfitStand
 	return {
-		description = stand.description,
+		details = {
+			description = stand.description,
+			name = stand.name,
+		},
 		roundedPosition = Data.TableToVector(stand.roundedPosition),
 	}
 end

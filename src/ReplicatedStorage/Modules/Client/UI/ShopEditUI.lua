@@ -324,7 +324,7 @@ local function SwitchLayout(id: LayoutData.LayoutId)
 			return stand.item ~= nil
 		end)
 		local filledOutfits = TableUtil.Filter(activeShop.outfitStands, function(outfit)
-			return outfit.description ~= nil
+			return outfit.details ~= nil
 		end)
 
 		-- Don't need to show switch prompt if the shop is not filled in at all.
