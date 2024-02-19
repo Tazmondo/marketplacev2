@@ -358,7 +358,8 @@ function CartController:IsEquipped(id: number): boolean
 		return item and item.equipped and item.id == id
 	end
 
-	return classicEquipped("Pants")
+	return lastEquippedPackage == id
+		or classicEquipped("Pants")
 		or classicEquipped("Shirt")
 		or classicEquipped("TShirt")
 		or (
