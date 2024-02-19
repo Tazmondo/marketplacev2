@@ -23,6 +23,7 @@ local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDes
 local DataEvents = require(ReplicatedStorage.Events.DataEvents)
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
+local BundleResolver = require(ReplicatedStorage.Modules.Shared.BundleResolver)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local Types = require(ReplicatedStorage.Modules.Shared.Types)
 local Bin = require(ReplicatedStorage.Packages.Bin)
@@ -564,9 +565,7 @@ function RenderWearing()
 			end
 		end)
 
-		item.Buy.Activated:Connect(function()
-			PurchaseEvents.Asset:FireServer(id, shopOwner)
-		end)
+		item.Buy.Visible = false
 
 		item.Parent = template.Parent
 
@@ -578,12 +577,30 @@ function RenderWearing()
 			local owned = if details then (details.owned or false) else false
 			item.Owned.Visible = owned
 
-			local price = if details and details.price then tostring(details.price) else nil
-			item.Buy.Visible = not owned and CartController:IsEquipped(id) and price ~= nil
+			local price: string?
 
-			if price then
-				item.Buy.TextLabel.Text = price
+			if details then
+				if BundleResolver.IsAssetBodyPart(details.assetType) then
+					local bundle = BundleResolver.BundleFromPart.Get(id):Await()
+					if bundle and bundle.price then
+						price = tostring(bundle.price)
+
+						item.Buy.Activated:Connect(function()
+							PurchaseEvents.Bundle:FireServer(bundle.id, shopOwner)
+						end)
+					end
+				elseif details.price then
+					price = tostring(details.price)
+
+					item.Buy.Activated:Connect(function()
+						PurchaseEvents.Asset:FireServer(id, shopOwner)
+					end)
+				end
 			end
+
+			item.Buy.Visible = not owned and CartController:IsEquipped(id)
+
+			item.Buy.TextLabel.Text = if price then price else "N/A"
 
 			if not details then
 				return
@@ -924,7 +941,6 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 			itemElement.Owned.Visible = false
 			itemElement:SetAttribute("Temporary", true)
 			itemElement:SetAttribute("AssetId", id)
-			itemElement:SetAttribute("Purchaseable", typeof(itemType) == "string")
 			itemElement.ImageFrame.Frame.ItemImage.Image = Thumbs.GetAsset(id)
 
 			local layoutOrder
@@ -954,10 +970,6 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 				end
 			end)
 
-			itemElement.Buy.Activated:Connect(function()
-				PurchaseEvents.Asset:FireServer(id, shopOwner)
-			end)
-
 			itemElement.Parent = outfitUI.Wearing.ListWrapper.List
 
 			DataFetch.GetItemDetails(id, Players.LocalPlayer):After(function(details)
@@ -965,11 +977,30 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 					return
 				end
 
-				itemElement.IsLimited.Visible = details.limited ~= nil
-				if itemType == "Accessory" then
-					itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id) and details.price ~= nil
-					itemElement.Buy.TextLabel.Text = if details.price then tostring(details.price) else "N/A"
+				local price: number?
+
+				if BundleResolver.IsAssetBodyPart(details.assetType) then
+					local bundle = BundleResolver.BundleFromPart.Get(id):Await()
+					if bundle and bundle.price then
+						price = bundle.price
+
+						itemElement.Buy.Activated:Connect(function()
+							PurchaseEvents.Bundle:FireServer(bundle.id, shopOwner)
+						end)
+					end
+				elseif details.price then
+					price = details.price
+
+					itemElement.Buy.Activated:Connect(function()
+						PurchaseEvents.Asset:FireServer(id, shopOwner)
+					end)
 				end
+
+				itemElement.IsLimited.Visible = details.limited ~= nil
+
+				itemElement.Buy.Visible = not details.owned and CartController:IsInCart(id)
+				itemElement.Buy.TextLabel.Text = if price then tostring(price) else "N/A"
+
 				itemElement.Owned.Visible = details.owned or false
 				itemElement:SetAttribute("Owned", details.owned)
 			end)
@@ -983,7 +1014,7 @@ function RenderOutfitPreviewPage(outfit: HumanoidDescription, shopOwner: number?
 
 					itemElement.UIStroke.Enabled = inCart
 					if owned ~= nil then
-						itemElement.Buy.Visible = not owned and inCart and itemElement:GetAttribute("Purchaseable")
+						itemElement.Buy.Visible = not owned and inCart
 					end
 				end
 			end

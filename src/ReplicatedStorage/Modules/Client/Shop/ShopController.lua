@@ -657,13 +657,17 @@ local function CreateShopSign(shop: Types.Shop)
 	end)
 
 	task.defer(function()
+		if shopSign.Parent == nil then
+			return
+		end
+
 		local passGui = shopSign:FindFirstChild("Passes", true) :: UITypes.Passes
 		local list = passGui.ScrollingFrame
 		local template = list.Donate
 		template.Visible = false
 
 		local success, passes = ShopEvents.GetOwnerPasses:Call(shop.owner):Await()
-		if not success or shopSign.Parent == nil then
+		if not success then
 			return
 		end
 
