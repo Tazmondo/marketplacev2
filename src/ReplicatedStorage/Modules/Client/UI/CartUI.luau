@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
 local CartController = require(ReplicatedStorage.Modules.Client.CartController)
+local BundleResolver = require(ReplicatedStorage.Modules.Shared.BundleResolver)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Thumbs = require(ReplicatedStorage.Modules.Shared.Thumbs)
 local Util = require(ReplicatedStorage.Modules.Shared.Util)
@@ -67,11 +68,25 @@ local function HandleCartUpdated()
 			item.LayoutOrder += 1000
 		end
 
-		if assetData.price then
-			item.Buy.TextLabel.Text = tostring(assetData.price)
+		local price: number?
+
+		if BundleResolver.IsAssetBodyPart(assetData.assetType) then
+			local bundle = BundleResolver.BundleFromPart.Get(assetData.assetId):Await()
+			if bundle and bundle.price then
+				price = bundle.price
+				item.Buy.Activated:Connect(function()
+					PurchaseEvents.Bundle:FireServer(bundle.id, data.shopOwner)
+				end)
+			end
+		else
+			price = assetData.price
 			item.Buy.Activated:Connect(function()
 				PurchaseEvents.Asset:FireServer(data.id, data.shopOwner)
 			end)
+		end
+
+		if price then
+			item.Buy.TextLabel.Text = tostring(price)
 		else
 			item.Buy.Visible = false
 		end

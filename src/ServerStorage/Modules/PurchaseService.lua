@@ -10,6 +10,7 @@ local EffectsService = require(script.Parent.EffectsService)
 local ShopService = require(script.Parent.ShopService)
 local DataService = require(ServerStorage.Modules.Data.DataService)
 local PurchaseEvents = require(ReplicatedStorage.Events.PurchaseEvents)
+local BundleResolver = require(ReplicatedStorage.Modules.Shared.BundleResolver)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local DataFetch = require(ReplicatedStorage.Modules.Shared.DataFetch)
 local Future = require(ReplicatedStorage.Packages.Future)
@@ -177,6 +178,35 @@ local function HandlePromptFinished(player: Player, assetId: number, purchased: 
 	DispatchEarnedEffect(player, ownerId, itemDetails.price, bux)
 end
 
+local function HandleBundleFinished(player: Player, bundleId: number, purchased: boolean)
+	if not purchased then
+		pendingPurchases[player] = nil
+		return
+	end
+
+	local ownerId: number? = pendingPurchases[player]
+	pendingPurchases[player] = nil
+	if not ownerId or ownerId == player.UserId then
+		-- don't process if players purchase from their own shops
+		return
+	end
+
+	local bundleDetails = BundleResolver.BundleFromId.Get(bundleId):Await()
+	if not bundleDetails or not bundleDetails.price then
+		return
+	end
+
+	local bux = bundleDetails.price * Config.BuxMultiplier
+
+	DataService:WriteData(player, function(data)
+		data.purchases += 1
+		data.shopbux += bux
+		data.totalShopbux += bux
+	end)
+
+	DispatchEarnedEffect(player, ownerId, bundleDetails.price, bux)
+end
+
 local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwner: number?)
 	if shopOwner then
 		pendingPurchases[player] = shopOwner
@@ -184,6 +214,14 @@ local function HandlePurchaseAssetEvent(player: Player, assetId: number, shopOwn
 
 	-- When we get exclusive deals we will need to secure this so users can't buy the exclusive assets.
 	MarketplaceService:PromptPurchase(player, assetId)
+end
+
+local function HandlePurchaseBundleEvent(player: Player, bundleId: number, shopOwner: number?)
+	if shopOwner then
+		pendingPurchases[player] = shopOwner
+	end
+
+	MarketplaceService:PromptBundlePurchase(player, bundleId)
 end
 
 local function HandleDonationFinished(player: Player, assetId: number, purchased: boolean)
@@ -242,9 +280,11 @@ end
 function PurchaseService:Initialize()
 	MarketplaceService.PromptPurchaseFinished:Connect(HandlePromptFinished)
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(HandleDonationFinished)
+	MarketplaceService.PromptBundlePurchaseFinished:Connect(HandleBundleFinished)
 
 	PurchaseEvents.Asset:SetServerListener(HandlePurchaseAssetEvent)
 	PurchaseEvents.Donate:SetServerListener(HandleDonateEvent)
+	PurchaseEvents.Bundle:SetServerListener(HandlePurchaseBundleEvent)
 
 	Players.PlayerRemoving:Connect(PlayerRemoving)
 	game:BindToClose(HandleGameClose)

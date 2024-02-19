@@ -157,4 +157,41 @@ function BundleResolver.GetOutfitPrice(outfit: HumanoidDescription)
 	end)
 end
 
+function BundleResolver.IsAssetBodyPart(assetType: Enum.AssetType | Enum.AvatarAssetType): boolean
+	return assetType == Enum.AssetType.Head
+		or assetType == Enum.AssetType.Torso
+		or assetType == Enum.AssetType.LeftArm
+		or assetType == Enum.AssetType.LeftLeg
+		or assetType == Enum.AssetType.RightArm
+		or assetType == Enum.AssetType.RightLeg
+		or assetType == Enum.AvatarAssetType.Head
+		or assetType == Enum.AvatarAssetType.Torso
+		or assetType == Enum.AvatarAssetType.LeftArm
+		or assetType == Enum.AvatarAssetType.LeftLeg
+		or assetType == Enum.AvatarAssetType.RightArm
+		or assetType == Enum.AvatarAssetType.RightLeg
+end
+
+local function GetBundleDetails(bundleId: number)
+	return Future.new(function(): Bundle?
+		local success, bundle = pcall(function()
+			return AvatarEditorService:GetItemDetails(bundleId, Enum.AvatarItemType.Bundle)
+		end)
+
+		if not success then
+			warn(bundle)
+			return nil
+		end
+
+		return {
+			id = bundle.Id,
+			creator = bundle.CreatorName,
+			price = bundle.Price,
+			name = bundle.Name,
+		}
+	end)
+end
+
+BundleResolver.BundleFromId = Util.FutureCache(GetBundleDetails)
+
 return BundleResolver
