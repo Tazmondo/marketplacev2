@@ -81,7 +81,7 @@ end
 -- This drastically reduces the data used to store each outfit
 function HumanoidDescription.Serialize(description: HumanoidDescription): Types.SerializedDescription
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE!
-	return {
+	local serialized: { any } = {
 		SerializeAccessories(description:GetAccessories(true)),
 		description.BodyTypeScale,
 		description.DepthScale,
@@ -107,12 +107,14 @@ function HumanoidDescription.Serialize(description: HumanoidDescription): Types.
 		description.WidthScale,
 		description.IdleAnimation,
 	}
+
+	return serialized :: any
 end
 
 function HumanoidDescription.Deserialize(descriptionInfo: Types.SerializedDescription): HumanoidDescription
 	-- BE VERY CAREFUL WHEN CHANGING THIS CODE
 	local description = Instance.new("HumanoidDescription")
-	local descriptionInfo = descriptionInfo :: { any }
+	local descriptionInfo = descriptionInfo :: any
 
 	description:SetAccessories(DeserializeAccessories(descriptionInfo[1]), true)
 	description.BodyTypeScale = descriptionInfo[2]

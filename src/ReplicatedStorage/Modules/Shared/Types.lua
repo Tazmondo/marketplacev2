@@ -21,8 +21,11 @@ export type Stand = {
 	[string]: never,
 }
 
-export type SerializedDescription = { string | number }
+-- export type SerializedDescription = { string | number }
+-- This is the real type ^. I am using the placeholder to ensure other tables can never be cast into it, causing false negative type errors.
+-- The table should never be accessed directly anyway, outside of the humanoid description module, so using a token like this is fine.
 
+export type SerializedDescription = typeof(setmetatable({}, { SerializedDescription = true }))
 export type OutfitStand = {
 	details: {
 		description: SerializedDescription,
