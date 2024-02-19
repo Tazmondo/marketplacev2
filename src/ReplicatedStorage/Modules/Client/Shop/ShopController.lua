@@ -464,7 +464,10 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 				prompt.Parent = modelPart
 
 				prompt.Triggered:Connect(function()
-					CatalogUI:DisplayOutfit(HumanoidDescription.Deserialize(stand.details), shop.details.owner)
+					CatalogUI:DisplayOutfit(
+						HumanoidDescription.Deserialize(stand.details.description),
+						shop.details.owner
+					)
 				end)
 			end
 		end
