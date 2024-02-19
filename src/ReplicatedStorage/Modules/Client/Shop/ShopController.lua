@@ -15,6 +15,7 @@ local CharacterCache = require(ReplicatedStorage.Modules.Client.CharacterCache)
 local ProfileUI = require(ReplicatedStorage.Modules.Client.UI.ProfileUI)
 local ShopEditUI = require(ReplicatedStorage.Modules.Client.UI.ShopEditUI)
 local UITypes = require(ReplicatedStorage.Modules.Client.UI.UITypes)
+local BundleResolver = require(ReplicatedStorage.Modules.Shared.BundleResolver)
 local Config = require(ReplicatedStorage.Modules.Shared.Config)
 local FormatNumber = require(ReplicatedStorage.Modules.Shared.FormatNumber)
 local HumanoidDescription = require(ReplicatedStorage.Modules.Shared.HumanoidDescription)
@@ -50,6 +51,11 @@ assert(shopPlaceholder and shopPlaceholder:IsA("Model"), "No shop placeholder fo
 
 local assetsFolder = assert(ReplicatedStorage:FindFirstChild("Assets")) :: Folder
 local highlightTemplate = assert(assetsFolder:FindFirstChild("ItemHighlight")) :: Highlight
+
+local outfitGuiTemplate = assert(
+	ReplicatedStorage.Assets.UI:FindFirstChild("OutfitGui"),
+	"Outfitgui not found in assets"
+) :: UITypes.OutfitGui
 
 ShopController.ShopEntered = Signal() :: Signal.Signal<RenderedShop?>
 
@@ -375,6 +381,35 @@ local function CreateOutfitStands(shop: RenderedShop, positionMap: { [Vector3]: 
 				local humanoid = outfit:FindFirstChildOfClass("Humanoid") :: Humanoid
 				local HRP = humanoid.RootPart :: BasePart
 				HRP.Anchored = true
+
+				local head = outfit:FindFirstChild("Head") :: BasePart
+				local gui = outfitGuiTemplate:Clone()
+				gui.Frame.OutfitName.Text = stand.details.name
+				gui.Frame.Frame.Price.Text = "Loading..."
+				gui.Parent = head
+
+				task.defer(function()
+					while
+						gui.Parent ~= nil
+						and (workspace.CurrentCamera.CFrame.Position - outfit:GetPivot().Position).Magnitude
+							> gui.MaxDistance
+					do
+						RunService.Heartbeat:Wait()
+					end
+
+					if gui.Parent == nil then
+						return
+					end
+
+					BundleResolver.GetOutfitPrice(HumanoidDescription.Deserialize(stand.details.description))
+						:After(function(price)
+							-- need to typecast here for some reason
+							if (gui.Parent :: Instance?) == nil then
+								return
+							end
+							gui.Frame.Frame.Price.Text = `{price}`
+						end)
+				end)
 
 				outfit:ScaleTo(standScale)
 

@@ -192,6 +192,7 @@ function Util.AwaitAllFuturesTupled<K, V...>(t: { [K]: Future<V...> }): Future<{
 	end, t)
 end
 
+-- Generic function for creating a future-based cache
 function Util.FutureCache<Key, Value>(func: (Key) -> Future.Future<Value>, timeout: number?)
 	local cache: { [Key]: { time: number, value: Future<Value> } } = {}
 	timeout = timeout or math.huge

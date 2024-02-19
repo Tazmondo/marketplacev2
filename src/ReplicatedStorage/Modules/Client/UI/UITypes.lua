@@ -1753,4 +1753,16 @@ export type Passes = SurfaceGui & {
 	},
 }
 
-return {}
+export type OutfitGui = BillboardGui & {
+	Frame: Frame & {
+		OutfitName: TextLabel,
+		Frame: Frame & {
+			UIListLayout: UIListLayout,
+			UICorner: UICorner,
+			Price: TextLabel,
+		},
+		UIListLayout: UIListLayout,
+	},
+}
+
+return nil
